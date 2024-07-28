@@ -1,0 +1,41 @@
+
+.scrollable::-webkit-scrollbar {
+  width: 12px; /* szerokość paska przewijania */
+  height: 12px; /* wysokość paska przewijania */
+}
+
+/* Stylowanie kanału paska przewijania */
+.scrollable::-webkit-scrollbar-track {
+  background: #4d4d4d; 
+  border-radius: 10px;
+}
+
+/* Stylowanie uchwytu (thumb) paska przewijania */
+.scrollable::-webkit-scrollbar-thumb {
+  background: #888; 
+  border-radius: 10px;
+}
+
+*
+{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body {
+  width:100%;
+  height:100%;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  font-family: "DM Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
