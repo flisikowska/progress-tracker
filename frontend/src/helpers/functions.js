@@ -1,3 +1,25 @@
+export const resizeGridItem = item => {
+  var grid = document.getElementsByClassName("activities")[0]
+  var rowHeight = parseInt(
+    window.getComputedStyle(grid).getPropertyValue("grid-auto-rows")
+  )
+  var rowGap = parseInt(
+    window.getComputedStyle(grid).getPropertyValue("grid-row-gap")
+  )
+  var rowSpan = Math.ceil(
+    (item.getBoundingClientRect().height + rowGap) /
+      (rowHeight + rowGap)
+  )
+  item.style.gridRowEnd = "span " + rowSpan
+}
+
+export const ResizeGridItems = () => {
+  var allItems = Array.from(document.getElementsByClassName('grid-item'));
+  allItems.forEach(function(item) {
+      resizeGridItem(item);
+  });
+}
+
 export function FormattedDate(d) {
     if (typeof d == 'string' || typeof d == 'number') d = new Date(d);
     const yyyy = d.getFullYear().toString();
@@ -26,3 +48,5 @@ export function FormattedDate(d) {
     newDate.setDate(newDate.getDate() + days);
     return newDate;
   };
+
+  

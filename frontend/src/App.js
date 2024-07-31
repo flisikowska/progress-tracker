@@ -8,11 +8,11 @@ import icon from './assets/bg2.png';
 import NotificationPopup from './components/notificationPopup';
 import AddActivityPopup from './components/addActivityPopup';
 
+
 const AppContainer=styled.div`
   width:100%;
-  height:100%;
-  min-height:600px;
-  padding:50px 0 80px 0;
+  min-height:100vh;
+  padding-bottom: 80px;
   background-color:rgb(180,180,180);
   background-image: url(${props => props.icon});
   #wrapper{
@@ -23,12 +23,39 @@ const AppContainer=styled.div`
     padding:20px;
     margin:auto;
     background-color:rgb(220,220,220);
-    @media(max-width:670px){
+    @media(max-width:770px){
       width:90%;
-    
     }
   }
 `;
+
+const StyledLoginContainer=styled.div`
+  display:flex;
+  flex-flow: row nowrap;
+  justify-content: right;
+  padding:10px;
+  >div{
+    color:#000;
+    font-weight:500;
+    font-size:1rem;
+    cursor:pointer;
+    padding:7px 10px;
+    margin:5px;
+    &:hover{
+      color:#555 
+    }
+  }
+    >div:nth-of-type(2){
+      border:2px solid #999;
+      border-radius: 10px;
+  }
+  @media(max-width:770px){
+    >div{
+      font-size:0.8rem;
+    }
+  }
+`;
+
 
 const IconsWrapper=styled.div`
   width:100%;
@@ -38,6 +65,10 @@ const IconsWrapper=styled.div`
   padding:20px;
   justify-content:right;
   align-items:center;
+  @media(max-width:770px){
+      padding:0px;
+      margin-bottom:30px;
+    }
 `;
 
 function App() {
@@ -46,6 +77,10 @@ function App() {
   const [activeAddPopup, setActiveAddPopup] = useState(false);
   return (
     <AppContainer icon={icon}>
+      <StyledLoginContainer>
+        <div>Zaloguj się</div>
+        <div>Utwórz konto</div>
+      </StyledLoginContainer>
       <Menu site={site} setActiveAddPopup={setActiveAddPopup} setSite={setSite}/>
       <div id='wrapper'>
         <IconsWrapper>  

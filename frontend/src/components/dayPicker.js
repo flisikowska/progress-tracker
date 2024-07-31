@@ -24,10 +24,12 @@ const StyledDaySquare = styled.div`
   @media (max-width: 450px) {
     font-size: 0.75rem;
   }
+    
   ${(props) =>
     props.selected &&
     css`
       background: rgba(86, 186, 119, 0.8);
+      border:3px solid rgb(86, 186, 119);
       p{
         color:white;
       }

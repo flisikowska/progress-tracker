@@ -24,6 +24,7 @@ const StyledTitle = styled.h5`
   min-height: 15px;
   margin: 0;
   padding: 0;
+  cursor:default;
   font-weight: 400;
   font-size: 0.7rem;
 `;

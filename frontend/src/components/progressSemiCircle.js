@@ -3,18 +3,15 @@ import styled from 'styled-components';
 
 
 const StyledContainer=styled.div`
-    width:600px;
-    margin:auto;
-    @media(max-width:670px){
-        width:100%;
-    }
+    width:100%;
+    position:relative;    
 `   
 
 const StyledCircle=styled.div`
     position: relative;
     margin:auto;
-    width: 200px;
-    height: 200px;
+    width: 205px;
+    height: 205px;
     border-radius: 100px;
     &:before {
         content: '';
@@ -34,33 +31,46 @@ const StyledCircle=styled.div`
         #ed5ad5 200deg 220deg,
         #dcdcdc 220deg 360deg
     );
+    @media(max-width:570px){
+        width:150px;
+        height:150px;
+        margin:0 25px 0 auto;
+        &:before {
+            width: 120px;
+            height: 120px;
+        }
+    }
     `;
 
-    const Napis=styled.p`
+    const StyledHeader=styled.h2`
         position:absolute;
         text-align:center;
         top:50%;
         left:50%;
+        cursor:default;
         transform:translate(-50%, -50%);
         font-size:1.2rem;
         font-weight:800;
         margin:0;
+        @media(max-width:570px){
+            font-size:1rem;
+        }   
+    }
     `
 
     const UsersContainer=styled.div`
-        width:220px;
-        margin-left:auto;
-        display:grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
+        position:absolute;
+        top:0;
+        left:0;
     `   
 
     const StyledUser=styled.div`
         display:flex;
         flex-wrap:nowrap;
-        margin:0 5px;
+        margin-bottom: 10px;
         width:100px;
         @media(max-width:670px){
+        margin-bottom: 7px;
             >p{
                 font-size:0.8rem;
             }
@@ -87,9 +97,6 @@ const StyledCircle=styled.div`
 function ProgressSemiCircle(){
     return(
         <StyledContainer>
-            <StyledCircle>
-                <Napis>Pozostało 40%</Napis>
-            </StyledCircle>
             <UsersContainer>
                 <StyledUser>
                     <Square color={"#e94547"}/>
@@ -108,6 +115,9 @@ function ProgressSemiCircle(){
                     <StyledName>Emilia</StyledName>
                 </StyledUser>
             </UsersContainer>
+            <StyledCircle>
+                <StyledHeader>Pozostało 40%</StyledHeader>
+            </StyledCircle>
         </StyledContainer>
     );
 };

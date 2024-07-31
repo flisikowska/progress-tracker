@@ -1,5 +1,5 @@
 import React, {useRef, useEffect, useState} from 'react';
-import styled from 'styled-components';
+import styled, {css} from 'styled-components';
 import TimePicker from './timePicker';
 import {PersonRunning} from '@styled-icons/fa-solid/PersonRunning';
 import {SportBasketball} from '@styled-icons/fluentui-system-regular/SportBasketball';
@@ -10,12 +10,15 @@ import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
 
 const StyledButton= styled.div`
     z-index:10;
-    padding:8px 15px;
+    padding:7px 10px;
     font-size:0.9rem;
-    font-weight:600;
+    font-weight:500;
     cursor:pointer;
-    border:2px solid #bbb;
-    border-radius:5px;
+    border:2px solid #999;
+    border-radius:8px;
+     &:hover{
+      color:#555; 
+    }
     @media(max-width:570px){
         display:none;
     }   
@@ -31,7 +34,7 @@ const StyledWrapper=styled.div`
     left:50%;
     top:50%;
     transform:translate(-50%, -50%);
-    width:80%;
+    width:60%;
     height:90%;
     background-color:rgba(255,255,255);
     border-radius:10px;
@@ -64,31 +67,43 @@ const StyledTitle= styled.div`
 const ActivitiesWrapper= styled.div`
     height: calc(100% - 320px);
     width:60%;
-     @media(max-width:1250px){
-        width:80%;
-    }
-     @media(max-width:900px){
+    @media(max-width:900px){
         width:90%;
     }
     overflow-y: scroll;
-    // height:200px;
     display: grid;
     margin:30px auto;
     grid-template-columns: repeat(3, 33.3%);
-    @media(max-width:670px){
-        grid-template-columns: repeat(2, 50%);
+    @media(max-width:700px){
+        grid-template-columns: repeat(2, 1fr);
     }
+    @media(max-width:520px){
+        grid-template-columns: repeat(1, 1fr);
+        >div{
+            width:80%;
+            margin:10px auto;
+        }
+    }
+
 
 `;
 
 const StyledActivity= styled.div`
     padding:10px;
     margin:10px;
+    width:150px;
     cursor:pointer;
     text-align:center;
     height:100px;
     border-radius:12px;
-    border:2px solid #ccc;
+    border: 2px solid #ccc;
+    ${(props) =>
+    props.chosen &&
+    css`
+        border: 2px solid rgb(86, 186, 119);
+        box-shadow: 0 0 4px rgb(86, 186, 119);
+    `};
+
     >p{
         font-weight:600;
         font-size:0.9rem;
@@ -155,10 +170,10 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
                 <CloseOutline onClick={()=>setActiveAddPopup(false)}/>
                 <StyledTitle>Wybierz aktywność:</StyledTitle>
                 <ActivitiesWrapper className="scrollable">
-                    <StyledActivity chosen={chosenItem} onClick={()=>setChosenItem("name")}><p>Bieganie</p><PersonRunning size="30"/></StyledActivity>
-                    <StyledActivity  chosen={chosenItem} onClick={()=>setChosenItem("name")}><p>Koszykówka</p><SportBasketball size="30"/></StyledActivity>
-                    <StyledActivity chosen={chosenItem} onClick={()=>setChosenItem("name")}><p>Tenis</p><Tennisball size="30"/></StyledActivity>
-                    <StyledActivity  chosen={chosenItem} onClick={()=>setChosenItem("name")}><p>Siatkówka</p><Volleyball size="30"/></StyledActivity>
+                    <StyledActivity chosen={chosenItem==1} onClick={()=>setChosenItem(1)}><p>Bieganie</p><PersonRunning size="30"/></StyledActivity>
+                    <StyledActivity chosen={chosenItem==2} onClick={()=>setChosenItem(2)}><p>Koszykówka</p><SportBasketball size="30"/></StyledActivity>
+                    <StyledActivity chosen={chosenItem==3} onClick={()=>setChosenItem(3)}><p>Tenis</p><Tennisball size="30"/></StyledActivity>
+                    <StyledActivity chosen={chosenItem==4} onClick={()=>setChosenItem(4)}><p>Siatkówka</p><Volleyball size="30"/></StyledActivity>
                 </ActivitiesWrapper>
                 <TimePicker
                         id='timePicker'
@@ -172,8 +187,8 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
                         value={{
                             // hours: parseInt(values.activeCookingTime.split(':')[0]),
                             // minutes: parseInt(values.activeCookingTime.split(':')[1]),
-                            hours:10,
-                            minutes:30,
+                            hours:0,
+                            minutes:0,
                         }}
                         />
                 <ChooseButton>Wybierz</ChooseButton>

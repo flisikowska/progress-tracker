@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { PersonRunning } from '@styled-icons/fa-solid/PersonRunning';
 import { BookPulse } from '@styled-icons/fluentui-system-regular/BookPulse';
-import { NoteAdd } from '@styled-icons/fluentui-system-filled/NoteAdd';
+import { ChannelAdd } from '@styled-icons/fluentui-system-filled/ChannelAdd';
 
 
 const StyledMenu = styled.div`
@@ -156,7 +156,7 @@ const Menu = ({site, setSite, setActiveAddPopup}) => {
             <MenuItemName>Raport</MenuItemName>
         </ItemWrapper>
         <ItemWrapper id="add" onClick={()=>setActiveAddPopup(true)}>
-            <NoteAdd />
+            <ChannelAdd />
         </ItemWrapper>
         <ItemWrapper  active={site==='moje'} onClick={()=>setSite('moje')}>
             <BookPulse />

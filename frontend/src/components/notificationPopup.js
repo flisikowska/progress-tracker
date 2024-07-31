@@ -19,13 +19,15 @@ const StyledWrapper=styled.div`
     position:absolute;
     text-align:left;
     padding:15px;
-    right:70px;
+    margin-top:10px;
+    right:75px;
     width:300px;
     height:350px;
     background-color:rgba(0,0,0,0.4);
     border-radius:10px;
     box-shadow:5px 5px 8px #aaa;
     >div{
+        cursor:default;
         background-color:rgba(255,255,255);
         padding:5px 10px;
         border-radius:5px;
@@ -40,6 +42,16 @@ const StyledWrapper=styled.div`
         margin:10px 0 5px 0;
         font-weight:bold;
     }
+    @media(max-width:570px){
+        width:70%;
+        height:250px;
+        #info{
+            font-size:0.7rem;    
+        }
+        #time{
+            font-size:0.6rem;
+        }
+    }    
 `;
 
 
