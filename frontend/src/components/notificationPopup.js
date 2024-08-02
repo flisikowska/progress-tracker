@@ -15,7 +15,7 @@ const StyledContainer=styled.div`
 const StyledWrapper=styled.div`
     z-index:10;
     overflow-y:scroll;
-    display: ${(props) => (props.active ? 'block' : 'none')};
+    display: ${(props) => (props.$active ? 'block' : 'none')};
     position:absolute;
     text-align:left;
     padding:15px;
@@ -85,7 +85,7 @@ const NotificationPopup=({active, setActiveNotificationPopup})=>{
     return (
         <StyledContainer>
             <Notifications onClick={()=> setActiveNotificationPopup(!active) }/>
-            <StyledWrapper className='scrollable' id='popup' active={active}>
+            <StyledWrapper className='scrollable' id='popup' $active={active}>
                 <div>
                     <p id='time'>12.03 10:30</p>
                     <p id='info'>Karolina dodał/a "bieganie-30 min"</p>

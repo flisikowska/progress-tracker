@@ -7,7 +7,6 @@ import {Tennisball} from '@styled-icons/ionicons-solid/Tennisball';
 import {Volleyball} from '@styled-icons/fa-solid/Volleyball';
 import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
 
-
 const StyledButton= styled.div`
     z-index:10;
     padding:7px 10px;
@@ -25,7 +24,7 @@ const StyledButton= styled.div`
 `;
 
 const StyledWrapper=styled.div`
-    display: ${(props) => (props.active ? 'flex' : 'none')};
+    display: ${(props) => (props.$active ? 'flex' : 'none')};
     position:fixed;
     flex-flow:column wrap;
     padding:25px;
@@ -98,7 +97,7 @@ const StyledActivity= styled.div`
     border-radius:12px;
     border: 2px solid #ccc;
     ${(props) =>
-    props.chosen &&
+    props.$chosen &&
     css`
         border: 2px solid rgb(86, 186, 119);
         box-shadow: 0 0 4px rgb(86, 186, 119);
@@ -166,14 +165,14 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
     return (
         <>
             <StyledButton onClick={()=> setActiveAddPopup(!active) }>Dodaj aktywność</StyledButton>
-            <StyledWrapper id='addPopup' active={active}>
+            <StyledWrapper id='addPopup' $active={active}>
                 <CloseOutline onClick={()=>setActiveAddPopup(false)}/>
                 <StyledTitle>Wybierz aktywność:</StyledTitle>
                 <ActivitiesWrapper className="scrollable">
-                    <StyledActivity chosen={chosenItem==1} onClick={()=>setChosenItem(1)}><p>Bieganie</p><PersonRunning size="30"/></StyledActivity>
-                    <StyledActivity chosen={chosenItem==2} onClick={()=>setChosenItem(2)}><p>Koszykówka</p><SportBasketball size="30"/></StyledActivity>
-                    <StyledActivity chosen={chosenItem==3} onClick={()=>setChosenItem(3)}><p>Tenis</p><Tennisball size="30"/></StyledActivity>
-                    <StyledActivity chosen={chosenItem==4} onClick={()=>setChosenItem(4)}><p>Siatkówka</p><Volleyball size="30"/></StyledActivity>
+                    <StyledActivity $chosen={chosenItem===1} onClick={()=>setChosenItem(1)}><p>Bieganie</p><PersonRunning size="30"/></StyledActivity>
+                    <StyledActivity $chosen={chosenItem===2} onClick={()=>setChosenItem(2)}><p>Koszykówka</p><SportBasketball size="30"/></StyledActivity>
+                    <StyledActivity $chosen={chosenItem===3} onClick={()=>setChosenItem(3)}><p>Tenis</p><Tennisball size="30"/></StyledActivity>
+                    <StyledActivity $chosen={chosenItem===4} onClick={()=>setChosenItem(4)}><p>Siatkówka</p><Volleyball size="30"/></StyledActivity>
                 </ActivitiesWrapper>
                 <TimePicker
                         id='timePicker'

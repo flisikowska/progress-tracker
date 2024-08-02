@@ -19,12 +19,11 @@ const StyledActivitiesWrapper = styled.div`
     width:80%;
   }
   @media(max-width:600px){
-      font-size:1rem;
-      width:95%;
-      gap:10px;
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-
-    }
+    font-size:1rem;
+    width:95%;
+    gap:10px;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
   :first-child{
     >h1{
       font-size:1.5rem;
@@ -85,7 +84,7 @@ justify-content:space-between;
 
 function Activities(){
     useEffect(() => {
-        ResizeGridItems()
+        ResizeGridItems("activities")
       })
     return(
       <StyledActivitiesWrapper className='activities'>

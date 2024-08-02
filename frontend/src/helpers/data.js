@@ -1,0 +1,42 @@
+export const data = [
+  {
+    x: "tydz. 27",
+    color: "#e94547",
+    groupA: 100,
+    groupB: 100,
+    groupC: 100,
+    groupD: 100,
+  },
+  {
+    x: "tydz. 28",
+    color: "#7dcef5",
+    groupA: 600,
+    groupB: 50,
+    groupC: 66,
+    groupD: 63,
+  },
+  {
+    x: "tydz. 29",
+    color: "#79c191",
+    groupA: 64,
+    groupB: 96,
+    groupC: 64,
+    groupD: 0,
+  },
+  {
+    x: "tydz. 30",
+    color: "#bd66bd",
+    groupA: 32,
+    groupB: 269,
+    groupC: 64,
+    groupD: 300,
+  },
+  {
+    x: "tydz. 31",
+    color: "#dcdcdc",
+    groupA: 12,
+    groupB: 18,
+    groupC: 273,
+    groupD: 300,
+  },
+];

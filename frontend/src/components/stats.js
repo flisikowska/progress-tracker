@@ -34,7 +34,7 @@ const StatContainer= styled.div`
     text-align:center;
      @media(max-width:600px){
         >div{
-            height:${(props) => props.statHeight}px/2;
+            height:${(props) => props.$statHeight}px/2;
             width:13px;
             border-radius:5px 5px 0 0;
 
@@ -47,12 +47,12 @@ const StatContainer= styled.div`
 
 
 const StatBar=styled.div`
-    border: 2px solid hsl(${(props) => props.hue}, 100%, 40%);
-    background-color:hsla(${(props) => props.hue}, 100%, 40%, 0.07);
+    border: 2px solid hsl(${(props) => props.$hue}, 100%, 40%);
+    background-color:hsla(${(props) => props.$hue}, 100%, 40%, 0.07);
     border-radius:10px 10px 0 0;
     margin:10px;
     width:30px;
-    height:${(props) => props.statHeight}px;
+    height:${(props) => props.$statHeight}px;
     display:flex;
     justify-content:space-between;
     flex-wrap:nowrap;
@@ -84,35 +84,35 @@ function Stats(){
                 <p>0h</p>
             </StyledBar>
             <StatContainer>
-                <StatBar hue={hue} statHeight={percentage*3}/>
+                <StatBar $hue={hue} $statHeight={percentage*3}/>
                 <StyledDate>24<br/>tydz.</StyledDate>
             </StatContainer>
             <StatContainer>
-                <StatBar hue={hue2} statHeight={100*3}/>
+                <StatBar $hue={hue2} $statHeight={100*3}/>
                 <StyledDate>25<br/>tydz.</StyledDate>
             </StatContainer>
             <StatContainer>
-                <StatBar hue={hue3} statHeight={0*3}/>
+                <StatBar $hue={hue3} $statHeight={0*3}/>
                 <StyledDate>26<br/>tydz.</StyledDate>
             </StatContainer>
             <StatContainer>
-                <StatBar hue={120*(54/100)} statHeight={54*3}/>
+                <StatBar $hue={120*(54/100)} $statHeight={54*3}/>
                 <StyledDate>27<br/>tydz.</StyledDate>
             </StatContainer>
             <StatContainer>
-                <StatBar hue={120*(100/100)} statHeight={100*3}/>
+                <StatBar $hue={120*(100/100)} $statHeight={100*3}/>
                 <StyledDate>28<br/>tydz.</StyledDate>
             </StatContainer>
             <StatContainer>
-                <StatBar hue={120*(100/100)} statHeight={100*3}/>
+                <StatBar $hue={120*(100/100)} $statHeight={100*3}/>
                 <StyledDate>29<br/>tydz.</StyledDate>
             </StatContainer>
             <StatContainer>
-                <StatBar hue={120*(6/100)} statHeight={6*3}/>
+                <StatBar $hue={120*(6/100)} $statHeight={6*3}/>
                 <StyledDate>30<br/>tydz.</StyledDate>
             </StatContainer>
             <StatContainer>
-                <StatBar hue={120*(40/100)} statHeight={40*3}/>
+                <StatBar $hue={120*(40/100)} $statHeight={40*3}/>
                 <StyledDate>31<br/>tydz.</StyledDate>
             </StatContainer>
         </StyledWrapper>

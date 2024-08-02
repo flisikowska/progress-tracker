@@ -1,5 +1,5 @@
-export const resizeGridItem = item => {
-  var grid = document.getElementsByClassName("activities")[0]
+export const resizeGridItem = (item, itemParent) => {
+  var grid = document.getElementsByClassName(itemParent)[0]
   var rowHeight = parseInt(
     window.getComputedStyle(grid).getPropertyValue("grid-auto-rows")
   )
@@ -13,10 +13,10 @@ export const resizeGridItem = item => {
   item.style.gridRowEnd = "span " + rowSpan
 }
 
-export const ResizeGridItems = () => {
+export const ResizeGridItems = (itemParent) => {
   var allItems = Array.from(document.getElementsByClassName('grid-item'));
   allItems.forEach(function(item) {
-      resizeGridItem(item);
+      resizeGridItem(item, itemParent);
   });
 }
 

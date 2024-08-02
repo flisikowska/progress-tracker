@@ -54,9 +54,9 @@ const ItemWrapper = styled.div`
     margin: 0 -.3em;
     width: 10em;
   	padding: .7em 2em .5em;
-    z-index: ${(props) => (props.active ? '2' : '1')};
+    z-index: ${(props) => (props.$active ? '2' : '1')};
     &:before{
-        background-color: ${(props) => (props.active ? 'rgba(86, 186, 119,0.8)' : 'rgba(100,100,100,0.3)')};
+        background-color: ${(props) => (props.$active ? 'rgba(86, 186, 119,0.8)' : 'rgba(100,100,100,0.3)')};
         border: .2em solid #fff;
         content: '';
         z-index:-1;
@@ -78,10 +78,10 @@ const ItemWrapper = styled.div`
         >svg{
             width: 23px;
             height: 23px;
-            color: ${(props) => (props.active ? '#000' : '#bbb')};
+            color: ${(props) => (props.$active ? '#000' : '#bbb')};
         }
         >span{
-            color: ${(props) => (props.active ? '#000' : '#bbb')};
+            color: ${(props) => (props.$active ? '#000' : '#bbb')};
         }
         &#add{
             display:block;
@@ -151,14 +151,14 @@ const Menu = ({site, setSite, setActiveAddPopup}) => {
 
   return (
       <StyledMenu id="menu">
-        <ItemWrapper active={site==='grupa'} onClick={()=>setSite('grupa')} >
+        <ItemWrapper $active={site==='grupa'} onClick={()=>setSite('grupa')} >
             <PersonRunning /> 
             <MenuItemName>Raport</MenuItemName>
         </ItemWrapper>
         <ItemWrapper id="add" onClick={()=>setActiveAddPopup(true)}>
             <ChannelAdd />
         </ItemWrapper>
-        <ItemWrapper  active={site==='moje'} onClick={()=>setSite('moje')}>
+        <ItemWrapper  $active={site==='moje'} onClick={()=>setSite('moje')}>
             <BookPulse />
             <MenuItemName>Profil</MenuItemName>
         </ItemWrapper>

@@ -1,25 +1,28 @@
 import React from 'react';
 import styled from 'styled-components';
-import ProgressSemiCircle from '../components/progressSemiCircle';
+import PieChart from '../components/pieChart';
 import Stats from '../components/stats';
+import { data } from "../helpers/data";
 
+import StackedAreaChart from '../components/stackedAreaChart';
 const StyledContainer=styled.div`
     width:100%;
     height:100%;
+    text-align:center;
 `;
 
-const StyledActivityTitle= styled.h2`
+const StyledStatsTitle= styled.h2`
     font-size:1.2rem;
     margin-top:40px;
+    text-align:left;
 `;
-
 
 function Grupa(){
     return(
         <StyledContainer>
-            <ProgressSemiCircle/>
-            <StyledActivityTitle>Statystyki:</StyledActivityTitle>
-            <Stats/>
+            <PieChart/>
+            <StyledStatsTitle>Statystyki:</StyledStatsTitle>
+            <StackedAreaChart data={data} width={600} height={400} />
         </StyledContainer>
     )
 };

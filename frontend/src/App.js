@@ -14,7 +14,7 @@ const AppContainer=styled.div`
   min-height:100vh;
   padding-bottom: 80px;
   background-color:rgb(180,180,180);
-  background-image: url(${props => props.icon});
+  background-image: url(${props => props.$icon});
   #wrapper{
     width:60%;
     position:relative;
@@ -76,7 +76,7 @@ function App() {
   const [activeNotificationPopup, setActiveNotificationPopup] = useState(false);
   const [activeAddPopup, setActiveAddPopup] = useState(false);
   return (
-    <AppContainer icon={icon}>
+    <AppContainer $icon={icon}>
       <StyledLoginContainer>
         <div>Zaloguj się</div>
         <div>Utwórz konto</div>
