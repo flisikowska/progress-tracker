@@ -1,24 +1,32 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
 import styled from 'styled-components';
 
 const MARGIN = { top: 30, right: 30, bottom: 50, left: 50 };
 
+const StyledContainer= styled.div`
+    max-width:600px;
+    margin:auto;
+`;
+
 const StyledSvg=styled.svg`
-    font-size:1.2rem;
     text-align:center;
 `;
 
 const StyledG=styled.g`
     color:#333;
 `;
-const StackedAreaChart = ({ width, height, data }) => {
+
+const StackedAreaChart = ({   data }) => {
+  const [dynamicSize, setDynamicSize] = useState({ width: 600, height: 400 });
+  const { width, height } = dynamicSize;
+
   const axesRef = useRef(null);
   const boundsWidth = width - MARGIN.right - MARGIN.left;
   const boundsHeight = height - MARGIN.top - MARGIN.bottom;
 
   // Data Wrangling: stack the data
-  const stackKeys = ['groupA', 'groupB', 'groupC', 'groupD'];
+  const stackKeys = ['Karolina', 'Kasia', 'Angelika', 'Emilia'];
   const stackSeries = d3.stack()
     .keys(stackKeys)
     .order(d3.stackOrderNone)
@@ -53,20 +61,25 @@ const StackedAreaChart = ({ width, height, data }) => {
     const xAxisGenerator = d3.axisBottom(xScale);
     var xTicks = svgElement.append('g')
       .attr('transform', `translate(0, ${boundsHeight})`)
-      .style('font-weight', '600')
-      .style('font-size', '.8rem')
+      .style('font-weight', '500')
+      .style('font-family', '"DM Sans", sans-serif')
+      .style('font-size', '.85rem')
       .call(xAxisGenerator);
+    
+      xTicks
+      .selectAll('text')
+      .attr('transform', 'translate(0, 3)');
       
-    xTicks
-        .selectAll('text')
-        .attr('transform', 'translate(0, 3)');
+      d3.select(xTicks.selectAll('.tick text').nodes()[0]).attr('transform', 'translate(-17, 3)');
+    
 
     const yAxisGenerator = d3.axisLeft(yScale)
       .tickFormat(d => `${(d / 60).toFixed(0)}h`); // Format to display hours without decimal
     svgElement.append('g')
         .call(yAxisGenerator)
-        .style('font-weight', '600')
-        .style('font-size', '.7rem')
+        .style('font-weight', '500')
+        .style('font-family', '"DM Sans", sans-serif')
+        .style('font-size', '.85rem')
         ;
   }, [xScale, yScale, boundsHeight]);
 
@@ -82,13 +95,9 @@ const StackedAreaChart = ({ width, height, data }) => {
   .y(d => yScale(d[1]));
 
   return (
-    <div>
-      <StyledSvg width={width} height={height}>
-        <StyledG
-          width={boundsWidth}
-          height={boundsHeight}
-          transform={`translate(${[MARGIN.left, MARGIN.top].join(',')})`}
-        >
+    <StyledContainer>
+      <StyledSvg width='100%' height='100%' viewBox={`0 0 600 400`}>
+        <StyledG transform={`translate(${[MARGIN.left, MARGIN.top].join(',')})`}>
         {series && series.map((serie, i) => (
             <>
                 <path
@@ -104,7 +113,7 @@ const StackedAreaChart = ({ width, height, data }) => {
                     opacity={1}
                     stroke={colorScale(serie.key)}
                     fill="none"
-                    strokeWidth="2px"
+                    strokeWidth="1px"
                 />
             </>
         ))};
@@ -116,7 +125,7 @@ const StackedAreaChart = ({ width, height, data }) => {
           transform={`translate(${[MARGIN.left, MARGIN.top].join(',')})`}
         />
       </StyledSvg>
-    </div>
+    </StyledContainer>
   );
 };
 

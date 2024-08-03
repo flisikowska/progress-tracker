@@ -13,36 +13,36 @@ const StyledContainer= styled.div`
     display:flex;
     align-items:center;
     flex-flow:row nowrap;
-    @media(max-width:760px){
-        flex-flow: column;
+    @media(max-width:1000px){
+      flex-flow: column;
+      height:unset;
     }
 `;
 
 const PieChartContainer= styled.div`
     width:300px;
     height:300px;
-    margin:auto;
+    margin:20px;
     z-index:1;
     transition: transform 1s ease-in-out;
-    transform: translateX(12vw); 
+    transform: translateX(270px); 
+    @media(max-width:1000px){
+      transform: translateX(0); 
+    }
 `;
 
 const StyledPieChart= styled.div`
     display: flex;
     width:100%;
-    cursor:pointer;
     height:100%;
+    cursor:pointer;
     align-items: center;
     justify-content: center;
     margin: 0 auto;
-    @media(min-width:768px) {
-        transition: 1s;
-    }
-    @media(max-width:767px) {
+    @media(max-width:1000px) {
         transform: rotate(90deg); 
         transform-origin: 50% 50%; 
         transition: 1s; 
-        max-width: 50%; 
     }
 `;
 
@@ -59,8 +59,11 @@ const StyledRemainingTime= styled.p`
 `;
 
 const StyledInfoContainer=styled.div`
-    width:50%;
+    width:calc(100% - 350px);
     height:100%;
+    @media(max-width:1000px){
+      width:100%;
+    }
 `;
 
 const StyledInfoWrapper=styled.div`
@@ -142,19 +145,19 @@ const emiliaActivities=[{
 
 const data_V1 = [{
     "Type": "Karolina",
-    "Amount": 0,
+    "Amount": 9450,
     "Component": () => <GroupMemberActivities activities={karolinaActivities}/>
   }, {
     "Type": "Angelika",
-    "Amount": 1000,
+    "Amount": 4600,
     "Component": () => <GroupMemberActivities activities={angelikaActivities}/>
   }, {
     "Type": "Kasia",
-    "Amount": 600,
+    "Amount": 2600,
     "Component": () => <GroupMemberActivities activities={kasiaActivities}/>
   }, {
     "Type": "Emilia",
-    "Amount": 1750,
+    "Amount": 6750,
     "Component": () => <GroupMemberActivities activities={emiliaActivities}/>
   }, {
     "Type": "Pozostało",

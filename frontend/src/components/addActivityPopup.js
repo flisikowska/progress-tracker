@@ -14,7 +14,7 @@ const StyledButton= styled.div`
     font-weight:500;
     cursor:pointer;
     border:2px solid #999;
-    border-radius:8px;
+    border-radius:4px;
      &:hover{
       color:#555; 
     }
@@ -33,6 +33,7 @@ const StyledWrapper=styled.div`
     left:50%;
     top:50%;
     transform:translate(-50%, -50%);
+    transition:0.4s;
     width:60%;
     height:90%;
     background-color:rgba(255,255,255);
@@ -41,6 +42,15 @@ const StyledWrapper=styled.div`
     z-index: 10;
     @media(max-width:900px){
         width:90%;
+    }
+    @media(max-width:570px){
+    width:100%;
+    height:100%;
+        display: block;
+        transform: translate(0, ${(props) => (props.$active ? '0' : '120%')});
+        top:0;
+        left:0;
+        border-radius:0px;  
     }
     >svg{
         position:absolute;
@@ -99,8 +109,8 @@ const StyledActivity= styled.div`
     ${(props) =>
     props.$chosen &&
     css`
-        border: 2px solid rgb(86, 186, 119);
-        box-shadow: 0 0 4px rgb(86, 186, 119);
+        border: 2px solid  rgba(121, 193, 145, 0.7);
+        box-shadow: 0 0 4px  rgba(121, 193, 145, 0.7);
     `};
 
     >p{
@@ -120,12 +130,13 @@ const ChooseButton= styled.div`
     padding:10px 0;
     cursor:pointer;
     text-align:center;
-    border-radius:12px;
+    border-radius:4px;
     border:2px solid #ccc;
     font-weight:600;
     font-size:0.9rem;
     transition:0.2s;
     width:100px;
+    margin:auto;
     &:hover{
         background-color:rgba(86, 186, 119,0.8);
         border:2px solid rgba(86, 186, 119,0.8);

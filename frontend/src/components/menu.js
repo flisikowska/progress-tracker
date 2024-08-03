@@ -63,7 +63,7 @@ const ItemWrapper = styled.div`
         position: absolute;
         top: 0; right: 0; bottom: 0; left: 0;
         border-bottom: none;
-        border-radius: .7em .7em 0 0;
+        border-radius: 4px 4px 0 0;
         transform: scale(1.2, 1.3) perspective(.5em) rotateX(5deg);
         transform-origin: bottom;
     }

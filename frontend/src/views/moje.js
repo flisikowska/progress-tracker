@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import DayPicker from '../components/dayPicker';
 import { FormattedDate } from '../helpers/functions';
 import styled from 'styled-components';
-import Activities from '../components/activities';
+import UserActivities from '../components/userActivities';
 
 const StyledContainer= styled.h1`
   width:100%;
@@ -13,11 +13,21 @@ const StyledContainer= styled.h1`
 
 const StyledActivityTitle=styled.h2`
   font-size:1.2rem;
-  margin-top:50px;
+  margin:30px 0;
 `
+const StyledButton= styled.div`
+    width:fit-content;
+    color:#000;
+    font-weight:500;
+    font-size:1rem;
+    cursor:pointer;
+    border:2px solid #999;
+    border-radius: 4px;
+    padding:7px 10px;
+    margin-left:auto;
+`;
 
-
-function Home() {
+function Home({logout}) {
   const [selectedDay, setSelectedDay] = useState(FormattedDate(new Date()));
   const [dayPickerVisibleDays, setDayPickerVisibleDays] = useState([]);
   // const dispatch = useDispatch();
@@ -43,7 +53,8 @@ function Home() {
           visibleDaysChanged={(days) => setDayPickerVisibleDays(days)}
         />
         <StyledActivityTitle>Twoja aktywność:</StyledActivityTitle>
-        <Activities/>
+        <UserActivities/>
+        <StyledButton onClick={logout}>Wyloguj sie</StyledButton>
       </StyledContainer>
   )
 };

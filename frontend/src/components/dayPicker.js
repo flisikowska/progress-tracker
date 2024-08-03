@@ -1,26 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
-import PropTypes from 'prop-types';
-import { ArrowLeftS } from '@styled-icons/remix-line/ArrowLeftS';
-import { ArrowRightS } from '@styled-icons/remix-line/ArrowRightS';
+import {ArrowLeftOutline} from '@styled-icons/evaicons-outline/ArrowLeftOutline';
 import { addDays, FormattedDate } from '../helpers/functions.js';
 
-const StyledDayPickerItemWrapper = styled.div`
+const StyledDaySquare = styled.div`
   margin: 0 6px;
   cursor: pointer;
-`;
-
-const StyledDaySquare = styled.div`
   width: 60px;
-  height: 75px;
-  transition: 0.3s;
-  color: black;
+  height: 65px;                                   
+  color: #000;
   font-size: 1rem;
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-radius: 15px;
+  border-radius: 3px;
   @media (max-width: 450px) {
     font-size: 0.75rem;
   }
@@ -28,20 +22,17 @@ const StyledDaySquare = styled.div`
   ${(props) =>
     props.selected &&
     css`
-      background: rgba(86, 186, 119, 0.8);
-      border:3px solid rgb(86, 186, 119);
+      background: rgba(121, 193, 145, 0.7);
+      border:2px solid rgb(121, 193, 145);
       p{
-        color:white;
+        color:#fff;
       }
-    `};
-
+  `};
 `;
 
 const StyledDay = styled.p`
-  font-size: 1.3rem;
-  font-family: "DM Sans", sans-serif;
-  margin: 10px auto 0 auto;
-  transition: 0.3s;
+  font-size: 1.2rem;
+  margin: 3px auto 0 auto;
   @media (max-width: 450px) {
     font-size: 1rem;
   }
@@ -49,40 +40,24 @@ const StyledDay = styled.p`
 
 const StyledDate = styled.p`
   font-size: 0.8rem;
-  margin-top:5px;
-  font-family: "DM Sans", sans-serif;
+  margin-top:7px;
   color: black;
-  transition: 0.3s;
   @media (max-width: 450px) {
     font-size: 0.75rem;
   }
 `;
+
 const DayPickerItem = ({
   selected,
   onClick,
-  day,
-  value,
-  caloriesGoal,
+  day
 }) => {
-  const valueForCalories = value ? value : 0;
 
   return (
-    <StyledDayPickerItemWrapper
-      title={caloriesGoal > 0 ? (value ? ((value / caloriesGoal) * 100).toFixed(0) + '%' : '') : ''}
-      className="dayPickerItem"
-      onClick={onClick}
-    >
-      <StyledDaySquare
-        calories={valueForCalories}
-        $caloricSurplus={valueForCalories > caloriesGoal}
-        selected={selected}
-      >
+      <StyledDaySquare className="dayPickerItem" onClick={onClick} selected={selected}>
         <StyledDay>{day.split('-')[2]}</StyledDay>
-        <StyledDate>
-          {day.split('-')[1]}/{day.split('-')[0].slice(2)}
-        </StyledDate>
+        <StyledDate>{day.split('-')[1]}/{day.split('-')[0].slice(2)}</StyledDate>
       </StyledDaySquare>
-    </StyledDayPickerItemWrapper>
   );
 };
 
@@ -90,18 +65,14 @@ const DayPickerItem = ({
 //////////////////////
 
 const StyledDayPickerWrapper = styled.div`
-    .icon{
+    >svg{
       color: #79c191;
       cursor: pointer;
       width: 40px;
       height: 40px;
       :hover {
-        transition: 0.2s;
         color:#55a670;
-        }
-        @media (max-width: 450px) {
-            display:none;
-        }
+      }
     }
     text-align: center;
     margin: 30px 0;
@@ -110,7 +81,9 @@ const StyledDayPickerWrapper = styled.div`
     flex-flow: row nowrap;
     justify-content: center;
     align-items: center;
-   
+    >svg:nth-of-type(2){
+        transform:rotate(180deg);
+    }
     `;
 
 const StyledDaysWrapper = styled.div`
@@ -129,7 +102,7 @@ const StyledDaysWrapper = styled.div`
       @media (max-width: 600px) and (min-width: 450px) {
         display: none;
       }
-      @media (max-width: 370px) {
+      @media (max-width: 450px) {
         display: none;
       }
     }
@@ -184,7 +157,7 @@ const DayPicker = ({
   }, [startDay]);
   return (
     <StyledDayPickerWrapper>
-        <ArrowLeftS className="icon" onClick={() => setStartDay(FormattedDate(addDays(startDay, -1)))}/>
+        <ArrowLeftOutline onClick={() => setStartDay(FormattedDate(addDays(startDay, -1)))}/>
         <StyledDaysWrapper>
         {weekdays.map((day, i) => (
           <DayPickerItem
@@ -204,24 +177,9 @@ const DayPicker = ({
           />
         ))}
         </StyledDaysWrapper>
-        <ArrowRightS  className="icon" onClick={() => setStartDay(FormattedDate(addDays(startDay, 1)))} />
+        <ArrowLeftOutline onClick={() => setStartDay(FormattedDate(addDays(startDay, 1)))} />
         </StyledDayPickerWrapper>
   );
-};
-
-DayPicker.propTypes = {
-  fetchSelectedDaysToParent: PropTypes.func,
-  multipleDaySelect: PropTypes.bool,
-  daysCount: PropTypes.number,
-  valueForTheDay: PropTypes.func,
-  visibleDaysChanged: PropTypes.func
-};
-
-DayPickerItem.propTypes = {
-  selected: PropTypes.bool,
-  onClick: PropTypes.func,
-  day: PropTypes.string,
-  value: PropTypes.string,
 };
 
 export default DayPicker;

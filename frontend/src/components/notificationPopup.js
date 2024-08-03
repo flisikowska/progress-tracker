@@ -21,16 +21,17 @@ const StyledWrapper=styled.div`
     padding:15px;
     margin-top:10px;
     right:75px;
-    width:300px;
-    height:350px;
-    background-color:rgba(0,0,0,0.4);
-    border-radius:10px;
+    width:400px;
+    height:450px;
+    background-color:rgba(255,255,255, 0.8);
+    border-radius:4px;
     box-shadow:5px 5px 8px #aaa;
     >div{
         cursor:default;
         background-color:rgba(255,255,255);
-        padding:5px 10px;
+        padding:5px 15px;
         border-radius:5px;
+        border:2px solid #ddd;
         margin:10px 0;
     }
     #time{
@@ -86,6 +87,30 @@ const NotificationPopup=({active, setActiveNotificationPopup})=>{
         <StyledContainer>
             <Notifications onClick={()=> setActiveNotificationPopup(!active) }/>
             <StyledWrapper className='scrollable' id='popup' $active={active}>
+                <div>
+                    <p id='time'>12.03 10:30</p>
+                    <p id='info'>Karolina dodał/a "bieganie-30 min"</p>
+                </div>
+                <div>
+                    <p id='time'>12.03 10:30</p>
+                    <p id='info'>Angelika dodał/a "pływanie-1 h"</p>
+                </div>
+                <div>
+                    <p id='time'>12.03 10:30</p>
+                    <p id='info'>Karolina dodał/a "bieganie-30 min"</p>
+                </div>
+                <div>
+                    <p id='time'>12.03 10:30</p>
+                    <p id='info'>Angelika dodał/a "pływanie-1 h"</p>
+                </div>
+                <div>
+                    <p id='time'>12.03 10:30</p>
+                    <p id='info'>Karolina dodał/a "bieganie-30 min"</p>
+                </div>
+                <div>
+                    <p id='time'>12.03 10:30</p>
+                    <p id='info'>Angelika dodał/a "pływanie-1 h"</p>
+                </div>
                 <div>
                     <p id='time'>12.03 10:30</p>
                     <p id='info'>Karolina dodał/a "bieganie-30 min"</p>

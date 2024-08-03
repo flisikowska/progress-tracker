@@ -48,7 +48,6 @@ const usePieChart = (data_V1, setSelectedComponent) => {
       .style("stroke",  d => color(d.data.Type))  // Ramka wokół segmentu
       .style("stroke-width", d=> d.data.Type==="Pozostało"? "0px": "2px")  // Grubość ramki
       .style("fill-opacity", 0.3)  // Przezroczystość wypełnienia
-
       .attr("d", arc)
       .on("click", function (event, d) {
         change(d, this);
@@ -61,13 +60,14 @@ const usePieChart = (data_V1, setSelectedComponent) => {
         pieChartContainer.style.transform = 'translateX(0)';
         setTimeout(() => {
           setSelectedComponent(() => d);
-        },500); // Opóźnienie pojawienia się komponentu po animacji
+        },800); // Opóźnienie pojawienia się komponentu po animacji
         svg.transition()
         .duration(1000)
         .attr("transform", "translate(" + width/2 + "," + height / 2 + ") rotate(" + angle + ")");
       }
       else {
-        pieChartContainer.style.transform = 'translateX(250px)';
+        if(window.innerWidth >= 1000)
+          pieChartContainer.style.transform = 'translateX(270px)';
         setSelectedComponent(null);
         svg.transition()
         .duration(1000)

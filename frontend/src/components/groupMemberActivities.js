@@ -3,9 +3,10 @@ import styled from 'styled-components';
 import { ResizeGridItems } from "../helpers/functions"
 
 const StyledActivitiesWrapper = styled.div`
-  width:430px;
-  height: 400px;
+  width:100%;
+  // height: 400px;
   place-items:center;
+  padding:0 20px;
   margin:auto;
   display: grid;  
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -15,20 +16,26 @@ const StyledActivitiesWrapper = styled.div`
     gap:10px;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
-  :first-child{
+  >div:first-child{
+    border:2px solid #888;
+    >div{
+      color:#000;
+      font-size:1rem;
+      margin-bottom:10px;
+    }
     >h1{
       font-size:1.2rem;
-      margin-top:10px;
-      @media(max-width:600px){
-        font-size:1rem;
+      @media(max-width:900px){
+        font-size:0.9rem;
       }
-    }}
+    }
+  }
 `;
 
 const StyledActivity=styled.div`
     width:130px;
     border:2px solid #bbb;
-    border-radius:10px;
+    border-radius:4px;
     padding:10px;
     text-align:center;
     cursor:default;
@@ -59,7 +66,7 @@ const StyledTime=styled.div`
     padding:0;
     color:#aaa;
     text-align:left;
-
+    font-weight:600;
 `
 
 function GroupMemberActivities({activities}){
@@ -83,13 +90,6 @@ function GroupMemberActivities({activities}){
 
             ),
           )}
-            {/* <StyledActivity className='grid-item'><StyledTime>2h</StyledTime><Volleyball size="30"/><ActivityTitle>Siatkówka plażowa</ActivityTitle></StyledActivity>
-            <StyledActivity className='grid-item'><StyledTime>45min</StyledTime><SportBasketball size="30"/><ActivityTitle>Skakanka na jednej nodze</ActivityTitle></StyledActivity>
-            <StyledActivity className='grid-item'><StyledTime>1h</StyledTime><Volleyball size="30"/><ActivityTitle>Siatkówka</ActivityTitle></StyledActivity>
-            <StyledActivity className='grid-item'><StyledTime>1.33h</StyledTime><PersonRunning size="30"/><ActivityTitle>Bieganie</ActivityTitle></StyledActivity>
-            <StyledActivity className='grid-item'><StyledTime>1.35h</StyledTime><Tennisball size="30"/><ActivityTitle>Tenis</ActivityTitle></StyledActivity>
-            <StyledActivity className='grid-item'><StyledTime>45min</StyledTime><SportBasketball size="30"/><ActivityTitle>Koszykówka</ActivityTitle></StyledActivity>
-            <StyledActivity className='grid-item'><StyledTime>2h</StyledTime><Volleyball size="30"/><ActivityTitle>Joga</ActivityTitle></StyledActivity> */}
       </StyledActivitiesWrapper>
     );
 };

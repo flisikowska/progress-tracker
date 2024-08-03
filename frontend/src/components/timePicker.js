@@ -76,6 +76,7 @@ const StyledSwiper = styled(Swiper)`
     font-weight: 600;
     opacity: 1;
     width: 100%;
+    color:  rgba(121, 193, 145);
   }
 `;
 

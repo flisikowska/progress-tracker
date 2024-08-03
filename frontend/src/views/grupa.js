@@ -1,10 +1,9 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import styled from 'styled-components';
 import PieChart from '../components/pieChart';
-import Stats from '../components/stats';
 import { data } from "../helpers/data";
-
 import StackedAreaChart from '../components/stackedAreaChart';
+
 const StyledContainer=styled.div`
     width:100%;
     height:100%;
@@ -19,7 +18,7 @@ const StyledStatsTitle= styled.h2`
 
 function Grupa(){
     return(
-        <StyledContainer>
+        <StyledContainer >
             <PieChart/>
             <StyledStatsTitle>Statystyki:</StyledStatsTitle>
             <StackedAreaChart data={data} width={600} height={400} />
