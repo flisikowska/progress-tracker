@@ -99,9 +99,8 @@ const StackedAreaChart = ({   data }) => {
       <StyledSvg width='100%' height='100%' viewBox={`0 0 600 400`}>
         <StyledG transform={`translate(${[MARGIN.left, MARGIN.top].join(',')})`}>
         {series && series.map((serie, i) => (
-            <>
+            <g key={i}>
                 <path
-                    key={i}
                     d={areaBuilder(serie)}
                     opacity={1}
                     stroke="none"
@@ -115,7 +114,7 @@ const StackedAreaChart = ({   data }) => {
                     fill="none"
                     strokeWidth="1px"
                 />
-            </>
+            </g>
         ))};
         </StyledG>
         <StyledG

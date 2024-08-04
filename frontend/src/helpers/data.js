@@ -22,9 +22,9 @@ export const data = [
   },
   {
     x: "30",
-    Karolina: 32,
-    Kasia: 269,
-    Angelika: 64,
+    Karolina: 60,
+    Kasia: 240,
+    Angelika: 60,
     Emilia: 300,
   },
   {

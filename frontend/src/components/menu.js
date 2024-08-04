@@ -7,12 +7,12 @@ import { ChannelAdd } from '@styled-icons/fluentui-system-filled/ChannelAdd';
 
 const StyledMenu = styled.div`
     display:flex;
+    width:900px;
     flex-flow:row nowrap;
     justify-content:right;
     padding-right:65px;
     margin:auto;
     z-index:4;
-    width:60%;
     #add{
         display:none;
         width:2em;
@@ -23,6 +23,9 @@ const StyledMenu = styled.div`
             position:relative;
             bottom:10px;
         }
+    }
+    @media(max-width:1000px){
+        width:90%;
     }
     @media (max-width: 570px) {
         position:fixed;

@@ -39,7 +39,7 @@ const usePieChart = (data_V1, setSelectedComponent) => {
       .attr('viewBox', '0 0 ' + Math.min(width, height) + ' ' + Math.min(width, height))
       .attr('preserveAspectRatio', 'xMidYMid meet')
       .append("g")
-      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+      .attr("transform", window.innerWidth <= 1000 ? "translate(" + width / 2 + "," + height / 2 + ") rotate(270)" : "translate(" + width / 2 + "," + height / 2 + ")");
 
     const g = svg.selectAll("path")
       .data(pie(data_V1))

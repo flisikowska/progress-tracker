@@ -9,7 +9,9 @@ import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
 
 const StyledActivitiesWrapper = styled.div`
   margin: 20px auto;
-  width:500px;
+  width:550px;
+  height:400px;
+  overflow-y:scroll;
   place-items:center;
   display: grid;  
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -125,7 +127,7 @@ function UserActivities(){
       })
   
     return(
-      <StyledActivitiesWrapper className='activities'>
+      <StyledActivitiesWrapper className='scrollable activities'>
         <StyledActivity id="summary" className='grid-item'><StyledHeader><p>Łącznie</p></StyledHeader><ActivityTitle>4h 35min</ActivityTitle></StyledActivity>
         {activities &&
           activities.map(

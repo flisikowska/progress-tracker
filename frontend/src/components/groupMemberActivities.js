@@ -4,14 +4,19 @@ import { ResizeGridItems } from "../helpers/functions"
 
 const StyledActivitiesWrapper = styled.div`
   width:100%;
-  // height: 400px;
+  height:300px;
+  overflow-y:scroll;
   place-items:center;
-  padding:0 20px;
+  padding:0;
   margin:auto;
   display: grid;  
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 10px;
   grid-auto-rows: 0; 
+  @media(max-width:1000px){
+    height:unset;
+    overflow-y:unset;
+  }
   @media(max-width:600px){
     gap:10px;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -69,13 +74,18 @@ const StyledTime=styled.div`
     font-weight:600;
 `
 
-function GroupMemberActivities({activities}){
+function GroupMemberActivities({summary, activities}){
     useEffect(() => {
         ResizeGridItems("groupMemberActivities")
-      })
+    })
     return(
-      <StyledActivitiesWrapper className='groupMemberActivities'>
-        <StyledActivity className='grid-item'><StyledTime>Łącznie</StyledTime><ActivityTitle>4h 35min</ActivityTitle></StyledActivity>
+      <StyledActivitiesWrapper className='scrollable groupMemberActivities'>
+        <StyledActivity className='grid-item'><StyledTime>Łącznie</StyledTime>
+          <ActivityTitle>
+              {Math.floor((summary/60)) !==0 ? ((Math.floor(summary/60))+'h '):''}
+              {((summary%60) === 0 ? '00' :summary%60)+'min'}
+          </ActivityTitle>
+        </StyledActivity>
         {activities &&
           activities.map(
             (
@@ -84,9 +94,9 @@ function GroupMemberActivities({activities}){
                 name,
                 time,
                 icon,
-              }
+              }, key
             ) => (
-                  <StyledActivity id={id} className='grid-item'><StyledTime>{time}</StyledTime>{icon}<ActivityTitle>{name}</ActivityTitle></StyledActivity>
+                  <StyledActivity key={key} id={id} className='grid-item'><StyledTime>{time}</StyledTime>{icon}<ActivityTitle>{name}</ActivityTitle></StyledActivity>
 
             ),
           )}

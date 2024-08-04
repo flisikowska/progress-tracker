@@ -75,7 +75,7 @@ const StyledDayPickerWrapper = styled.div`
       }
     }
     text-align: center;
-    margin: 30px 0;
+    margin: 20px 0;
     white-space: nowrap;
     display: flex;
     flex-flow: row nowrap;

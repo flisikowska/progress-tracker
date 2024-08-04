@@ -13,7 +13,7 @@ const AppContainer=styled.div`
     min-height:100vh;
     padding: 50px 0 100px 0;
     background-color:rgb(180,180,180);
-    @media(max-width:450px){
+    @media(max-width:570px){
       padding:10px 0 70px 0;
     }
   `;
@@ -30,11 +30,11 @@ const AppContainer=styled.div`
   @media(max-width:1000px){
     width:90%;
   }
-  @media(max-width:450px){
+  @media(max-width:570px){
     width:96%;
     padding:20px 10px;
     border-radius:0;
-    margin:0 auto 0px auto;
+    margin:0 auto;
   }
 `;
 

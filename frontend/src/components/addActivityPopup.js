@@ -4,8 +4,12 @@ import TimePicker from './timePicker';
 import {PersonRunning} from '@styled-icons/fa-solid/PersonRunning';
 import {SportBasketball} from '@styled-icons/fluentui-system-regular/SportBasketball';
 import {Tennisball} from '@styled-icons/ionicons-solid/Tennisball';
+import { FormattedDate } from '../helpers/functions';
+
 import {Volleyball} from '@styled-icons/fa-solid/Volleyball';
 import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
+import { ResizeGridItems } from '../helpers/functions';
+import DayPicker from '../components/dayPicker';
 
 const StyledButton= styled.div`
     z-index:10;
@@ -34,18 +38,18 @@ const StyledWrapper=styled.div`
     top:50%;
     transform:translate(-50%, -50%);
     transition:0.4s;
-    width:60%;
+    width:900px;
     height:90%;
     background-color:rgba(255,255,255);
     border-radius:10px;
     box-shadow:5px 5px 8px #aaa;
     z-index: 10;
-    @media(max-width:900px){
+    @media(max-width:1000px){
         width:90%;
     }
     @media(max-width:570px){
-    width:100%;
-    height:100%;
+        width:100%;
+        height:100%;
         display: block;
         transform: translate(0, ${(props) => (props.$active ? '0' : '120%')});
         top:0;
@@ -74,27 +78,28 @@ const StyledTitle= styled.div`
 `;
 
 const ActivitiesWrapper= styled.div`
-    height: calc(100% - 320px);
-    width:60%;
-    @media(max-width:900px){
-        width:90%;
+    height: 300px;
+    width:550px;
+    @media(max-width:1000px){
+        width:80%;
     }
     overflow-y: scroll;
     display: grid;
     margin:30px auto;
-    grid-template-columns: repeat(3, 33.3%);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    grid-auto-rows: 0; 
     @media(max-width:700px){
         grid-template-columns: repeat(2, 1fr);
     }
     @media(max-width:520px){
         grid-template-columns: repeat(1, 1fr);
+        height: 200px;
         >div{
-            width:80%;
+            width:90%;
             margin:10px auto;
         }
     }
-
-
 `;
 
 const StyledActivity= styled.div`
@@ -126,6 +131,12 @@ const StyledActivity= styled.div`
     }
 `;
 
+const StyledHeader= styled.div`
+        font-size:1.2rem;
+        color:#000;
+        margin: 5px auto;
+`;
+
 const ChooseButton= styled.div`
     padding:10px 0;
     cursor:pointer;
@@ -146,8 +157,9 @@ const ChooseButton= styled.div`
 
 const AddActivityPopup=({active, setActiveAddPopup})=>{
     const [chosenItem, setChosenItem] = useState(null);
-
     const activePopupRef = useRef(active);
+    const [selectedDay, setSelectedDay] = useState(FormattedDate(new Date()));
+    const [dayPickerVisibleDays, setDayPickerVisibleDays] = useState([]);
     useEffect(() => {
         window.addEventListener('mouseup', (event) => {
             if (window.innerWidth >= 450) {
@@ -172,18 +184,20 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
     useEffect(() => {
         activePopupRef.current = active;
     }, [active]);
-
+    useEffect(() => {
+        ResizeGridItems("groupMemberActivities");
+    })
     return (
         <>
             <StyledButton onClick={()=> setActiveAddPopup(!active) }>Dodaj aktywność</StyledButton>
             <StyledWrapper id='addPopup' $active={active}>
                 <CloseOutline onClick={()=>setActiveAddPopup(false)}/>
                 <StyledTitle>Wybierz aktywność:</StyledTitle>
-                <ActivitiesWrapper className="scrollable">
-                    <StyledActivity $chosen={chosenItem===1} onClick={()=>setChosenItem(1)}><p>Bieganie</p><PersonRunning size="30"/></StyledActivity>
-                    <StyledActivity $chosen={chosenItem===2} onClick={()=>setChosenItem(2)}><p>Koszykówka</p><SportBasketball size="30"/></StyledActivity>
-                    <StyledActivity $chosen={chosenItem===3} onClick={()=>setChosenItem(3)}><p>Tenis</p><Tennisball size="30"/></StyledActivity>
-                    <StyledActivity $chosen={chosenItem===4} onClick={()=>setChosenItem(4)}><p>Siatkówka</p><Volleyball size="30"/></StyledActivity>
+                <ActivitiesWrapper className="groupMemberActivities scrollable">
+                    <StyledActivity className='grid-item' $chosen={chosenItem===1} onClick={()=>setChosenItem(1)}><p>Bieganie</p><PersonRunning size="30"/></StyledActivity>
+                    <StyledActivity className='grid-item' $chosen={chosenItem===2} onClick={()=>setChosenItem(2)}><p>Koszykówka</p><SportBasketball size="30"/></StyledActivity>
+                    <StyledActivity className='grid-item' $chosen={chosenItem===3} onClick={()=>setChosenItem(3)}><p>Tenis</p><Tennisball size="30"/></StyledActivity>
+                    <StyledActivity className='grid-item' $chosen={chosenItem===4} onClick={()=>setChosenItem(4)}><p>Siatkówka</p><Volleyball size="30"/></StyledActivity>
                 </ActivitiesWrapper>
                 <TimePicker
                         id='timePicker'
@@ -201,6 +215,18 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
                             minutes:0,
                         }}
                         />
+                        <StyledHeader>Że niby kiedy?</StyledHeader>
+                        <DayPicker
+                            fetchSelectedDaysToParent={(selectedDays) => {
+                                if (selectedDays.length === 1) setSelectedDay(selectedDays[0]);
+                            }}
+                            multipleDaySelect={false}
+                            daysCount={7}
+                            valueForTheDay={(date) =>
+                                0
+                            }
+                            visibleDaysChanged={(days) => setDayPickerVisibleDays(days)}
+        />
                 <ChooseButton>Wybierz</ChooseButton>
             </StyledWrapper>
         </>

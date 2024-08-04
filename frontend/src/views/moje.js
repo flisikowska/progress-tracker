@@ -5,7 +5,7 @@ import { FormattedDate } from '../helpers/functions';
 import styled from 'styled-components';
 import UserActivities from '../components/userActivities';
 
-const StyledContainer= styled.h1`
+const StyledContainer= styled.div`
   width:100%;
   height:100%;
   margin:0;
@@ -54,7 +54,7 @@ function Home({logout}) {
         />
         <StyledActivityTitle>Twoja aktywność:</StyledActivityTitle>
         <UserActivities/>
-        <StyledButton onClick={logout}>Wyloguj sie</StyledButton>
+          <StyledButton onClick={logout}>Wyloguj sie</StyledButton>
       </StyledContainer>
   )
 };

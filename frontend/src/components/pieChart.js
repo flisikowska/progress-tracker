@@ -29,6 +29,11 @@ const PieChartContainer= styled.div`
     @media(max-width:1000px){
       transform: translateX(0); 
     }
+    @media(max-width:750px){
+    width:200px;
+    height:200px;
+      scale:70%;
+    }
 `;
 
 const StyledPieChart= styled.div`
@@ -78,6 +83,7 @@ const StyledInfoWrapper=styled.div`
     @media(max-width:767px)  {
         width: 100%; 
         min-height: 0;
+        padding:10px 0;
     } 
 `;
 
@@ -85,51 +91,63 @@ const StyledInfoWrapper=styled.div`
 
 const StyledTitle=styled.div`
     font-weight:600;
-    font-size:1.2rem;
+    font-size:1.4rem;
     cursor:default;
 `;
 
 const StyledInfo=styled.div`
     width: 100%;
     padding: 20px;
+     @media(max-width:767px)  {
+        padding:10px 0;
+    } 
 `;
 
 const kasiaActivities=[{
     name: 'Siatkówka plażowa',
+    date: '2024.06.21',
     time: '1.35h',
     icon: <Tennisball size="30"/>,
   },{
     name: 'Skakanka na jednej nodze',
+    date: '2024.06.21',
     time: '2h',
     icon: <Volleyball size="30"/>,
   },{
     name: 'Siatkówka',
+    date: '2024.06.21',
     time: '0.35h',
     icon: <SportBasketball size="30"/>,
   }];
   
 const angelikaActivities=[{
     name: 'Siatkówka plażowa',
+    date: '2024.06.21',
     time: '1.35h',
     icon: <Tennisball size="30"/>,
   },{
     name: 'Skakanka na jednej nodze',
+    date: '2024.06.21',
     time: '2h',
     icon: <Volleyball size="30"/>,
   },{
     name: 'Siatkówka',
+    date: '2024.06.21',
     time: '0.35h',
     icon: <SportBasketball size="30"/>,
   },{
     name: 'Siatkówka plażowa',
+    date: '2024.06.21',
     time: '1.35h',
     icon: <Tennisball size="30"/>,
   },{
     name: 'Skakanka na jednej nodze',
+    date: '2024.06.21',
     time: '2h',
     icon: <Volleyball size="30"/>,
   },{
     name: 'Siatkówka',
+    date: '2024.06.21',
     time: '0.35h',
     icon: <PersonRunning size="30"/>,
   }];
@@ -138,6 +156,7 @@ const karolinaActivities=[];
 
 const emiliaActivities=[{
     name: 'Siatkówka plażowa',
+    date: '2024.06.21',
     time: '1.35h',
     icon: <Tennisball size="30"/>,
   }];
@@ -145,41 +164,44 @@ const emiliaActivities=[{
 
 const data_V1 = [{
     "Type": "Karolina",
-    "Amount": 9450,
-    "Component": () => <GroupMemberActivities activities={karolinaActivities}/>
+    "Amount": 300,
+    "Component": ({summary}) => <GroupMemberActivities summary={summary} activities={karolinaActivities}/>
   }, {
     "Type": "Angelika",
-    "Amount": 4600,
-    "Component": () => <GroupMemberActivities activities={angelikaActivities}/>
+    "Amount": 240,
+    "Component": ({summary}) => <GroupMemberActivities summary={summary} activities={angelikaActivities}/>
   }, {
     "Type": "Kasia",
-    "Amount": 2600,
-    "Component": () => <GroupMemberActivities activities={kasiaActivities}/>
+    "Amount": 50,
+    "Component": ({summary}) => <GroupMemberActivities summary={summary} activities={kasiaActivities}/>
   }, {
     "Type": "Emilia",
-    "Amount": 6750,
-    "Component": () => <GroupMemberActivities activities={emiliaActivities}/>
+    "Amount": 260,
+    "Component": ({summary}) => <GroupMemberActivities summary={summary} activities={emiliaActivities}/>
   }, {
     "Type": "Pozostało",
-    "Amount": 3300,
-    "Component": () => <></>
+    "Amount":170,
+    "Component": ({summary}) => <></>
   }];
 
 function PieChart(){
     const [selectedComponent, setSelectedComponent] = useState(null);
+    const timeLeft= data_V1.find((item) => item.Type === 'Pozostało').Amount;
     usePieChart(data_V1, setSelectedComponent);
     return(
     <StyledContainer>
         <PieChartContainer id="pieChartContainer">
             <StyledPieChart id="pieChart"/>
-            <StyledRemainingTime>Pozostało<br/>10h 35min</StyledRemainingTime>
+            <StyledRemainingTime>Pozostało<br/>{Math.floor(timeLeft/60)!==0 && Math.floor(timeLeft/60)+'h '+timeLeft%60+'min'}</StyledRemainingTime>
         </PieChartContainer>
         <StyledInfoContainer>
             {selectedComponent && (
                 <StyledInfoWrapper className="info-container">
-                    <StyledTitle id="segmentTitle">{ selectedComponent.data.Type + ": " + selectedComponent.data.Amount}</StyledTitle>
+                    <StyledTitle id="segmentTitle">
+                      { selectedComponent.data.Type                  
+                    }</StyledTitle>
                     <StyledInfo id="segmentInfo">
-                        {selectedComponent.data.Component()}
+                        {selectedComponent.data.Component({summary:selectedComponent.data.Amount})}
                     </StyledInfo>     
                 </StyledInfoWrapper>   
             )}
