@@ -1,24 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
-const usePieChart = (data_V1, setSelectedComponent) => {
+const usePieChart = (data_V1, setSelectedComponent, selectedComponent, chosenComponent) => {
+  const changeRef = useRef(null); // Ref do funkcji change
+
   useEffect(() => {
     const width = parseInt(d3.select('#pieChart').style('width'), 10);
     const height = width;
     const radius = 90;
-    // const radius = (Math.min(width, height) - 15) / 2;
-    const types = data_V1.map(d => d.Type);
 
-    var inner = Math.min(radius, 150);
-    var outer = Math.max(radius, 150);
+    const inner = Math.min(radius, 150);
+    const outer = Math.max(radius, 150);
 
     const arcOver = d3.arc()
       .outerRadius(inner - 10)
       .innerRadius(outer + 20);
-
-    const color = d3.scaleOrdinal()
-      .domain(types)
-      .range(["#e94547", "#7dcef5", "#79c191", "#bd66bd", "#dcdcdc"]);
 
     const arc = d3.arc()
       .outerRadius(inner - 10)
@@ -27,10 +23,6 @@ const usePieChart = (data_V1, setSelectedComponent) => {
     const pie = d3.pie()
       .sort(null)
       .value(d => d.Amount);
-    // Compute the position of each group on the pie
-    // var pie = d3.pie()
-    //   .value(function (d) { return d.Amount; })
-    //   .sort(function (a, b) { console.log(a); return d3.ascending(a.key, b.key); }) // This make sure that group order remains the same in the pie chart
 
     const svg = d3.select("#pieChart").append("svg")
       .attr("width", '100%')
@@ -44,11 +36,19 @@ const usePieChart = (data_V1, setSelectedComponent) => {
     const g = svg.selectAll("path")
       .data(pie(data_V1))
       .enter().append("path")
-      .style("fill", d => color(d.data.Type))
-      .style("stroke",  d => color(d.data.Type))  // Ramka wokół segmentu
-      .style("stroke-width", d=> d.data.Type==="Pozostało"? "0px": "2px")  // Grubość ramki
-      .style("fill-opacity", 0.3)  // Przezroczystość wypełnienia
+      .style("fill", d => d.data.Color)
+      .style("stroke", d => d.data.Color)
+      .style("stroke-width", d => d.data.Type === "Pozostało" ? "0px" : "2px")
+      .style("fill-opacity", d => (d.data.Type === selectedComponent ? 0.5 : 0.3)) 
       .attr("d", arc)
+      .on("mouseenter", function (event, d) {
+        d3.select(this).attr("fill-opacity", 0.5);
+      })
+      .on("mouseleave", function (event, d) {
+        if (d.data.Type !== selectedComponent){
+          d3.select(this).attr("fill-opacity", 0.3);
+        }
+      })
       .on("click", function (event, d) {
         change(d, this);
       });
@@ -59,19 +59,18 @@ const usePieChart = (data_V1, setSelectedComponent) => {
       if (d.data.Type !== "Pozostało") {
         pieChartContainer.style.transform = 'translateX(0)';
         setTimeout(() => {
-          setSelectedComponent(() => d);
-        },800); // Opóźnienie pojawienia się komponentu po animacji
+          setSelectedComponent(() => d.data.Type);
+        }, 800);
         svg.transition()
-        .duration(1000)
-        .attr("transform", "translate(" + width/2 + "," + height / 2 + ") rotate(" + angle + ")");
-      }
-      else {
-        if(window.innerWidth >= 1000)
+          .duration(1000)
+          .attr("transform", "translate(" + width / 2 + "," + height / 2 + ") rotate(" + angle + ")");
+      } else {
+        if (window.innerWidth >= 1000)
           pieChartContainer.style.transform = 'translateX(270px)';
         setSelectedComponent(null);
         svg.transition()
-        .duration(1000)
-        .attr("transform", "translate(" + width/2 + "," + height / 2 + ") rotate(" + 0 + ")");
+          .duration(1000)
+          .attr("transform", "translate(" + width / 2 + "," + height / 2 + ") rotate(0)");
       }
       svg.selectAll("path")
         .transition()
@@ -81,14 +80,17 @@ const usePieChart = (data_V1, setSelectedComponent) => {
         .transition()
         .duration(1000)
         .attr("d", arcOver);
-    };
+    }
 
+    changeRef.current = change; // Zapisz funkcję do ref
+    
     // Cleanup on component unmount
     return () => {
       d3.select("#pieChart").select("svg").remove();
     };
+  }, [data_V1, setSelectedComponent, selectedComponent, chosenComponent]);
 
-  }, [data_V1, setSelectedComponent]);
+  return changeRef;
 };
 
 export default usePieChart;

@@ -39,16 +39,26 @@ const AppContainer=styled.div`
 `;
 
 
-const IconsWrapper=styled.div`
+const HeaderWrapper=styled.div`
   width:100%;
   display:flex;
   flex-flow: row nowrap;
-  padding:20px;
-  justify-content:right;
+  padding-top:20px;
+  justify-content:space-between;
   align-items:center;
   @media(max-width:770px){
       padding:0px;
     }
+  #buttons{
+    display:flex;
+    flex-flow:row-nowrap;
+    padding-right:20px;
+  }
+`;
+
+const StyledHeader=styled.h1`
+  font-size:1.4rem;
+  color:#000;
 `;
 
 function App() {
@@ -62,10 +72,13 @@ function App() {
       <>
         <Menu site={site} setActiveAddPopup={setActiveAddPopup} setSite={setSite}/>
         <StyledWrapper>
-          <IconsWrapper>  
-            <AddActivityPopup setActiveAddPopup={setActiveAddPopup} active={activeAddPopup}/>
-            <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup}/>
-          </IconsWrapper>
+          <HeaderWrapper>  
+            <StyledHeader>{site==='grupa' ?("Raport grupy"):( "Moja aktywność")}</StyledHeader>
+            <div id="buttons">
+              <AddActivityPopup setActiveAddPopup={setActiveAddPopup} active={activeAddPopup}/>
+              <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup}/>
+            </div>
+          </HeaderWrapper>
           {site==='grupa' ?(
             <Grupa/>
           ):(

@@ -1,11 +1,11 @@
 import React, {useEffect} from 'react';
 import styled from 'styled-components';
 import { ResizeGridItems } from "../helpers/functions"
-
+import { MinutesToFormattedTime } from '../helpers/functions';
 const StyledActivitiesWrapper = styled.div`
   width:100%;
   height:300px;
-  overflow-y:scroll;
+  overflow-y:auto;
   place-items:center;
   padding:0;
   margin:auto;
@@ -82,8 +82,7 @@ function GroupMemberActivities({summary, activities}){
       <StyledActivitiesWrapper className='scrollable groupMemberActivities'>
         <StyledActivity className='grid-item'><StyledTime>Łącznie</StyledTime>
           <ActivityTitle>
-              {Math.floor((summary/60)) !==0 ? ((Math.floor(summary/60))+'h '):''}
-              {((summary%60) === 0 ? '00' :summary%60)+'min'}
+            {MinutesToFormattedTime(summary)}
           </ActivityTitle>
         </StyledActivity>
         {activities &&
@@ -96,7 +95,7 @@ function GroupMemberActivities({summary, activities}){
                 icon,
               }, key
             ) => (
-                  <StyledActivity key={key} id={id} className='grid-item'><StyledTime>{time}</StyledTime>{icon}<ActivityTitle>{name}</ActivityTitle></StyledActivity>
+                  <StyledActivity key={key} id={id} className='grid-item'><StyledTime> {MinutesToFormattedTime(time)}</StyledTime>{icon}<ActivityTitle>{name}</ActivityTitle></StyledActivity>
 
             ),
           )}

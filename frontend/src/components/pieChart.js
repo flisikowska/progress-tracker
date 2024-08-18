@@ -1,16 +1,15 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import styled from 'styled-components';
 import usePieChart from '../helpers/usePieChart';
+import { data_V1 } from '../helpers/data_v1';
 import GroupMemberActivities from '../components/groupMemberActivities';
-import {PersonRunning} from '@styled-icons/fa-solid/PersonRunning';
-import {SportBasketball} from '@styled-icons/fluentui-system-regular/SportBasketball';
-import {Tennisball} from '@styled-icons/ionicons-solid/Tennisball';
-import {Volleyball} from '@styled-icons/fa-solid/Volleyball';
-
-const StyledContainer= styled.div`
+import { startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
+import { MinutesToFormattedTime } from '../helpers/functions';
+const StyledContainer = styled.div`
     width:100%;
     height:400px;
     display:flex;
+    position:relative;
     align-items:center;
     flex-flow:row nowrap;
     @media(max-width:1000px){
@@ -19,7 +18,7 @@ const StyledContainer= styled.div`
     }
 `;
 
-const PieChartContainer= styled.div`
+const PieChartContainer = styled.div`
     width:300px;
     height:300px;
     margin:20px;
@@ -30,13 +29,13 @@ const PieChartContainer= styled.div`
       transform: translateX(0); 
     }
     @media(max-width:750px){
-    width:200px;
-    height:200px;
+      width:200px;
+      height:200px;
       scale:70%;
     }
 `;
 
-const StyledPieChart= styled.div`
+const StyledPieChart = styled.div`
     display: flex;
     width:100%;
     height:100%;
@@ -51,7 +50,7 @@ const StyledPieChart= styled.div`
     }
 `;
 
-const StyledRemainingTime= styled.p`
+const StyledRemainingTime = styled.p`
     position:absolute;
     top:50%;
     left:50%;
@@ -63,7 +62,7 @@ const StyledRemainingTime= styled.p`
     cursor:default;
 `;
 
-const StyledInfoContainer=styled.div`
+const StyledInfoContainer = styled.div`
     width:calc(100% - 350px);
     height:100%;
     @media(max-width:1000px){
@@ -71,7 +70,7 @@ const StyledInfoContainer=styled.div`
     }
 `;
 
-const StyledInfoWrapper=styled.div`
+const StyledInfoWrapper = styled.div`
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -87,127 +86,85 @@ const StyledInfoWrapper=styled.div`
     } 
 `;
 
-
-
-const StyledTitle=styled.div`
+const StyledTitle = styled.div`
     font-weight:600;
     font-size:1.4rem;
     cursor:default;
+    color:${(props) => props.$color};
 `;
 
-const StyledInfo=styled.div`
+const StyledInfo = styled.div`
     width: 100%;
     padding: 20px;
-     @media(max-width:767px)  {
+    @media(max-width:767px)  {
         padding:10px 0;
     } 
 `;
 
-const kasiaActivities=[{
-    name: 'Siatkówka plażowa',
-    date: '2024.06.21',
-    time: '1.35h',
-    icon: <Tennisball size="30"/>,
-  },{
-    name: 'Skakanka na jednej nodze',
-    date: '2024.06.21',
-    time: '2h',
-    icon: <Volleyball size="30"/>,
-  },{
-    name: 'Siatkówka',
-    date: '2024.06.21',
-    time: '0.35h',
-    icon: <SportBasketball size="30"/>,
-  }];
-  
-const angelikaActivities=[{
-    name: 'Siatkówka plażowa',
-    date: '2024.06.21',
-    time: '1.35h',
-    icon: <Tennisball size="30"/>,
-  },{
-    name: 'Skakanka na jednej nodze',
-    date: '2024.06.21',
-    time: '2h',
-    icon: <Volleyball size="30"/>,
-  },{
-    name: 'Siatkówka',
-    date: '2024.06.21',
-    time: '0.35h',
-    icon: <SportBasketball size="30"/>,
-  },{
-    name: 'Siatkówka plażowa',
-    date: '2024.06.21',
-    time: '1.35h',
-    icon: <Tennisball size="30"/>,
-  },{
-    name: 'Skakanka na jednej nodze',
-    date: '2024.06.21',
-    time: '2h',
-    icon: <Volleyball size="30"/>,
-  },{
-    name: 'Siatkówka',
-    date: '2024.06.21',
-    time: '0.35h',
-    icon: <PersonRunning size="30"/>,
-  }];
+function PieChart({ selectedComponent, setSelectedComponent }) {
+    const [chosenComponent, setChosenComponent]=useState(null);
+    const goal=1200;
+    const filterActivitiesThisWeek = (activities) => {
+        const now = new Date();
+        const start = startOfWeek(now, { weekStartsOn: 1 });
+        const end = endOfWeek(now, { weekStartsOn: 1 });
+        return activities.filter(activity => {
+            const activityDate = parseISO(activity.date);
+            return isWithinInterval(activityDate, { start, end });
+        });
+    };
 
-const karolinaActivities=[];
+    const calculateAmount = (d) => {
+        return d.activities.reduce((total, activity) => total + activity.time, 0);
+      };
 
-const emiliaActivities=[{
-    name: 'Siatkówka plażowa',
-    date: '2024.06.21',
-    time: '1.35h',
-    icon: <Tennisball size="30"/>,
-  }];
+    const filteredData = data_V1.map(d => ({...d, activities: filterActivitiesThisWeek(d.activities) }));
+    const timeLeft= goal - filteredData.reduce((sum, d) => sum + calculateAmount(d), 0);
+    usePieChart([...filteredData.map(d => ({
+        Type: d.Type,
+        Amount: calculateAmount(d),
+        Color: d.Color,
+        activities: d.activities
+      })),
+      {
+        Type: 'Pozostało',
+        Amount: timeLeft,
+        Color: '#dcdcdc',
+        activities: []
+    }]
+    , setSelectedComponent, selectedComponent, chosenComponent);
+    useEffect(() => {
+        if (selectedComponent) {
+            const selectedData = filteredData.find(d => d.Type === selectedComponent);
+            setChosenComponent(selectedData || null);
 
-
-const data_V1 = [{
-    "Type": "Karolina",
-    "Amount": 300,
-    "Component": ({summary}) => <GroupMemberActivities summary={summary} activities={karolinaActivities}/>
-  }, {
-    "Type": "Angelika",
-    "Amount": 240,
-    "Component": ({summary}) => <GroupMemberActivities summary={summary} activities={angelikaActivities}/>
-  }, {
-    "Type": "Kasia",
-    "Amount": 50,
-    "Component": ({summary}) => <GroupMemberActivities summary={summary} activities={kasiaActivities}/>
-  }, {
-    "Type": "Emilia",
-    "Amount": 260,
-    "Component": ({summary}) => <GroupMemberActivities summary={summary} activities={emiliaActivities}/>
-  }, {
-    "Type": "Pozostało",
-    "Amount":170,
-    "Component": ({summary}) => <></>
-  }];
-
-function PieChart(){
-    const [selectedComponent, setSelectedComponent] = useState(null);
-    const timeLeft= data_V1.find((item) => item.Type === 'Pozostało').Amount;
-    usePieChart(data_V1, setSelectedComponent);
-    return(
-    <StyledContainer>
-        <PieChartContainer id="pieChartContainer">
-            <StyledPieChart id="pieChart"/>
-            <StyledRemainingTime>Pozostało<br/>{Math.floor(timeLeft/60)!==0 && Math.floor(timeLeft/60)+'h '+timeLeft%60+'min'}</StyledRemainingTime>
-        </PieChartContainer>
-        <StyledInfoContainer>
-            {selectedComponent && (
-                <StyledInfoWrapper className="info-container">
-                    <StyledTitle id="segmentTitle">
-                      { selectedComponent.data.Type                  
-                    }</StyledTitle>
-                    <StyledInfo id="segmentInfo">
-                        {selectedComponent.data.Component({summary:selectedComponent.data.Amount})}
-                    </StyledInfo>     
-                </StyledInfoWrapper>   
-            )}
-        </StyledInfoContainer>
-    </StyledContainer>
+        } else {
+            setChosenComponent(null);
+        }
+    }, [selectedComponent]);
+    return (
+        <StyledContainer>
+            <PieChartContainer id="pieChartContainer">
+                <StyledPieChart id="pieChart" />
+                <StyledRemainingTime>
+                    Pozostało<br />
+                    {MinutesToFormattedTime(timeLeft)}
+                </StyledRemainingTime>
+            </PieChartContainer>
+            <StyledInfoContainer>
+                {chosenComponent && (
+                    <StyledInfoWrapper className="info-container">
+                        <StyledTitle $color={ chosenComponent.Color} id="segmentTitle">
+                            {chosenComponent.Type}
+                        </StyledTitle>
+                        <StyledInfo id="segmentInfo">
+                            <GroupMemberActivities summary={chosenComponent.activities.reduce((total, activity) => total + activity.time, 0)} activities={chosenComponent.activities} />
+                        </StyledInfo>
+                    </StyledInfoWrapper>
+                )}
+            </StyledInfoContainer>
+        </StyledContainer>
     );
-};
+}
 
 export default PieChart;

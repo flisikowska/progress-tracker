@@ -11,10 +11,6 @@ const StyledContainer= styled.div`
   margin:0;
 `
 
-const StyledActivityTitle=styled.h2`
-  font-size:1.2rem;
-  margin:30px 0;
-`
 const StyledButton= styled.div`
     width:fit-content;
     color:#000;
@@ -52,7 +48,6 @@ function Home({logout}) {
           }
           visibleDaysChanged={(days) => setDayPickerVisibleDays(days)}
         />
-        <StyledActivityTitle>Twoja aktywność:</StyledActivityTitle>
         <UserActivities/>
           <StyledButton onClick={logout}>Wyloguj sie</StyledButton>
       </StyledContainer>

@@ -11,7 +11,7 @@ const StyledActivitiesWrapper = styled.div`
   margin: 20px auto;
   width:550px;
   height:400px;
-  overflow-y:scroll;
+  overflow-y:auto;
   place-items:center;
   display: grid;  
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

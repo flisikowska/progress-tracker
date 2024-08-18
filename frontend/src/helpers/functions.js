@@ -1,3 +1,4 @@
+
 export const resizeGridItem = (item, itemParent) => {
   var grid = document.getElementsByClassName(itemParent)[0]
   var rowHeight = parseInt(
@@ -42,11 +43,12 @@ export function FormattedDate(d) {
   
     return FormattedDate(d) + ' ' + DateToFormattedTime(d);
   }
-  
+  export function MinutesToFormattedTime(d){
+    return Math.floor((d/60)) !==0 ? ((Math.floor(d/60))+'h '+d%60+'min'):''+(d%60+'min');
+  }
+
   export const addDays = (date, days) => {
     const newDate = new Date(date);
     newDate.setDate(newDate.getDate() + days);
     return newDate;
   };
-
-  
