@@ -1,15 +1,18 @@
 import React, {useRef, useEffect, useState} from 'react';
 import styled, {css} from 'styled-components';
 import TimePicker from './timePicker';
-import {PersonRunning} from '@styled-icons/fa-solid/PersonRunning';
-import {SportBasketball} from '@styled-icons/fluentui-system-regular/SportBasketball';
-import {Tennisball} from '@styled-icons/ionicons-solid/Tennisball';
 import { FormattedDate } from '../helpers/functions';
-
-import {Volleyball} from '@styled-icons/fa-solid/Volleyball';
+import DayPicker from '../components/dayPicker';
 import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
 import { ResizeGridItems } from '../helpers/functions';
-import DayPicker from '../components/dayPicker';
+
+import yoga from '../assets/yoga.png';
+import walking from '../assets/walking.png';
+import tennis from '../assets/tennis.png';
+import swimming from '../assets/swimming.png';
+import pilates from '../assets/pilates.png';
+import soccer from '../assets/soccer.png';
+import basketball from '../assets/basketball.png';
 
 const StyledButton= styled.div`
     z-index:10;
@@ -103,7 +106,7 @@ const ActivitiesWrapper= styled.div`
 `;
 
 const StyledActivity= styled.div`
-    padding:10px;
+    padding:15px;
     margin:10px;
     width:150px;
     cursor:pointer;
@@ -117,24 +120,20 @@ const StyledActivity= styled.div`
         border: 2px solid  rgba(121, 193, 145, 0.7);
         box-shadow: 0 0 4px  rgba(121, 193, 145, 0.7);
     `};
-
     >p{
         font-weight:600;
         font-size:0.9rem;
-        margin:10px;
+        margin-top:10px;
         @media(max-width:450px){
             font-size:0.7rem;
         }
     }
-    >svg{
-        color: rgba(86, 186, 119);
-    }
 `;
 
 const StyledHeader= styled.div`
-        font-size:1.2rem;
-        color:#000;
-        margin: 5px auto;
+    font-size:1.2rem;
+    color:#000;
+    margin: 5px auto;
 `;
 
 const ChooseButton= styled.div`
@@ -156,6 +155,15 @@ const ChooseButton= styled.div`
 
 
 const AddActivityPopup=({active, setActiveAddPopup})=>{
+    const activityMap = {
+        tennis: { name: 'Tenis', icon: tennis },
+        yoga: { name: 'Joga', icon: yoga },
+        walking: { name: 'Spacer', icon: walking },
+        soccer: { name: 'Piłka nożna', icon: soccer },
+        swimming: { name: 'Pływanie', icon: swimming },
+        basketball: { name: 'Koszykówka', icon: basketball },
+        pilates: { name: 'Pilates', icon: pilates },
+      };
     const [chosenItem, setChosenItem] = useState(null);
     const activePopupRef = useRef(active);
     const [selectedDay, setSelectedDay] = useState(FormattedDate(new Date()));
@@ -194,10 +202,17 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
                 <CloseOutline onClick={()=>setActiveAddPopup(false)}/>
                 <StyledTitle>Wybierz aktywność:</StyledTitle>
                 <ActivitiesWrapper className="groupMemberActivities scrollable">
-                    <StyledActivity className='grid-item' $chosen={chosenItem===1} onClick={()=>setChosenItem(1)}><p>Bieganie</p><PersonRunning size="30"/></StyledActivity>
-                    <StyledActivity className='grid-item' $chosen={chosenItem===2} onClick={()=>setChosenItem(2)}><p>Koszykówka</p><SportBasketball size="30"/></StyledActivity>
-                    <StyledActivity className='grid-item' $chosen={chosenItem===3} onClick={()=>setChosenItem(3)}><p>Tenis</p><Tennisball size="30"/></StyledActivity>
-                    <StyledActivity className='grid-item' $chosen={chosenItem===4} onClick={()=>setChosenItem(4)}><p>Siatkówka</p><Volleyball size="30"/></StyledActivity>
+                {Object.entries(activityMap).map(([key, { name, icon }], index) => (
+                    <StyledActivity
+                        className='grid-item'
+                        key={key}
+                        $chosen={chosenItem === index}
+                        onClick={() => setChosenItem(index)}
+                    >
+                        <img src={icon} alt={name} width="40" height="40" />
+                        <p>{name}</p>
+                    </StyledActivity>
+                ))}
                 </ActivitiesWrapper>
                 <TimePicker
                         id='timePicker'

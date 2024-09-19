@@ -2,6 +2,14 @@ import React, {useEffect} from 'react';
 import styled from 'styled-components';
 import { ResizeGridItems } from "../helpers/functions"
 import { MinutesToFormattedTime } from '../helpers/functions';
+import yoga from '../assets/yoga.png';
+import walking from '../assets/walking.png';
+import tennis from '../assets/tennis.png';
+import swimming from '../assets/swimming.png';
+import pilates from '../assets/pilates.png';
+import soccer from '../assets/soccer.png';
+import basketball from '../assets/basketball.png';
+
 const StyledActivitiesWrapper = styled.div`
   width:100%;
   height:300px;
@@ -74,7 +82,22 @@ const StyledTime=styled.div`
     font-weight:600;
 `
 
+const StyledIcon=styled.img`
+  width:40px;
+  height:40px;
+  margin:10px 0;
+`;
+
 function GroupMemberActivities({summary, activities}){
+  const iconMap = {
+    tennis: tennis,
+    yoga: yoga,
+    walking: walking,
+    soccer: soccer,
+    swimming: swimming,
+    basketball: basketball,
+    pilates: pilates,
+  };
     useEffect(() => {
         ResizeGridItems("groupMemberActivities")
     })
@@ -89,13 +112,16 @@ function GroupMemberActivities({summary, activities}){
           activities.map(
             (
               {
-                id,
                 name,
                 time,
                 icon,
               }, key
             ) => (
-                  <StyledActivity key={key} id={id} className='grid-item'><StyledTime> {MinutesToFormattedTime(time)}</StyledTime>{icon}<ActivityTitle>{name}</ActivityTitle></StyledActivity>
+                  <StyledActivity key={key} className='grid-item'>
+                    <StyledTime>{MinutesToFormattedTime(time)}</StyledTime>
+                    <StyledIcon src={iconMap[icon]} alt={icon} />
+                    <ActivityTitle>{name}</ActivityTitle>
+                  </StyledActivity>
 
             ),
           )}

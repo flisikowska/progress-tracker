@@ -1,20 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import * as d3 from 'd3';
 
-const usePieChart = (data_V1, setSelectedComponent, selectedComponent, chosenComponent) => {
-  const changeRef = useRef(null); // Ref do funkcji change
-
+const usePieChart = (data_V1, setSelectedComponent, selectedComponent) => {
   useEffect(() => {
-    const width = parseInt(d3.select('#pieChart').style('width'), 10);
+    const pieChartElement = d3.select('#pieChart');
+    const width = parseInt(pieChartElement.style('width'), 10);
     const height = width;
     const radius = 90;
-
     const inner = Math.min(radius, 150);
     const outer = Math.max(radius, 150);
-
-    const arcOver = d3.arc()
-      .outerRadius(inner - 10)
-      .innerRadius(outer + 20);
 
     const arc = d3.arc()
       .outerRadius(inner - 10)
@@ -39,58 +33,80 @@ const usePieChart = (data_V1, setSelectedComponent, selectedComponent, chosenCom
       .style("fill", d => d.data.Color)
       .style("stroke", d => d.data.Color)
       .style("stroke-width", d => d.data.Type === "Pozostało" ? "0px" : "2px")
-      .style("fill-opacity", d => (d.data.Type === selectedComponent ? 0.5 : 0.3)) 
+      .style("fill-opacity", d => (d.data.Type === (selectedComponent && selectedComponent.Type) ? 0.5 : 0.3))
       .attr("d", arc)
       .on("mouseenter", function (event, d) {
         d3.select(this).attr("fill-opacity", 0.5);
       })
       .on("mouseleave", function (event, d) {
-        if (d.data.Type !== selectedComponent){
+        if (d.data.Type !== (selectedComponent && selectedComponent.Type)) {
           d3.select(this).attr("fill-opacity", 0.3);
         }
       })
       .on("click", function (event, d) {
-        change(d, this);
+        if (d.data.Type !== "Pozostało") {
+          setSelectedComponent(d.data);
+        } else {
+          setSelectedComponent(null);
+        }
       });
 
-    const change = (d, i) => {
-      const angle = 90 - ((d.startAngle * (180 / Math.PI)) + ((d.endAngle - d.startAngle) * (180 / Math.PI) / 2));
-      const pieChartContainer = document.querySelector('#pieChartContainer');
-      if (d.data.Type !== "Pozostało") {
-        pieChartContainer.style.transform = 'translateX(0)';
-        setTimeout(() => {
-          setSelectedComponent(() => d.data.Type);
-        }, 800);
-        svg.transition()
-          .duration(1000)
-          .attr("transform", "translate(" + width / 2 + "," + height / 2 + ") rotate(" + angle + ")");
-      } else {
-        if (window.innerWidth >= 1000)
-          pieChartContainer.style.transform = 'translateX(270px)';
-        setSelectedComponent(null);
-        svg.transition()
-          .duration(1000)
-          .attr("transform", "translate(" + width / 2 + "," + height / 2 + ") rotate(0)");
-      }
-      svg.selectAll("path")
-        .transition()
-        .duration(1000)
-        .attr("d", arc);
-      d3.select(i)
-        .transition()
-        .duration(1000)
-        .attr("d", arcOver);
-    }
-
-    changeRef.current = change; // Zapisz funkcję do ref
-    
     // Cleanup on component unmount
     return () => {
       d3.select("#pieChart").select("svg").remove();
     };
-  }, [data_V1, setSelectedComponent, selectedComponent, chosenComponent]);
+  }, [data_V1]);
 
-  return changeRef;
+  useEffect(() => {
+    const currentSelectedComponent = selectedComponent || { Type: "Pozostało" };
+    const radius = 90;
+    const inner = Math.min(radius, 150);
+    const outer = Math.max(radius, 150);
+
+    const pie = d3.pie()
+      .sort(null)
+      .value(d => d.Amount);
+
+    const pieData = pie(data_V1); // Obliczamy dane pie
+
+    const svg = d3.select("#pieChart").select("svg");
+
+    const arcOver = d3.arc()
+      .outerRadius(inner - 10)
+      .innerRadius(outer + 20);
+
+    const arc = d3.arc()
+      .outerRadius(inner - 10)
+      .innerRadius(outer);
+
+    const selectedPie = pieData.find(d => d.data.Type === currentSelectedComponent.Type);
+      const angle = 90 - ((selectedPie.startAngle * (180 / Math.PI)) + ((selectedPie.endAngle - selectedPie.startAngle) * (180 / Math.PI) / 2));
+      const pieChartContainer = document.querySelector('#pieChartContainer');
+      if (selectedPie.data.Type !== "Pozostało") {
+        pieChartContainer.style.transform = 'translateX(0)';
+        svg.transition()
+          .duration(1000)
+          .attr("transform", "rotate(" + angle + ")");
+      } else {
+        if (window.innerWidth >= 1000)
+          pieChartContainer.style.transform = 'translateX(270px)';
+          svg.transition()
+            .duration(1000)
+            .attr("transform", "rotate(0)");
+      }
+
+      svg.selectAll("path")
+        .transition()
+        .duration(1000)
+        .attr("d", arc);
+
+      d3.select(svg.selectAll("path").filter(p => p.data.Type === selectedPie.data.Type).node())
+        .transition()
+        .duration(1000)
+        .attr("d", arcOver);
+    
+  }, [data_V1, selectedComponent]);
+
 };
 
 export default usePieChart;

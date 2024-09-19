@@ -1,0 +1,7 @@
+GET http://localhost:5000
+
+###/current-week
+GET http://localhost:5000/current-week
+
+###/group
+GET http://localhost:5000/group

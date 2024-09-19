@@ -6,6 +6,15 @@ import {Tennisball} from '@styled-icons/ionicons-solid/Tennisball';
 import {Volleyball} from '@styled-icons/fa-solid/Volleyball';
 import { ResizeGridItems } from "../helpers/functions"
 import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
+import { MinutesToFormattedTime } from '../helpers/functions';
+
+import yoga from '../assets/yoga.png';
+import walking from '../assets/walking.png';
+import tennis from '../assets/tennis.png';
+import swimming from '../assets/swimming.png';
+import pilates from '../assets/pilates.png';
+import soccer from '../assets/soccer.png';
+import basketball from '../assets/basketball.png';
 
 const StyledActivitiesWrapper = styled.div`
   margin: 20px auto;
@@ -96,50 +105,42 @@ justify-content:space-between;
   }
 `
 
-function UserActivities(){
-  const activities=[{
-    name: 'Siatkówka plażowa',
-    time: '1.35h',
-    icon: <Tennisball size="30"/>,
-  },{
-    name: 'Skakanka na jednej nodze',
-    time: '2h',
-    icon: <Volleyball size="30"/>,
-  },{
-    name: 'Siatkówka',
-    time: '0.35h',
-    icon: <SportBasketball size="30"/>,
-  },{
-    name: 'Siatkówka plażowa',
-    time: '1.35h',
-    icon: <Tennisball size="30"/>,
-  },{
-    name: 'Skakanka na jednej nodze',
-    time: '2h',
-    icon: <Volleyball size="30"/>,
-  },{
-    name: 'Siatkówka',
-    time: '0.35h',
-    icon: <PersonRunning size="30"/>,
-  }];
+const StyledIcon=styled.img`
+  width:40px;
+  height:40px;
+  margin:10px 0;
+`;
+
+function UserActivities({activities}){
+  const iconMap = {
+    tennis: tennis,
+    yoga: yoga,
+    walking: walking,
+    soccer: soccer,
+    swimming: swimming,
+    basketball: basketball,
+    pilates: pilates,
+  };
     useEffect(() => {
         ResizeGridItems("activities")
       })
-  
     return(
       <StyledActivitiesWrapper className='scrollable activities'>
-        <StyledActivity id="summary" className='grid-item'><StyledHeader><p>Łącznie</p></StyledHeader><ActivityTitle>4h 35min</ActivityTitle></StyledActivity>
+        <StyledActivity id="summary" className='grid-item'><StyledHeader><p>Łącznie</p></StyledHeader><ActivityTitle>{MinutesToFormattedTime(activities.reduce((total, activity) => total + activity.activity_amount, 0))}</ActivityTitle></StyledActivity>
         {activities &&
           activities.map(
             (
               {
-                id,
-                name,
-                time,
-                icon,
-              }
+                activity_type_name,
+                activity_amount,
+                activity_type_icon,
+              }, key
             ) => (
-                  <StyledActivity id={id} className='grid-item'><StyledHeader><p>{time}</p><CloseOutline/></StyledHeader>{icon}<ActivityTitle>{name}</ActivityTitle></StyledActivity>
+              <StyledActivity key={key}  className='grid-item'>
+                <StyledHeader><p>{MinutesToFormattedTime(activity_amount)}</p><CloseOutline/></StyledHeader>
+                <StyledIcon src={iconMap[ activity_type_icon]} alt={activity_type_icon} />
+                <ActivityTitle>{activity_type_name}</ActivityTitle>
+              </StyledActivity>
             ),
           )}
       </StyledActivitiesWrapper>

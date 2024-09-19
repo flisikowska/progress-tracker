@@ -66,8 +66,6 @@ function Invite() {
         <Right>
           <StyledHeader>Wyślij zaproszenia znajomym</StyledHeader>
           <StyledLoginContainer>
-            <div>Zaloguj się</div>
-            <div>Utwórz konto</div>
           </StyledLoginContainer>
       </Right>
       </StyledContainer>

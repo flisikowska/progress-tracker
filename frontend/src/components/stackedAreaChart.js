@@ -1,8 +1,8 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 import styled from 'styled-components';
-import { data } from '../helpers/data';
-import {data_V1} from '../helpers/data_v1';
+import { parseISO, differenceInCalendarWeeks, endOfISOWeek, format } from 'date-fns';
+
 const MARGIN = { top: 30, right: 30, bottom: 50, left: 50 };
 
 const StyledContainer = styled.div`
@@ -17,14 +17,47 @@ const StyledSvg = styled.svg`
 const StyledG = styled.g`
   color: #333;
 `;
+const getWeekNumber = (dateString) => {
+    const date = parseISO(dateString);
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const weekNumber = differenceInCalendarWeeks(date, startOfYear, { weekStartsOn: 1 }) + 1;
+    return weekNumber;
+};
 
-const StackedAreaChart = ({ selectedComponent, setSelectedComponent, changeRef, width, height }) => {
-  const goal=1200 //cel 20 godzin
+const generateWeeklyData = (data_V1) => {
+    const weeklyData = {};
+    const people = data_V1.map(person => person.Type);
+    const currentDate = new Date();
+    const endWeek = getWeekNumber(format(endOfISOWeek(currentDate), 'yyyy-MM-dd'));
+    const startWeek = endWeek - 9;
+
+    for (let week = startWeek; week <= endWeek; week++) {
+        weeklyData[week] = { x: `${week}` };
+        people.forEach(person => {
+            weeklyData[week][person] = 0;
+        });
+    }
+
+    data_V1.forEach(person => {
+        person.activities.forEach(activity => {
+            const weekNumber = getWeekNumber(activity.date);
+            if (weekNumber !== null && weekNumber >= startWeek && weekNumber <= endWeek) {
+                const timeInMinutes =activity.time ;
+                weeklyData[weekNumber][person.Type] += timeInMinutes;
+            }
+        });
+    });
+
+    return Object.values(weeklyData).sort((a, b) => a.x.localeCompare(b.x));
+};
+
+const StackedAreaChart = ({ goal, selectedComponent, setSelectedComponent, width, height, activities }) => {
+  const data = generateWeeklyData(activities);
   const axesRef = useRef(null);
   const boundsWidth = width - MARGIN.right - MARGIN.left;
   const boundsHeight = height - MARGIN.top - MARGIN.bottom;
 
-  const stackKeys = ['Karolina', 'Kasia', 'Angelika', 'Emilia'];
+  const stackKeys =  activities.map(item => item.Type);
   const stackSeries = d3.stack()
       .keys(stackKeys)
       .order(d3.stackOrderNone)
@@ -34,8 +67,8 @@ const StackedAreaChart = ({ selectedComponent, setSelectedComponent, changeRef, 
 
   const colorScale = d3.scaleOrdinal()
       .domain(stackKeys)
-      .range(['#e94547', '#7dcef5', '#79c191', '#bd66bd', '#dcdcdc']);
-
+      .range(['#e94547', '#7dcef5', '#79c191', '#bd66bd']);
+//   const colorScale=activities.map(item => item.Color);
   const maxMinutes = d3.max(series, s => d3.max(s, d => d[1])) || goal; 
 
   const yScale = useMemo(() => d3.scaleLinear()
@@ -111,23 +144,17 @@ const StackedAreaChart = ({ selectedComponent, setSelectedComponent, changeRef, 
                 {series && series.map((serie, i) => (
                     <g key={i}
                         onMouseEnter={(e) => {
-                            if (serie.key !== selectedComponent) {
+                            if (serie.key !== (selectedComponent && selectedComponent.Type)) {
                                 d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.4);
                             }
                         }}
                         onMouseLeave={(e) => {
-                            if (serie.key !== selectedComponent) {
+                            if (serie.key !== (selectedComponent && selectedComponent.Type)) {
                                 d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.3);
                             }
                         }}
                         onClick={() => {
-                            if (selectedComponent !== serie.key) {
-                                setSelectedComponent(serie.key);
-                                const selectedData = data_V1.find(d => d.Type === serie.key);
-                                if (selectedData && changeRef.current) {
-                                    changeRef.current(selectedData, d3.select('#pieChart').selectAll('path').filter(d => d.data.Type === serie.key).node());
-                                }
-                            }
+                            setSelectedComponent(serie.key);
                         }}
                     >
                         <path

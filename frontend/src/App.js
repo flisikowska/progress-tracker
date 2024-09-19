@@ -1,12 +1,13 @@
 import './App.css';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import styled from 'styled-components';
 import Home from './views/moje';
-import Grupa from './views/grupa';
+import Group from './views/group';
 import Menu from './components/menu';
 import NotificationPopup from './components/notificationPopup';
 import AddActivityPopup from './components/addActivityPopup';
 import Login from './views/login';
+import axios from 'axios';
 
 const AppContainer=styled.div`
     width:100%;
@@ -62,6 +63,23 @@ const StyledHeader=styled.h1`
 `;
 
 function App() {
+  const [membersActivities, setMembersActivities] = useState([]);
+  const [userName, setUserName] = useState('Emilia');
+  const [groupName, setGroupName] = useState('');
+  const [goal, setGoal] = useState(0);
+  useEffect(() => {
+    axios.get(`http://localhost:5000/current-week`)
+    .then(res => {
+        setMembersActivities(res.data);
+      });
+    axios.get(`http://localhost:5000/group`)
+    .then(res => {
+      console.log(res);
+      setGroupName(res.data.name);
+      setGoal(res.data.goal);
+      });
+  }, []);
+  useEffect(()=>{console.log(goal)}, [goal])
   const [site, setSite] = useState('grupa');
   const [loggedIn, setLoggedIn] = useState(true);
   const [activeNotificationPopup, setActiveNotificationPopup] = useState(false);
@@ -73,16 +91,16 @@ function App() {
         <Menu site={site} setActiveAddPopup={setActiveAddPopup} setSite={setSite}/>
         <StyledWrapper>
           <HeaderWrapper>  
-            <StyledHeader>{site==='grupa' ?("Raport grupy"):( "Moja aktywność")}</StyledHeader>
+            <StyledHeader>{site==='grupa' ?("Raport grupy: "+ groupName):("Moja aktywność")}</StyledHeader>
             <div id="buttons">
               <AddActivityPopup setActiveAddPopup={setActiveAddPopup} active={activeAddPopup}/>
               <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup}/>
             </div>
           </HeaderWrapper>
           {site==='grupa' ?(
-            <Grupa/>
+            <Group goal={goal} name={groupName} membersActivities={membersActivities}/>
           ):(
-            <Home logout={()=>setLoggedIn(false)} />
+            <Home activities={membersActivities.filter(activity=> activity.user_name===userName)} logout={()=>setLoggedIn(false)} />
           )}
         </StyledWrapper>
       </>
