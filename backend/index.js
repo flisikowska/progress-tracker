@@ -86,10 +86,12 @@ app.get('/current-week', async (req, res) => {
     SELECT 
 	    U.user_id,
       U.name AS user_name,
+      U.color AS user_color,
       AT.activity_type_id,
       AT.name AS activity_type_name,
       AT.icon AS activity_type_icon,
       A.date AS activity_date,
+      A.activity_id,
       A.amount AS activity_amount
     FROM public.group 
     JOIN public.user U ON public.group.group_id= U.group_id
@@ -112,6 +114,45 @@ app.get('/current-week', async (req, res) => {
   const response=(resp.rows);
   await client.end();
   res.send(response);
+})
+
+app.get('/activity-types', async (req, res) => {
+  const query = `
+  SELECT activity_type_id AS id, icon, name
+	FROM public.activity_type;
+`;
+  const client = new Client({
+    user: 'postgres',
+    password: '123456',
+    host: 'localhost',
+    port: 5432,
+    database: 'progress_tracker',
+  });
+  await client.connect();
+  const resp = await client.query(query, [])
+  const response=resp.rows;
+  await client.end();
+  res.send(response);
+});
+
+app.delete('/activities/:id', async (req, res) => {
+  const user_id = 1;
+  const activity_id=req.params.id;
+  const query = `
+    DELETE FROM public.activity 
+    WHERE activity_id=$1 AND user_id=$2
+  `;
+  const client = new Client({
+    user: 'postgres',
+    password: '123456',
+    host: 'localhost',
+    port: 5432,
+    database: 'progress_tracker',
+  });
+  await client.connect();
+  await client.query(query, [activity_id, user_id]);
+  await client.end();
+  res.send();
 })
 
 

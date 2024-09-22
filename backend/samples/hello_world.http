@@ -5,3 +5,10 @@ GET http://localhost:5000/current-week
 
 ###/group
 GET http://localhost:5000/group
+
+###/activity_types
+GET http://localhost:5000/activity-types
+
+
+###/activities/:id
+DELETE http://localhost:5000/activities/2362

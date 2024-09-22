@@ -83,3 +83,8 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.activity
     OWNER to postgres;
+
+ALTER TABLE IF EXISTS public."user"
+    ADD COLUMN color text NOT NULL DEFAULT 'FFFFFF';
+	
+	

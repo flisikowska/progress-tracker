@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as d3 from 'd3';
 
 const usePieChart = (data_V1, setSelectedComponent, selectedComponent) => {
+  const [currentRotation, setCurrentRotation] = useState(0); 
   useEffect(() => {
     const pieChartElement = d3.select('#pieChart');
     const width = parseInt(pieChartElement.style('width'), 10);
@@ -25,7 +26,7 @@ const usePieChart = (data_V1, setSelectedComponent, selectedComponent) => {
       .attr('viewBox', '0 0 ' + Math.min(width, height) + ' ' + Math.min(width, height))
       .attr('preserveAspectRatio', 'xMidYMid meet')
       .append("g")
-      .attr("transform", window.innerWidth <= 1000 ? "translate(" + width / 2 + "," + height / 2 + ") rotate(270)" : "translate(" + width / 2 + "," + height / 2 + ")");
+      .attr("transform", window.innerWidth <= 1000 ? "translate(" + width / 2 + "," + height / 2 + ") rotate(270)" : "translate(" + width / 2 + "," + height / 2 + ") rotate(" + currentRotation + ")");
 
     const g = svg.selectAll("path")
       .data(pie(data_V1))
@@ -44,7 +45,11 @@ const usePieChart = (data_V1, setSelectedComponent, selectedComponent) => {
         }
       })
       .on("click", function (event, d) {
+        // const selectedPie = pieData.find(d => d.data.Type === currentSelectedComponent.Type);
         if (d.data.Type !== "Pozostało") {
+          const angle = 90 - ((d.startAngle * (180 / Math.PI)) + ((d.endAngle - d.startAngle) * (180 / Math.PI) / 2));
+          setCurrentRotation(currentRotation+angle);
+          console.log(currentRotation);
           setSelectedComponent(d.data);
         } else {
           setSelectedComponent(null);
@@ -79,7 +84,7 @@ const usePieChart = (data_V1, setSelectedComponent, selectedComponent) => {
       .outerRadius(inner - 10)
       .innerRadius(outer);
 
-    const selectedPie = pieData.find(d => d.data.Type === currentSelectedComponent.Type);
+      const selectedPie = pieData.find(d => d.data.Type === currentSelectedComponent.Type);
       const angle = 90 - ((selectedPie.startAngle * (180 / Math.PI)) + ((selectedPie.endAngle - selectedPie.startAngle) * (180 / Math.PI) / 2));
       const pieChartContainer = document.querySelector('#pieChartContainer');
       if (selectedPie.data.Type !== "Pozostało") {

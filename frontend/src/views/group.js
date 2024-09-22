@@ -23,11 +23,11 @@ function Group({goal, membersActivities}) {
     const processData = (data) => {
         const userMap = new Map();
         data.forEach(activity => {
-            const { user_name, activity_amount, activity_type_name, activity_date, activity_type_icon } = activity;
+            const { user_name, user_color, activity_amount, activity_type_name, activity_date, activity_type_icon } = activity;
             if (!userMap.has(user_name)) {
                 userMap.set(user_name, {
                     Type: user_name,
-                    Color: '#fff',
+                    Color: '#'+user_color,
                     activities: []
                 });
             }

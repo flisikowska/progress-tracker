@@ -70,16 +70,15 @@ function App() {
   useEffect(() => {
     axios.get(`http://localhost:5000/current-week`)
     .then(res => {
+        console.log(res.data);
         setMembersActivities(res.data);
       });
     axios.get(`http://localhost:5000/group`)
     .then(res => {
-      console.log(res);
       setGroupName(res.data.name);
       setGoal(res.data.goal);
       });
   }, []);
-  useEffect(()=>{console.log(goal)}, [goal])
   const [site, setSite] = useState('grupa');
   const [loggedIn, setLoggedIn] = useState(true);
   const [activeNotificationPopup, setActiveNotificationPopup] = useState(false);
