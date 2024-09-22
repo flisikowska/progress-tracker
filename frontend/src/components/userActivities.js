@@ -111,7 +111,7 @@ const StyledIcon=styled.img`
   margin:10px 0;
 `;
 
-function UserActivities({activities}){
+function UserActivities({deleteActivity, activities}){
   const iconMap = {
     tennis: tennis,
     yoga: yoga,
@@ -131,13 +131,14 @@ function UserActivities({activities}){
           activities.map(
             (
               {
+                activity_id,
                 activity_type_name,
                 activity_amount,
                 activity_type_icon,
               }, key
             ) => (
               <StyledActivity key={key}  className='grid-item'>
-                <StyledHeader><p>{MinutesToFormattedTime(activity_amount)}</p><CloseOutline/></StyledHeader>
+                <StyledHeader><p>{MinutesToFormattedTime(activity_amount)}</p><CloseOutline onClick={()=> deleteActivity(activity_id)}/></StyledHeader>
                 <StyledIcon src={iconMap[ activity_type_icon]} alt={activity_type_icon} />
                 <ActivityTitle>{activity_type_name}</ActivityTitle>
               </StyledActivity>

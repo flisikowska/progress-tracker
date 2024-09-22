@@ -67,18 +67,34 @@ function App() {
   const [userName, setUserName] = useState('Emilia');
   const [groupName, setGroupName] = useState('');
   const [goal, setGoal] = useState(0);
-  useEffect(() => {
+
+  const getActivities=()=>{
     axios.get(`http://localhost:5000/current-week`)
     .then(res => {
-        console.log(res.data);
         setMembersActivities(res.data);
       });
+  }
+
+  useEffect(() => {
+    getActivities();
     axios.get(`http://localhost:5000/group`)
     .then(res => {
       setGroupName(res.data.name);
       setGoal(res.data.goal);
       });
   }, []);
+
+  const handleActivityDelete = (id) => {
+    axios.delete(`http://localhost:5000/activities/${id}`) 
+        .then(res => {
+            console.log('Activity deleted:', res.data);
+            getActivities();
+        })
+        .catch(err => {
+            console.error('Error deleting activity:', err);
+        });
+  };
+
   const [site, setSite] = useState('grupa');
   const [loggedIn, setLoggedIn] = useState(true);
   const [activeNotificationPopup, setActiveNotificationPopup] = useState(false);
@@ -99,7 +115,7 @@ function App() {
           {site==='grupa' ?(
             <Group goal={goal} name={groupName} membersActivities={membersActivities}/>
           ):(
-            <Home activities={membersActivities.filter(activity=> activity.user_name===userName)} logout={()=>setLoggedIn(false)} />
+            <Home deleteActivity={handleActivityDelete} activities={membersActivities.filter(activity=> activity.user_name===userName)} logout={()=>setLoggedIn(false)} />
           )}
         </StyledWrapper>
       </>

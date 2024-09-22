@@ -1,7 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import PieChart from '../components/pieChart';
 import StackedAreaChart from '../components/stackedAreaChart';
+import PieChartActivities from '../components/pieChartActivities';
+
+const StyledPieChart = styled.div`
+    width:100%;
+    height:400px;
+    display:flex;
+    position:relative;
+    align-items:center;
+    flex-flow:row nowrap;
+    @media(max-width:1000px){
+      flex-flow: column;
+      height:unset;
+    }
+`;
 
 const StyledContainer = styled.div`
     width: 100%;
@@ -16,9 +30,9 @@ const StyledStatsTitle = styled.h2`
 `;
 
 function Group({goal, membersActivities}) {
-    const [selectedComponent, setSelectedComponent] = useState(null);
     const areaChartWidth=600;
     const areaChartHeight=400;
+    const pieChartActivitiesRef = useRef();
 
     const processData = (data) => {
         const userMap = new Map();
@@ -45,17 +59,21 @@ function Group({goal, membersActivities}) {
     const activities=processData(membersActivities);
     return (
         <StyledContainer>
-            <PieChart
-                goal={goal}
-                selectedComponent={selectedComponent}
-                setSelectedComponent={setSelectedComponent}
-                activities={activities}
-            />
+            <StyledPieChart>
+                <PieChart
+                    goal={goal}
+                    activities={activities}
+                    setComponent={pieChartActivitiesRef?.current?.setComponent}
+                />
+                <PieChartActivities
+                    ref={pieChartActivitiesRef}
+                    goal={goal}
+                    activities={activities} 
+                />
+            </StyledPieChart>
             <StyledStatsTitle>Statystyki:</StyledStatsTitle>
             <StackedAreaChart
                 goal={goal}
-                selectedComponent={selectedComponent}
-                setSelectedComponent={(e)=> setSelectedComponent(activities.find(d => d.Type === e))}
                 width={areaChartWidth}
                 height={areaChartHeight}
                 activities={activities}

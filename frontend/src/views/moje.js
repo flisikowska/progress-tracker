@@ -23,13 +23,14 @@ const StyledButton= styled.div`
     margin-left:auto;
 `;
 
-function Home({activities, logout}) {
+function Home({deleteActivity, activities, logout}) {
   const [selectedDay, setSelectedDay] = useState(FormattedDate(new Date()));
   const [dayPickerVisibleDays, setDayPickerVisibleDays] = useState([]);
   // const dispatch = useDispatch();
   // const { meals } = useSelector((state) => ({
     //   meals: state.meals
     // }));
+ 
   return (
     <StyledContainer>
         <DayPicker
@@ -48,7 +49,7 @@ function Home({activities, logout}) {
           }
           visibleDaysChanged={(days) => setDayPickerVisibleDays(days)}
         />
-        <UserActivities activities={activities.filter(activity=> activity.activity_date.split('T')[0]===selectedDay)}/>
+        <UserActivities deleteActivity={deleteActivity} activities={activities.filter(activity=> activity.activity_date.split('T')[0]===selectedDay)}/>
         <StyledButton onClick={logout}>Wyloguj się</StyledButton>
       </StyledContainer>
   )

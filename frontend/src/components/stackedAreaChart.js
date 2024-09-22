@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import styled from 'styled-components';
 import { parseISO, differenceInCalendarWeeks, endOfISOWeek, format } from 'date-fns';
@@ -17,6 +17,7 @@ const StyledSvg = styled.svg`
 const StyledG = styled.g`
   color: #333;
 `;
+
 const getWeekNumber = (dateString) => {
     const date = parseISO(dateString);
     const startOfYear = new Date(date.getFullYear(), 0, 1);
@@ -51,7 +52,7 @@ const generateWeeklyData = (data_V1) => {
     return Object.values(weeklyData).sort((a, b) => a.x.localeCompare(b.x));
 };
 
-const StackedAreaChart = ({ goal, selectedComponent, setSelectedComponent, width, height, activities }) => {
+const StackedAreaChart = ({ goal, width, height, activities }) => {
   const data = generateWeeklyData(activities);
   const axesRef = useRef(null);
   const boundsWidth = width - MARGIN.right - MARGIN.left;
@@ -64,11 +65,7 @@ const StackedAreaChart = ({ goal, selectedComponent, setSelectedComponent, width
       .offset(d3.stackOffsetNone);
 
   const series = stackSeries(data);
-
-  const colorScale = d3.scaleOrdinal()
-      .domain(stackKeys)
-      .range(['#e94547', '#7dcef5', '#79c191', '#bd66bd']);
-//   const colorScale=activities.map(item => item.Color);
+  const colorScale = Object.fromEntries(activities.map(x=> [x.Type, x.Color]));
   const maxMinutes = d3.max(series, s => d3.max(s, d => d[1])) || goal; 
 
   const yScale = useMemo(() => d3.scaleLinear()
@@ -82,7 +79,7 @@ const StackedAreaChart = ({ goal, selectedComponent, setSelectedComponent, width
   useEffect(() => {
       const svgElement = d3.select(axesRef.current);
       svgElement.selectAll('*').remove();
-
+      
       const xAxisGenerator = d3.axisBottom(xScale)
       .tickFormat((d, i) => i === 0 ? `tydz. ${d}` : d); 
 
@@ -105,8 +102,8 @@ const StackedAreaChart = ({ goal, selectedComponent, setSelectedComponent, width
           .call(yAxisGenerator)
           .style('font-weight', '500')
           .style('font-family', '"DM Sans", sans-serif')
-          .style('font-size', '.85rem');
-
+          .style('font-size', '.85rem')
+         
       svgElement.append('line')
       .attr('x1', 0)
       .attr('x2', boundsWidth)
@@ -126,6 +123,7 @@ const StackedAreaChart = ({ goal, selectedComponent, setSelectedComponent, width
       .attr('font-family', '"DM Sans", sans-serif')
       .attr('fill', '#555')
       .text('cel');
+
   }, [xScale, yScale, boundsHeight]);
 
   const areaBuilder = d3.area()
@@ -142,31 +140,31 @@ const StackedAreaChart = ({ goal, selectedComponent, setSelectedComponent, width
         <StyledSvg width='100%' height='100%' viewBox={`0 0 ${width} ${height}`}>
             <StyledG transform={`translate(${[MARGIN.left, MARGIN.top].join(',')})`}>
                 {series && series.map((serie, i) => (
-                    <g key={i}
+                    <g key={i} 
                         onMouseEnter={(e) => {
-                            if (serie.key !== (selectedComponent && selectedComponent.Type)) {
-                                d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.4);
-                            }
+                            document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('mouseenterchart'));
+                            d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.5);
                         }}
                         onMouseLeave={(e) => {
-                            if (serie.key !== (selectedComponent && selectedComponent.Type)) {
-                                d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.3);
-                            }
+                            document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('mouseleavechart'));
+                            d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.3);
                         }}
                         onClick={() => {
-                            setSelectedComponent(serie.key);
+                            document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('click'));
                         }}
                     >
                         <path
+                            id={`chartArea${serie.key}`}
+                            className="opacity"
                             data-key={serie.key}
                             d={areaBuilder(serie)}
                             stroke="none"
-                            fill={colorScale(serie.key)}
-                            fillOpacity={serie.key === selectedComponent ? 0.5 : 0.3}
+                            fill={colorScale[serie.key]}
+                            fillOpacity={0.3}
                         />
                         <path
                             d={lineBuilder(serie)}
-                            stroke={colorScale(serie.key)}
+                            stroke={colorScale[serie.key]}
                             fill="none"
                             strokeWidth={1.7}
                         />
