@@ -120,8 +120,6 @@ const DayPicker = ({
   fetchSelectedDaysToParent,
   multipleDaySelect,
   daysCount,
-  valueForTheDay,
-  visibleDaysChanged,
 }) => {
   const initialStartDay = FormattedDate(addDays(new Date(), -3));
   const [startDay, setStartDay] = useState(initialStartDay);
@@ -135,9 +133,6 @@ const DayPicker = ({
       days = [...days, day];
     }
     setWeekdays(days);
-    if (visibleDaysChanged) {
-      visibleDaysChanged(days);
-    }
     // eslint-disable-next-line
   }, [startDay, daysCount]);
 
@@ -161,16 +156,19 @@ const DayPicker = ({
         <StyledDaysWrapper>
         {weekdays.map((day, i) => (
           <DayPickerItem
-            value={valueForTheDay ? valueForTheDay(day) : undefined}
             day={day}
             key={i}
             selectedDays={selectedDays}
             onClick={() => {
               if (!multipleDaySelect) setSelectedDays([day]);
               else {
-                if (selectedDays.some((s) => s === day))
-                  setSelectedDays(selectedDays.filter((s) => s !== day));
-                else setSelectedDays([...selectedDays, day]);
+                if (selectedDays.some((s) => s === day)){
+                  if(selectedDays.length>1)
+                    setSelectedDays(selectedDays.filter((s) => s !== day));
+                }
+                else {
+                  setSelectedDays([...selectedDays, day]);
+                }
               }
             }}
             selected={selectedDays.some((s) => s === day)}

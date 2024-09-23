@@ -64,16 +64,20 @@ const usePieChart = (data_V1, setComponent) => {
         const pieChartContainer = document.querySelector('#pieChartContainer');
         if (d.data.Type !== "Pozostało") {
           pieChartContainer.style.transform = 'translateX(0)';
-          setTimeout(() => {
-            setComponent(d.data);
-          }, 800);
+          // setTimeout(() => {
+            if (typeof setComponent === 'function') {
+              setComponent(d.data);
+            }
+          // }, 800);
           svg.transition()
           .duration(1000)
           .attr("transform", "translate(" + width / 2 + "," + height / 2 + ") rotate(" + angle + ")");
         } else {
             if (window.innerWidth >= 1000)
               pieChartContainer.style.transform = 'translateX(270px)';
-            setComponent(null);
+            if (typeof setComponent === 'function') {
+              setComponent(null);
+            }
             svg.transition()
               .duration(1000)
               .attr("transform", "translate(" + width / 2 + "," + height / 2 + ") rotate(0)");
@@ -88,10 +92,10 @@ const usePieChart = (data_V1, setComponent) => {
           .attr("d", arcOver);
       };
 
-    return () => {
-      d3.select("#pieChart").select("svg").remove();
-    };
-  }, [data_V1]);
+      return () => {
+        d3.select("#pieChart").select("svg").remove();
+      };
+  }, [data_V1, setComponent]);
 };
 
 export default usePieChart;

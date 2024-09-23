@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import styled from 'styled-components';
-import { parseISO, differenceInCalendarWeeks, endOfISOWeek, format } from 'date-fns';
+import axios from 'axios';
 
 const MARGIN = { top: 30, right: 30, bottom: 50, left: 50 };
 
@@ -18,70 +18,66 @@ const StyledG = styled.g`
   color: #333;
 `;
 
-const getWeekNumber = (dateString) => {
-    const date = parseISO(dateString);
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const weekNumber = differenceInCalendarWeeks(date, startOfYear, { weekStartsOn: 1 }) + 1;
-    return weekNumber;
-};
-
-const generateWeeklyData = (data_V1) => {
-    const weeklyData = {};
-    const people = data_V1.map(person => person.Type);
-    const currentDate = new Date();
-    const endWeek = getWeekNumber(format(endOfISOWeek(currentDate), 'yyyy-MM-dd'));
-    const startWeek = endWeek - 9;
-
-    for (let week = startWeek; week <= endWeek; week++) {
-        weeklyData[week] = { x: `${week}` };
-        people.forEach(person => {
-            weeklyData[week][person] = 0;
-        });
+const StackedAreaChart = ({ goal, width, height, members }) => {
+    const [activities, setActivities]=useState([]);
+    const fetchMembersActivities=()=>{
+        axios.get(`http://localhost:5000/last-10-weeks`)
+        .then(res => {
+            setActivities(res.data);
+            });
     }
-
-    data_V1.forEach(person => {
-        person.activities.forEach(activity => {
-            const weekNumber = getWeekNumber(activity.date);
-            if (weekNumber !== null && weekNumber >= startWeek && weekNumber <= endWeek) {
-                const timeInMinutes =activity.time ;
-                weeklyData[weekNumber][person.Type] += timeInMinutes;
-            }
-        });
-    });
-
-    return Object.values(weeklyData).sort((a, b) => a.x.localeCompare(b.x));
-};
-
-const StackedAreaChart = ({ goal, width, height, activities }) => {
-  const data = generateWeeklyData(activities);
+    useEffect(()=>{fetchMembersActivities()}, [])
+    
   const axesRef = useRef(null);
   const boundsWidth = width - MARGIN.right - MARGIN.left;
   const boundsHeight = height - MARGIN.top - MARGIN.bottom;
+  const colorScale = Object.fromEntries(
+    members.map(({ user_name, user_color }) => [user_name, `#${user_color}`])
+  );  
 
-  const stackKeys =  activities.map(item => item.Type);
-  const stackSeries = d3.stack()
+  const processData = (rawData) => {
+    if (!rawData || Object.keys(rawData).length === 0) 
+        return [];
+    const weeks = Object.keys(rawData);
+    
+    if (!weeks.length) 
+        return [];
+    const people = Object.keys(rawData[weeks[0]]);
+
+    return weeks.map(week => {
+        const formattedWeek = new Date(week).toLocaleDateString('pl-PL', {
+            day: '2-digit',
+            month: '2-digit',
+          });
+        const entry = { x: formattedWeek };
+        people.forEach(person => {
+            entry[person] = rawData[week][person];
+        });
+        return entry;
+    });
+    };
+    const processedData = useMemo(() => processData(activities), [activities]);
+    const stackKeys = members.map(m=> m.user_name);
+    const stackSeries = d3.stack()
       .keys(stackKeys)
       .order(d3.stackOrderNone)
       .offset(d3.stackOffsetNone);
-
-  const series = stackSeries(data);
-  const colorScale = Object.fromEntries(activities.map(x=> [x.Type, x.Color]));
-  const maxMinutes = d3.max(series, s => d3.max(s, d => d[1])) || goal; 
-
-  const yScale = useMemo(() => d3.scaleLinear()
+    const series = stackSeries(processedData);
+    const maxMinutes = d3.max(series, s => d3.max(s, d => d[1])) || goal; 
+    const yScale = useMemo(() => d3.scaleLinear()
     .domain([0, Math.max(maxMinutes, goal)])
     .range([boundsHeight, 0]), [boundsHeight, maxMinutes]);
 
   const xScale = useMemo(() => d3.scalePoint()
-      .domain(data.map(d => d.x))
-      .range([0, boundsWidth]), [data, boundsWidth]);
+      .domain(processedData.map(d => d.x).reverse())
+      .range([0, boundsWidth]), [processedData, boundsWidth]);
 
   useEffect(() => {
       const svgElement = d3.select(axesRef.current);
       svgElement.selectAll('*').remove();
       
       const xAxisGenerator = d3.axisBottom(xScale)
-      .tickFormat((d, i) => i === 0 ? `tydz. ${d}` : d); 
+      .tickFormat((d, i) => d); 
 
       const xTicks = svgElement.append('g')
           .attr('transform', `translate(0, ${boundsHeight})`)
@@ -91,9 +87,8 @@ const StackedAreaChart = ({ goal, width, height, activities }) => {
           .call(xAxisGenerator);
 
       xTicks.selectAll('text')
-          .attr('transform', 'translate(0, 3)');
+          .attr('transform', 'translate(0, 4)');
 
-      d3.select(xTicks.selectAll('.tick text').nodes()[0]).attr('transform', 'translate(-17, 3)');
 
       const yAxisGenerator = d3.axisLeft(yScale)
           .tickFormat(d => `${(d / 60).toFixed(0)}h`);
@@ -111,7 +106,8 @@ const StackedAreaChart = ({ goal, width, height, activities }) => {
       .attr('y2', yScale(goal - 1))
       .attr('stroke', '#555')
       .attr('stroke-width', 1)
-      .attr('stroke-dasharray', '5,5'); 
+      .attr('stroke-dasharray', '5,5') 
+      .attr('pointer-events', 'none'); 
       
       svgElement.append('text')
       .attr('x', boundsWidth - 5)

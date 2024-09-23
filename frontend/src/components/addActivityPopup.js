@@ -13,6 +13,8 @@ import swimming from '../assets/swimming.png';
 import pilates from '../assets/pilates.png';
 import soccer from '../assets/soccer.png';
 import basketball from '../assets/basketball.png';
+import confused from '../assets/confused.png';
+import axios from 'axios';
 
 const StyledButton= styled.div`
     z-index:10;
@@ -33,7 +35,7 @@ const StyledButton= styled.div`
 const StyledWrapper=styled.div`
     display: ${(props) => (props.$active ? 'flex' : 'none')};
     position:fixed;
-    flex-flow:column wrap;
+    flex-flow:column nowrap;
     padding:25px;
     text-align:center;
     align-items:center;
@@ -154,20 +156,40 @@ const ChooseButton= styled.div`
 `;
 
 
-const AddActivityPopup=({active, setActiveAddPopup})=>{
-    const activityMap = {
-        tennis: { name: 'Tenis', icon: tennis },
-        yoga: { name: 'Joga', icon: yoga },
-        walking: { name: 'Spacer', icon: walking },
-        soccer: { name: 'Piłka nożna', icon: soccer },
-        swimming: { name: 'Pływanie', icon: swimming },
-        basketball: { name: 'Koszykówka', icon: basketball },
-        pilates: { name: 'Pilates', icon: pilates },
-      };
+const AddActivityPopup=({active, setActiveAddPopup, refreshMembersActivities, refreshUserActivities})=>{
+    const [activities, setActivities]= useState([]);
     const [chosenItem, setChosenItem] = useState(null);
     const activePopupRef = useRef(active);
     const [selectedDay, setSelectedDay] = useState(FormattedDate(new Date()));
     const [dayPickerVisibleDays, setDayPickerVisibleDays] = useState([]);
+    const [amount, setAmount]= useState(0);
+    const activityIcons = {
+        tennis,
+        yoga,
+        walking, 
+        soccer,
+        swimming,
+        basketball,
+        pilates
+    };
+
+    useEffect(()=>{
+        fetchActivityTypes();
+    }, [])
+
+    const fetchActivityTypes=()=>{
+        axios.get(`http://localhost:5000/activity-types`)
+            .then(res => {
+                const activitiesWithIcons = res.data.map(activity => ({
+                    ...activity,
+                    icon: activityIcons[activity.icon] || confused,
+                }));
+                setActivities(activitiesWithIcons);
+            })
+    }
+
+
+
     useEffect(() => {
         window.addEventListener('mouseup', (event) => {
             if (window.innerWidth >= 450) {
@@ -192,9 +214,20 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
     useEffect(() => {
         activePopupRef.current = active;
     }, [active]);
+
     useEffect(() => {
         ResizeGridItems("groupMemberActivities");
     })
+
+    const addActivity=(activity_type_id, date, amount)=>{
+        axios.post(`http://localhost:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount})
+        .then(res => {
+           refreshMembersActivities();
+           refreshUserActivities(selectedDay);
+           setActiveAddPopup(false);
+        });
+      }
+
     return (
         <>
             <StyledButton onClick={()=> setActiveAddPopup(!active) }>Dodaj aktywność</StyledButton>
@@ -202,15 +235,15 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
                 <CloseOutline onClick={()=>setActiveAddPopup(false)}/>
                 <StyledTitle>Wybierz aktywność:</StyledTitle>
                 <ActivitiesWrapper className="groupMemberActivities scrollable">
-                {Object.entries(activityMap).map(([key, { name, icon }], index) => (
+                {activities.map((activity, index) => (
                     <StyledActivity
                         className='grid-item'
-                        key={key}
+                        key={activity.id}
                         $chosen={chosenItem === index}
                         onClick={() => setChosenItem(index)}
                     >
-                        <img src={icon} alt={name} width="40" height="40" />
-                        <p>{name}</p>
+                        <img src={activity.icon} alt={activity.name} width="40" height="40" />
+                        <p>{activity.name}</p>
                     </StyledActivity>
                 ))}
                 </ActivitiesWrapper>
@@ -218,17 +251,8 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
                         id='timePicker'
                         title="ile czasu spędziłaś?"
                         name="activityTime"
-                        onChange={(e) => {
-                            // setFieldValue('activeCookingTime', e.hours + ':' + e.minutes);
-                            // touched.activeCookingTime = true;
-                            // validateForm();                        
-                        }}
-                        value={{
-                            // hours: parseInt(values.activeCookingTime.split(':')[0]),
-                            // minutes: parseInt(values.activeCookingTime.split(':')[1]),
-                            hours:0,
-                            minutes:0,
-                        }}
+                        onChange={(e) => {setAmount(parseInt(e.hours)*60+parseInt(e.minutes))}}
+                        value={{hours:0,minutes:0}}
                         />
                         <StyledHeader>Że niby kiedy?</StyledHeader>
                         <DayPicker
@@ -237,12 +261,8 @@ const AddActivityPopup=({active, setActiveAddPopup})=>{
                             }}
                             multipleDaySelect={false}
                             daysCount={7}
-                            valueForTheDay={(date) =>
-                                0
-                            }
-                            visibleDaysChanged={(days) => setDayPickerVisibleDays(days)}
         />
-                <ChooseButton>Wybierz</ChooseButton>
+                <ChooseButton onClick={()=>addActivity(activities[chosenItem].id, selectedDay, amount)}>Wybierz</ChooseButton>
             </StyledWrapper>
         </>
 

@@ -1,7 +1,7 @@
 import './App.css';
 import React, {useState, useEffect} from 'react';
 import styled from 'styled-components';
-import Home from './views/moje';
+import Profile from './views/profile';
 import Group from './views/group';
 import Menu from './components/menu';
 import NotificationPopup from './components/notificationPopup';
@@ -63,42 +63,44 @@ const StyledHeader=styled.h1`
 `;
 
 function App() {
+  const [members, setMembers] = useState([]);
   const [membersActivities, setMembersActivities] = useState([]);
-  const [userName, setUserName] = useState('Emilia');
+  const [userActivitiesFromTheDay, setUserActivitiesFromTheDay] = useState([]);
   const [groupName, setGroupName] = useState('');
   const [goal, setGoal] = useState(0);
+  const [site, setSite] = useState('grupa');
+  const [loggedIn, setLoggedIn] = useState(true);
+  const [activeNotificationPopup, setActiveNotificationPopup] = useState(false);
+  const [activeAddPopup, setActiveAddPopup] = useState(false);
 
-  const getActivities=()=>{
+  useEffect(() => {
+    fetchMembersActivities();
+    fetchGroupInfo();
+  }, []);
+
+  const fetchMembersActivities=()=>{
     axios.get(`http://localhost:5000/current-week`)
     .then(res => {
         setMembersActivities(res.data);
       });
   }
 
-  useEffect(() => {
-    getActivities();
+  const fetchUserActivities=(selectedDays)=>{
+    axios.get(`http://localhost:5000/activities`, {params: {date: selectedDays}})
+    .then(res => {
+        setUserActivitiesFromTheDay(res.data);
+      });
+  }
+
+  const fetchGroupInfo=()=>{
     axios.get(`http://localhost:5000/group`)
     .then(res => {
-      setGroupName(res.data.name);
-      setGoal(res.data.goal);
+        setGroupName(res.data.group_name);
+        setGoal(res.data.group_goal);
+        setMembers(res.data.users);
       });
-  }, []);
+  }
 
-  const handleActivityDelete = (id) => {
-    axios.delete(`http://localhost:5000/activities/${id}`) 
-        .then(res => {
-            console.log('Activity deleted:', res.data);
-            getActivities();
-        })
-        .catch(err => {
-            console.error('Error deleting activity:', err);
-        });
-  };
-
-  const [site, setSite] = useState('grupa');
-  const [loggedIn, setLoggedIn] = useState(true);
-  const [activeNotificationPopup, setActiveNotificationPopup] = useState(false);
-  const [activeAddPopup, setActiveAddPopup] = useState(false);
   return (
     <AppContainer>
     {loggedIn ?(
@@ -108,14 +110,14 @@ function App() {
           <HeaderWrapper>  
             <StyledHeader>{site==='grupa' ?("Raport grupy: "+ groupName):("Moja aktywność")}</StyledHeader>
             <div id="buttons">
-              <AddActivityPopup setActiveAddPopup={setActiveAddPopup} active={activeAddPopup}/>
+              <AddActivityPopup setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshMembersActivities={fetchMembersActivities} refreshUserActivities={fetchUserActivities}/>
               <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup}/>
             </div>
           </HeaderWrapper>
           {site==='grupa' ?(
-            <Group goal={goal} name={groupName} membersActivities={membersActivities}/>
+            <Group members={members} goal={goal} name={groupName} membersActivities={membersActivities}/>
           ):(
-            <Home deleteActivity={handleActivityDelete} activities={membersActivities.filter(activity=> activity.user_name===userName)} logout={()=>setLoggedIn(false)} />
+            <Profile members={members} userActivitiesFromTheDay={userActivitiesFromTheDay} refreshMembersActivities={fetchMembersActivities} fetchUserActivities={fetchUserActivities} logout={()=>setLoggedIn(false)} />
           )}
         </StyledWrapper>
       </>

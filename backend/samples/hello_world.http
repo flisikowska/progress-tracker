@@ -3,6 +3,17 @@ GET http://localhost:5000
 ###/current-week
 GET http://localhost:5000/current-week
 
+###/last-10-weeks
+GET http://localhost:5000/last-10-weeks
+
+###/user-activities
+GET http://localhost:5000/user-activities?date=2024-09-22&date=2024-09-20
+###/user-activities
+GET http://localhost:5000/user-activities?date=2024-09-22
+
+###/user-activities
+GET http://localhost:5000/user-activities
+
 ###/group
 GET http://localhost:5000/group
 
@@ -12,3 +23,13 @@ GET http://localhost:5000/activity-types
 
 ###/activities/:id
 DELETE http://localhost:5000/activities/2362
+
+###/
+POST http://localhost:5000/activities
+Content-Type: application/json
+
+{
+"activity_type_id": 3,
+"date": "2024-09-23",
+"amount": 239
+}

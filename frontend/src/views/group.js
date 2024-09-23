@@ -29,11 +29,10 @@ const StyledStatsTitle = styled.h2`
     text-align: left;
 `;
 
-function Group({goal, membersActivities}) {
+function Group({members, goal, membersActivities}) {
     const areaChartWidth=600;
     const areaChartHeight=400;
     const pieChartActivitiesRef = useRef();
-
     const processData = (data) => {
         const userMap = new Map();
         data.forEach(activity => {
@@ -63,7 +62,7 @@ function Group({goal, membersActivities}) {
                 <PieChart
                     goal={goal}
                     activities={activities}
-                    setComponent={pieChartActivitiesRef?.current?.setComponent}
+                    setComponent={(x)=>pieChartActivitiesRef?.current?.setComponent(x)}
                 />
                 <PieChartActivities
                     ref={pieChartActivitiesRef}
@@ -76,7 +75,7 @@ function Group({goal, membersActivities}) {
                 goal={goal}
                 width={areaChartWidth}
                 height={areaChartHeight}
-                activities={activities}
+                members={members}
             />
         </StyledContainer>
     );

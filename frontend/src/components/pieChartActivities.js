@@ -43,11 +43,12 @@ const StyledInfo = styled.div`
 
 const PieChartActivities = forwardRef((props, ref) => {
     const [selectedComponent, setSelectedComponent]= useState(null);
-    useImperativeHandle(ref, () => ({
+    useImperativeHandle(ref, () =>  ({
         setComponent(x) {
             setSelectedComponent(x);
         }
-    }));
+    })
+);
 
     return (
             <StyledInfoContainer>
