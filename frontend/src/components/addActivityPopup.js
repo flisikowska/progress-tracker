@@ -4,16 +4,6 @@ import TimePicker from './timePicker';
 import { FormattedDate } from '../helpers/functions';
 import DayPicker from '../components/dayPicker';
 import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
-import { ResizeGridItems } from '../helpers/functions';
-
-import yoga from '../assets/yoga.png';
-import walking from '../assets/walking.png';
-import tennis from '../assets/tennis.png';
-import swimming from '../assets/swimming.png';
-import pilates from '../assets/pilates.png';
-import soccer from '../assets/soccer.png';
-import basketball from '../assets/basketball.png';
-import confused from '../assets/confused.png';
 import axios from 'axios';
 
 const StyledButton= styled.div`
@@ -22,7 +12,7 @@ const StyledButton= styled.div`
     font-size:0.9rem;
     font-weight:500;
     cursor:pointer;
-    border:2px solid #999;
+    border:3px solid #999;
     border-radius:4px;
      &:hover{
       color:#555; 
@@ -43,11 +33,10 @@ const StyledWrapper=styled.div`
     top:50%;
     transform:translate(-50%, -50%);
     transition:0.4s;
-    width:900px;
+    width:910px;
     height:90%;
     background-color:rgba(255,255,255);
-    border-radius:10px;
-    box-shadow:5px 5px 8px #aaa;
+    border-radius:4px;
     z-index: 10;
     @media(max-width:1000px){
         width:90%;
@@ -77,11 +66,6 @@ const StyledWrapper=styled.div`
     }
     `;
 
-const StyledTitle= styled.div`
-    font-weight:600;
-    font-size:1.1rem;
-`;
-
 const ActivitiesWrapper= styled.div`
     height: 300px;
     width:550px;
@@ -90,10 +74,10 @@ const ActivitiesWrapper= styled.div`
     }
     overflow-y: scroll;
     display: grid;
-    margin:30px auto;
+    margin:20px auto;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    grid-auto-rows: 0; 
+    gap: 0px;
+    align-items:center;
     @media(max-width:700px){
         grid-template-columns: repeat(2, 1fr);
     }
@@ -133,9 +117,10 @@ const StyledActivity= styled.div`
 `;
 
 const StyledHeader= styled.div`
-    font-size:1.2rem;
+    font-size:1.1rem;
     color:#000;
     margin: 5px auto;
+    font-weight:500;
 `;
 
 const ChooseButton= styled.div`
@@ -156,39 +141,11 @@ const ChooseButton= styled.div`
 `;
 
 
-const AddActivityPopup=({active, setActiveAddPopup, refreshMembersActivities, refreshUserActivities})=>{
-    const [activities, setActivities]= useState([]);
+const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsActivities, refreshUsersActivities, refreshUserActivities})=>{
     const [chosenItem, setChosenItem] = useState(null);
     const activePopupRef = useRef(active);
     const [selectedDay, setSelectedDay] = useState(FormattedDate(new Date()));
-    const [dayPickerVisibleDays, setDayPickerVisibleDays] = useState([]);
     const [amount, setAmount]= useState(0);
-    const activityIcons = {
-        tennis,
-        yoga,
-        walking, 
-        soccer,
-        swimming,
-        basketball,
-        pilates
-    };
-
-    useEffect(()=>{
-        fetchActivityTypes();
-    }, [])
-
-    const fetchActivityTypes=()=>{
-        axios.get(`http://localhost:5000/activity-types`)
-            .then(res => {
-                const activitiesWithIcons = res.data.map(activity => ({
-                    ...activity,
-                    icon: activityIcons[activity.icon] || confused,
-                }));
-                setActivities(activitiesWithIcons);
-            })
-    }
-
-
 
     useEffect(() => {
         window.addEventListener('mouseup', (event) => {
@@ -215,16 +172,15 @@ const AddActivityPopup=({active, setActiveAddPopup, refreshMembersActivities, re
         activePopupRef.current = active;
     }, [active]);
 
-    useEffect(() => {
-        ResizeGridItems("groupMemberActivities");
-    })
 
     const addActivity=(activity_type_id, date, amount)=>{
-        axios.post(`http://localhost:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount})
+        const host='192.168.1.126';
+        axios.post(`http://${host}:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount})
         .then(res => {
-           refreshMembersActivities();
+           refreshUsersActivities();
            refreshUserActivities(selectedDay);
            setActiveAddPopup(false);
+           refreshStatsActivities();
         });
       }
 
@@ -233,11 +189,10 @@ const AddActivityPopup=({active, setActiveAddPopup, refreshMembersActivities, re
             <StyledButton onClick={()=> setActiveAddPopup(!active) }>Dodaj aktywność</StyledButton>
             <StyledWrapper id='addPopup' $active={active}>
                 <CloseOutline onClick={()=>setActiveAddPopup(false)}/>
-                <StyledTitle>Wybierz aktywność:</StyledTitle>
-                <ActivitiesWrapper className="groupMemberActivities scrollable">
-                {activities.map((activity, index) => (
+                <StyledHeader>Dodaj aktywność:</StyledHeader>
+                <ActivitiesWrapper className="scrollable">
+                {activityTypes.map((activity, index) => (
                     <StyledActivity
-                        className='grid-item'
                         key={activity.id}
                         $chosen={chosenItem === index}
                         onClick={() => setChosenItem(index)}
@@ -262,7 +217,7 @@ const AddActivityPopup=({active, setActiveAddPopup, refreshMembersActivities, re
                             multipleDaySelect={false}
                             daysCount={7}
         />
-                <ChooseButton onClick={()=>addActivity(activities[chosenItem].id, selectedDay, amount)}>Wybierz</ChooseButton>
+                <ChooseButton onClick={()=>addActivity(activityTypes[chosenItem].id, selectedDay, amount)}>Wybierz</ChooseButton>
             </StyledWrapper>
         </>
 

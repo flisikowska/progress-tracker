@@ -1,20 +1,8 @@
 import React, {useEffect} from 'react';
 import styled from 'styled-components';
-import {PersonRunning} from '@styled-icons/fa-solid/PersonRunning';
-import {SportBasketball} from '@styled-icons/fluentui-system-regular/SportBasketball';
-import {Tennisball} from '@styled-icons/ionicons-solid/Tennisball';
-import {Volleyball} from '@styled-icons/fa-solid/Volleyball';
 import { ResizeGridItems } from "../helpers/functions"
 import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
 import { MinutesToFormattedTime } from '../helpers/functions';
-
-import yoga from '../assets/yoga.png';
-import walking from '../assets/walking.png';
-import tennis from '../assets/tennis.png';
-import swimming from '../assets/swimming.png';
-import pilates from '../assets/pilates.png';
-import soccer from '../assets/soccer.png';
-import basketball from '../assets/basketball.png';
 
 const StyledActivitiesWrapper = styled.div`
   margin: 20px auto;
@@ -37,7 +25,7 @@ const StyledActivitiesWrapper = styled.div`
 
   }
   >div:first-child{
-    border:2px solid #888;
+    border:3px solid #999;
     >div{
       >p{
         color:#000;
@@ -56,7 +44,7 @@ const StyledActivitiesWrapper = styled.div`
 
 const StyledActivity=styled.div`
     width:150px;
-    border:2px solid #bbb;
+    border:3px solid #bbb;
     border-radius:4px;
     padding:10px;
     text-align:center;
@@ -78,6 +66,8 @@ const StyledActivity=styled.div`
 
 const ActivityTitle= styled.h1`
     padding:0;
+    pointer-events:none;
+
     font-weight:600;
     font-size:1.1rem;
     margin: 0 auto;
@@ -88,6 +78,9 @@ const ActivityTitle= styled.h1`
 `;
 
 const StyledHeader=styled.div`
+>p{
+  pointer-events:none;
+}
 display:flex;
 flex-flow:row nowrap;
 align-items:center;
@@ -111,36 +104,26 @@ const StyledIcon=styled.img`
   margin:10px 0;
 `;
 
-function UserActivities({deleteActivity, activities}){
-  const iconMap = {
-    tennis: tennis,
-    yoga: yoga,
-    walking: walking,
-    soccer: soccer,
-    swimming: swimming,
-    basketball: basketball,
-    pilates: pilates,
-  };
+function UserActivities({activityTypes, deleteActivity, activities}){
     useEffect(() => {
         ResizeGridItems("activities")
       })
     return(
       <StyledActivitiesWrapper className='scrollable activities'>
-        <StyledActivity id="summary" className='grid-item'><StyledHeader><p>Łącznie</p></StyledHeader><ActivityTitle>{MinutesToFormattedTime(activities.reduce((total, activity) => total + activity.activity_amount, 0))}</ActivityTitle></StyledActivity>
+        <StyledActivity id="summary" className='grid-item'><StyledHeader><p>Łącznie</p></StyledHeader><ActivityTitle>{MinutesToFormattedTime(activities.reduce((total, activity) => total + activity.time, 0))}</ActivityTitle></StyledActivity>
         {activities &&
           activities.map(
             (
               {
                 activity_id,
-                activity_type_name,
-                activity_amount,
-                activity_type_icon,
+                activity_type_id,
+                time,
               }, key
             ) => (
               <StyledActivity key={key}  className='grid-item'>
-                <StyledHeader><p>{MinutesToFormattedTime(activity_amount)}</p><CloseOutline onClick={()=> deleteActivity(activity_id)}/></StyledHeader>
-                <StyledIcon src={iconMap[ activity_type_icon]} alt={activity_type_icon} />
-                <ActivityTitle>{activity_type_name}</ActivityTitle>
+                <StyledHeader><p>{MinutesToFormattedTime(time)}</p><CloseOutline onClick={()=> deleteActivity(activity_id)}/></StyledHeader>
+                <StyledIcon src={activityTypes.find(a=> a.id===activity_type_id).icon} alt={activityTypes.find(a=> a.id===activity_type_id).icon_name} />
+                <ActivityTitle>{activityTypes.find(a=> a.id===activity_type_id).name}</ActivityTitle>
               </StyledActivity>
             ),
           )}

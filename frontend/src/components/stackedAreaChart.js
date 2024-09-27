@@ -18,21 +18,12 @@ const StyledG = styled.g`
   color: #333;
 `;
 
-const StackedAreaChart = ({ goal, width, height, members }) => {
-    const [activities, setActivities]=useState([]);
-    const fetchMembersActivities=()=>{
-        axios.get(`http://localhost:5000/last-10-weeks`)
-        .then(res => {
-            setActivities(res.data);
-            });
-    }
-    useEffect(()=>{fetchMembersActivities()}, [])
-    
+const StackedAreaChart = ({ data, goal, width, height, users}) => { 
   const axesRef = useRef(null);
   const boundsWidth = width - MARGIN.right - MARGIN.left;
   const boundsHeight = height - MARGIN.top - MARGIN.bottom;
   const colorScale = Object.fromEntries(
-    members.map(({ user_name, user_color }) => [user_name, `#${user_color}`])
+    users.map(({ user_id, user_color }) => [user_id, `#${user_color}`])
   );  
 
   const processData = (rawData) => {
@@ -56,8 +47,8 @@ const StackedAreaChart = ({ goal, width, height, members }) => {
         return entry;
     });
     };
-    const processedData = useMemo(() => processData(activities), [activities]);
-    const stackKeys = members.map(m=> m.user_name);
+    const processedData = useMemo(() => processData(data), [data]);
+    const stackKeys = users.map(m=> m.user_id);
     const stackSeries = d3.stack()
       .keys(stackKeys)
       .order(d3.stackOrderNone)
@@ -84,6 +75,7 @@ const StackedAreaChart = ({ goal, width, height, members }) => {
           .style('font-weight', '500')
           .style('font-family', '"DM Sans", sans-serif')
           .style('font-size', '.85rem')
+          .style('pointer-events', 'none')
           .call(xAxisGenerator);
 
       xTicks.selectAll('text')
@@ -98,6 +90,8 @@ const StackedAreaChart = ({ goal, width, height, members }) => {
           .style('font-weight', '500')
           .style('font-family', '"DM Sans", sans-serif')
           .style('font-size', '.85rem')
+          .style('pointer-events', 'none')
+
          
       svgElement.append('line')
       .attr('x1', 0)
@@ -117,6 +111,7 @@ const StackedAreaChart = ({ goal, width, height, members }) => {
       .attr('font-size', '0.9rem')
       .attr('font-weight', '600')
       .attr('font-family', '"DM Sans", sans-serif')
+      .style('pointer-events', 'none')
       .attr('fill', '#555')
       .text('cel');
 

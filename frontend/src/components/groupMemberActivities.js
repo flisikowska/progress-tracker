@@ -2,13 +2,6 @@ import React, {useEffect} from 'react';
 import styled from 'styled-components';
 import { ResizeGridItems } from "../helpers/functions"
 import { MinutesToFormattedTime } from '../helpers/functions';
-import yoga from '../assets/yoga.png';
-import walking from '../assets/walking.png';
-import tennis from '../assets/tennis.png';
-import swimming from '../assets/swimming.png';
-import pilates from '../assets/pilates.png';
-import soccer from '../assets/soccer.png';
-import basketball from '../assets/basketball.png';
 
 const StyledActivitiesWrapper = styled.div`
   width:100%;
@@ -30,7 +23,7 @@ const StyledActivitiesWrapper = styled.div`
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
   >div:first-child{
-    border:2px solid #888;
+    border:3px solid #999;
     >div{
       color:#000;
       font-size:1rem;
@@ -46,8 +39,9 @@ const StyledActivitiesWrapper = styled.div`
 `;
 
 const StyledActivity=styled.div`
+    pointer-events:none;
     width:130px;
-    border:2px solid #bbb;
+    border:3px solid #bbb;
     border-radius:4px;
     padding:10px;
     text-align:center;
@@ -88,16 +82,7 @@ const StyledIcon=styled.img`
   margin:10px 0;
 `;
 
-function GroupMemberActivities({summary, activities}){
-  const iconMap = {
-    tennis: tennis,
-    yoga: yoga,
-    walking: walking,
-    soccer: soccer,
-    swimming: swimming,
-    basketball: basketball,
-    pilates: pilates,
-  };
+function GroupMemberActivities({activityTypes, summary, activities}){
     useEffect(() => {
         ResizeGridItems("groupMemberActivities")
     })
@@ -112,15 +97,14 @@ function GroupMemberActivities({summary, activities}){
           activities.map(
             (
               {
-                name,
+                activity_type_id,
                 time,
-                icon,
               }, key
             ) => (
                   <StyledActivity key={key} className='grid-item'>
                     <StyledTime>{MinutesToFormattedTime(time)}</StyledTime>
-                    <StyledIcon src={iconMap[icon]} alt={icon} />
-                    <ActivityTitle>{name}</ActivityTitle>
+                    <StyledIcon src={activityTypes.find(a=> a.id===activity_type_id).icon} alt={activityTypes.find(a=> a.id===activity_type_id).icon_name} />
+                    <ActivityTitle>{activityTypes.find(a=> a.id===activity_type_id).name}</ActivityTitle>
                   </StyledActivity>
 
             ),

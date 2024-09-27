@@ -87,4 +87,23 @@ ALTER TABLE IF EXISTS public.activity
 ALTER TABLE IF EXISTS public."user"
     ADD COLUMN color text NOT NULL DEFAULT 'FFFFFF';
 	
-	
+ALTER TABLE IF EXISTS public."user"
+    ADD COLUMN sub text NOT NULL UNIQUE;
+
+    DELETE FROM public."user";
+DELETE FROM public."activity";
+
+Alter Table public.activity DROP CONSTRAINT user_id;
+
+ALTER TABLE public.user
+ALTER COLUMN user_id TYPE text;
+
+ALTER TABLE public.activity
+ALTER COLUMN user_id TYPE text;
+
+ALTER TABLE public.activity
+ADD CONSTRAINT user_id FOREIGN KEY (user_id)
+REFERENCES public.user (user_id);
+
+alter table public.user
+drop column sub;

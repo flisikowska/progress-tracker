@@ -24,7 +24,9 @@ const StyledButton= styled.div`
     margin-left:auto;
 `;
 
-function Profile({members, userActivitiesFromTheDay, refreshMembersActivities, fetchUserActivities, logout}) {
+function Profile({activityTypes, userActivitiesForTheDay, refreshUsersActivities, fetchUserActivities, logout}) {
+  const host='192.168.1.126';
+
   const [selectedDays, setSelectedDays] = useState([FormattedDate(new Date())]);
 
   useEffect(()=>{
@@ -32,9 +34,9 @@ function Profile({members, userActivitiesFromTheDay, refreshMembersActivities, f
   },[selectedDays]);
 
   const handleActivityDelete = (id) => {
-    axios.delete(`http://localhost:5000/activities/${id}`) 
+    axios.delete(`http://${host}:5000/activities/${id}`) 
       .then(res => {
-        refreshMembersActivities();
+        refreshUsersActivities();
         fetchUserActivities(selectedDays);
     })
   };
@@ -48,7 +50,7 @@ function Profile({members, userActivitiesFromTheDay, refreshMembersActivities, f
           multipleDaySelect={true}
           daysCount={7}
         />
-        <UserActivities deleteActivity={handleActivityDelete} activities={userActivitiesFromTheDay}/>
+        <UserActivities activityTypes={activityTypes} deleteActivity={handleActivityDelete} activities={userActivitiesForTheDay}/>
         <StyledButton onClick={logout}>Wyloguj się</StyledButton>
       </StyledContainer>
   )

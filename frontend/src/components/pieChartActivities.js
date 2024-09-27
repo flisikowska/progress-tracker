@@ -27,10 +27,11 @@ const StyledInfoWrapper = styled.div`
 `;
 
 const StyledTitle = styled.div`
+    pointer-events:none;
     font-weight:600;
     font-size:1.4rem;
     cursor:default;
-    color:${(props) => props.$color};
+    color:#000;
 `;
 
 const StyledInfo = styled.div`
@@ -41,24 +42,24 @@ const StyledInfo = styled.div`
     } 
 `;
 
-const PieChartActivities = forwardRef((props, ref) => {
+const PieChartActivities = forwardRef(({activityTypes}, ref) => {
     const [selectedComponent, setSelectedComponent]= useState(null);
     useImperativeHandle(ref, () =>  ({
         setComponent(x) {
             setSelectedComponent(x);
         }
-    })
-);
+        })
+    );
 
     return (
             <StyledInfoContainer>
                 {selectedComponent && (
                     <StyledInfoWrapper className="info-container">
-                        <StyledTitle $color={ selectedComponent.Color} id="segmentTitle">
-                            {selectedComponent.Type}
+                        <StyledTitle id="segmentTitle">
+                            {selectedComponent.name}
                         </StyledTitle>
                         <StyledInfo id="segmentInfo">
-                            <GroupMemberActivities summary={selectedComponent.activities && selectedComponent.activities.reduce((total, activity) => total + activity.time, 0)} activities={selectedComponent.activities} />
+                            <GroupMemberActivities activityTypes={activityTypes} summary={selectedComponent.amount} activities={selectedComponent.activities} />
                         </StyledInfo>
                     </StyledInfoWrapper>
                 )}

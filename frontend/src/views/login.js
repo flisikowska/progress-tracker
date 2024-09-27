@@ -1,6 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import girl from '../assets/girl2.png';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
 
 const StyledContainer= styled.div`
   width:100%;
@@ -60,20 +62,35 @@ const StyledLoginContainer=styled.div`
     }
   }
 `;
+const onSuccess = async (response) => {
+    const { credential } = response;
+    const res = await axios.post('http://localhost:5000/google-auth', {
+      credential,
+    }, {
+      withCredentials: true,
+    });
+    console.log('Login successful:', res.data);
+};
 
+
+const onFailure = (error) => {
+  console.log('Login failed:', error);
+};
 
 function Login() {
-  return (
+  return (    
+  <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
     <StyledContainer>
         <StyledGirl/>
         <Right>
           <StyledHeader>Cześć<p>Zbierz drużynę i razem osiągnijcie wymarzony cel!</p></StyledHeader>
-          <StyledLoginContainer>
-            <div>Zaloguj się</div>
-            <div>Utwórz konto</div>
-          </StyledLoginContainer>
+            <GoogleLogin
+              onSuccess={onSuccess}
+              onError={onFailure}
+            />
       </Right>
       </StyledContainer>
+    </GoogleOAuthProvider>
   )
 };
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import * as d3 from 'd3';
 
-const usePieChart = (data_V1, setComponent) => {
+const usePieChart = (data, setComponent) => {
   useEffect(() => {
     const pieChartElement = d3.select('#pieChart');
     const width = parseInt(pieChartElement.style('width'), 10);
@@ -20,7 +20,7 @@ const usePieChart = (data_V1, setComponent) => {
 
     const pie = d3.pie()
       .sort(null)
-      .value(d => d.Amount);
+      .value(d => d.amount);
 
     const svg = d3.select("#pieChart").append("svg")
       .attr("width", '100%')
@@ -33,21 +33,21 @@ const usePieChart = (data_V1, setComponent) => {
 
     const g = svg
       .selectAll("path")
-      .data(pie(data_V1))
+      .data(pie(data))
       .enter().append("path")
-      .style("fill", d => d.data.Color)
-      .style("stroke", d => d.data.Color)
-      .style("stroke-width", d => d.data.Type === "Pozostało" ? "0px" : "2px")
+      .style("fill", d => d.data.color)
+      .style("stroke", d => d.data.color)
+      .style("stroke-width", d => d.data.name === "Pozostało" ? "0px" : "2px")
       .attr("d", arc)
-      .attr("id", d => `pieArc${d.data.Type}`)
+      .attr("id", d => `pieArc${d.data.user_id}`)
       .attr("fill-opacity", 0.3)
       .on("mouseenter", function (event, d) {
         d3.select(this).attr("fill-opacity", 0.4);
-        d3.select(`#chartArea${d.data.Type}`).attr('fill-opacity', '0.4');
+        d3.select(`#chartArea${d.data.user_id}`).attr('fill-opacity', '0.4');
       })
       .on("mouseleave", function (event, d) {
         d3.select(this).attr("fill-opacity", 0.3); 
-        d3.select(`#chartArea${d.data.Type}`).attr('fill-opacity', '0.3');
+        d3.select(`#chartArea${d.data.user_id}`).attr('fill-opacity', '0.3');
       })
       .on("mouseenterchart", function (event, d) {
         d3.select(this).attr("fill-opacity", 0.4);
@@ -62,22 +62,23 @@ const usePieChart = (data_V1, setComponent) => {
       const change=(d, i)=>{
         const angle = 90 - ((d.startAngle * (180 / Math.PI)) + ((d.endAngle - d.startAngle) * (180 / Math.PI) / 2));
         const pieChartContainer = document.querySelector('#pieChartContainer');
-        if (d.data.Type !== "Pozostało") {
+        if (d.data.name !== "Pozostało") {
           pieChartContainer.style.transform = 'translateX(0)';
-          // setTimeout(() => {
-            if (typeof setComponent === 'function') {
+          if (window.innerWidth >= 1000){
+            setTimeout(() => {
               setComponent(d.data);
-            }
-          // }, 800);
+            }, 800);
+          }
+          else{
+            setComponent(d.data);
+          }
           svg.transition()
           .duration(1000)
           .attr("transform", "translate(" + width / 2 + "," + height / 2 + ") rotate(" + angle + ")");
         } else {
             if (window.innerWidth >= 1000)
               pieChartContainer.style.transform = 'translateX(270px)';
-            if (typeof setComponent === 'function') {
-              setComponent(null);
-            }
+            setComponent(null);
             svg.transition()
               .duration(1000)
               .attr("transform", "translate(" + width / 2 + "," + height / 2 + ") rotate(0)");
@@ -95,7 +96,7 @@ const usePieChart = (data_V1, setComponent) => {
       return () => {
         d3.select("#pieChart").select("svg").remove();
       };
-  }, [data_V1, setComponent]);
+  }, [data, setComponent]);
 };
 
 export default usePieChart;

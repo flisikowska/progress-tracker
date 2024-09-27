@@ -33,6 +33,7 @@ const StyledDaySquare = styled.div`
 const StyledDay = styled.p`
   font-size: 1.2rem;
   margin: 3px auto 0 auto;
+  pointer-events:none;
   @media (max-width: 450px) {
     font-size: 1rem;
   }
@@ -40,6 +41,7 @@ const StyledDay = styled.p`
 
 const StyledDate = styled.p`
   font-size: 0.8rem;
+  pointer-events:none;
   margin-top:7px;
   color: black;
   @media (max-width: 450px) {

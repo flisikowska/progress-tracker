@@ -49,6 +49,7 @@ const StyledPieChart = styled.div`
 `;
 
 const StyledRemainingTime = styled.div`
+    pointer-events:none;
     position:absolute;
     top:50%;
     left:50%;
@@ -61,22 +62,24 @@ const StyledRemainingTime = styled.div`
 `;
 
 
-function PieChart({ goal, activities, setComponent }) {
+function PieChart({ goal, users, usersActivities, setComponent }) {
     const calculateAmount = (d) => {
         return d.activities.reduce((total, activity) => total + activity.time, 0);
     };
-    const timeLeft= goal - activities.reduce((sum, d) => sum + calculateAmount(d), 0);
-    
-    usePieChart([...activities.map(d => ({
-        Type: d.Type,
-        Amount: calculateAmount(d),
-        Color: d.Color,
+    const timeLeft= goal - usersActivities.reduce((sum, d) => sum + calculateAmount(d), 0);
+
+    usePieChart([...usersActivities.map(d => (
+        {
+        user_id: d.user_id,
+        name: users.find(u=> u.user_id==d.user_id)?.user_name,
+        amount: calculateAmount(d),
+        color: '#'+users.find(u=> u.user_id==d.user_id)?.user_color,
         activities: d.activities
       })),
       {
-        Type: 'Pozostało',
-        Amount: timeLeft,
-        Color: '#dcdcdc',
+        name: 'Pozostało',
+        amount: timeLeft,
+        color: '#777879',
         activities: []
     }], 
     setComponent

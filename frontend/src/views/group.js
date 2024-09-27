@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import styled from 'styled-components';
 import PieChart from '../components/pieChart';
 import StackedAreaChart from '../components/stackedAreaChart';
@@ -24,58 +24,38 @@ const StyledContainer = styled.div`
 `;
 
 const StyledStatsTitle = styled.h2`
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     margin-top: 40px;
     text-align: left;
+    pointer-events: none;
+
 `;
 
-function Group({members, goal, membersActivities}) {
+function Group({statsData, activityTypes, users, goal, usersActivities}) {
     const areaChartWidth=600;
     const areaChartHeight=400;
     const pieChartActivitiesRef = useRef();
-    const processData = (data) => {
-        const userMap = new Map();
-        data.forEach(activity => {
-            const { user_name, user_color, activity_amount, activity_type_name, activity_date, activity_type_icon } = activity;
-            if (!userMap.has(user_name)) {
-                userMap.set(user_name, {
-                    Type: user_name,
-                    Color: '#'+user_color,
-                    activities: []
-                });
-            }
-
-            userMap.get(user_name).activities.push({
-                name: activity_type_name,
-                icon: activity_type_icon,
-                date: activity_date.split('T')[0],
-                time: activity_amount
-            });
-        });
-
-        return Array.from(userMap.values());
-    };
-    const activities=processData(membersActivities);
     return (
         <StyledContainer>
             <StyledPieChart>
                 <PieChart
                     goal={goal}
-                    activities={activities}
+                    users={users}
+                    usersActivities={usersActivities}
                     setComponent={(x)=>pieChartActivitiesRef?.current?.setComponent(x)}
                 />
                 <PieChartActivities
+                    activityTypes={activityTypes}
                     ref={pieChartActivitiesRef}
-                    goal={goal}
-                    activities={activities} 
                 />
             </StyledPieChart>
             <StyledStatsTitle>Statystyki:</StyledStatsTitle>
             <StackedAreaChart
+                data={statsData}
                 goal={goal}
                 width={areaChartWidth}
                 height={areaChartHeight}
-                members={members}
+                users={users}
             />
         </StyledContainer>
     );

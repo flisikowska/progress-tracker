@@ -44,8 +44,11 @@ const StyledWrapper=styled.div`
         font-weight:bold;
     }
     @media(max-width:570px){
-        width:70%;
-        height:250px;
+        width:100%;
+        height:100%;
+        right:0;
+        transform: translate(${(props) => (props.$active ? '0' : '120%')});
+        transition:  2s;
         #info{
             font-size:0.7rem;    
         }
