@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { MinutesToFormattedTime } from '../helpers/functions';
 import usePieChart from '../helpers/usePieChart';
@@ -21,11 +21,6 @@ const PieChartContainer = styled.div`
     height:300px;
     margin:20px;
     z-index:1;
-    transition: transform 1s ease-in-out;
-    transform: translateX(270px); 
-    @media(max-width:1000px){
-      transform: translateX(0); 
-    }
     @media(max-width:750px){
       width:200px;
       height:200px;
@@ -62,38 +57,39 @@ const StyledRemainingTime = styled.div`
 `;
 
 
-function PieChart({ goal, users, usersActivities, setComponent }) {
+function PieChart({ goal, users, usersActivities, setComponent, selected }) {
     const calculateAmount = (d) => {
         return d.activities.reduce((total, activity) => total + activity.time, 0);
     };
     const timeLeft= goal - usersActivities.reduce((sum, d) => sum + calculateAmount(d), 0);
 
-    usePieChart([...usersActivities.map(d => (
-        {
+    const data = useMemo(() => ([
+      ...usersActivities.map(d => ({
         user_id: d.user_id,
-        name: users.find(u=> u.user_id==d.user_id)?.user_name,
+        name: users.find(u => u.user_id == d.user_id)?.user_name,
         amount: calculateAmount(d),
-        color: '#'+users.find(u=> u.user_id==d.user_id)?.user_color,
-        activities: d.activities
+        color: '#' + users.find(u => u.user_id == d.user_id)?.user_color,
+        activities: d.activities,
       })),
       {
         name: 'Pozostało',
         amount: timeLeft,
         color: '#777879',
-        activities: []
-    }], 
-    setComponent
-   );
+        activities: [],
+      },
+    ]), [usersActivities, users, timeLeft]);
+
+    usePieChart(data, setComponent, selected);
 
     return (
         <StyledContainer>
             <PieChartContainer id="pieChartContainer">
                 <StyledPieChart id="pieChart" />
                 <StyledRemainingTime>
-                    {timeLeft<=0? 
+                    {timeLeft<=0?
                     <p>Cel został osiągnięty!</p>
                     :
-                    <p>Pozostało <br/> {MinutesToFormattedTime(timeLeft)}</p>}
+                    <p>{MinutesToFormattedTime(goal - timeLeft)} <br/> z {MinutesToFormattedTime(goal)} celu</p>}
                 </StyledRemainingTime>
             </PieChartContainer>
         </StyledContainer>

@@ -174,7 +174,7 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
 
 
     const addActivity=(activity_type_id, date, amount)=>{
-        const host='192.168.1.126';
+        const host='localhost';
         axios.post(`http://${host}:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount})
         .then(res => {
            refreshUsersActivities();

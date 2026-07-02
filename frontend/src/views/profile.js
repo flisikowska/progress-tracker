@@ -25,7 +25,7 @@ const StyledButton= styled.div`
 `;
 
 function Profile({activityTypes, userActivitiesForTheDay, refreshUsersActivities, fetchUserActivities, logout}) {
-  const host='192.168.1.126';
+  const host='localhost';
 
   const [selectedDays, setSelectedDays] = useState([FormattedDate(new Date())]);
 

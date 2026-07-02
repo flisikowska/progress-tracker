@@ -4,13 +4,12 @@ import { PersonRunning } from '@styled-icons/fa-solid/PersonRunning';
 import { BookPulse } from '@styled-icons/fluentui-system-regular/BookPulse';
 import { ChannelAdd } from '@styled-icons/fluentui-system-filled/ChannelAdd';
 
-
 const StyledMenu = styled.div`
     display:flex;
     width:900px;
     flex-flow:row nowrap;
-    justify-content:right;
-    padding-right:65px;
+    justify-content:left;
+    padding-left:65px;
     margin:auto;
     z-index:4;
     #add{
@@ -53,14 +52,14 @@ const ItemWrapper = styled.div`
     position: relative;
     display: flex;
     flex-flow: row nowrap;
-    justify-content:center;    
+    justify-content:center;
     margin: 0 -.3em;
     width: 10em;
   	padding: .7em 2em .5em;
     z-index: ${(props) => (props.$active ? '2' : '1')};
     &:before{
         background-color: ${(props) => (props.$active ? 'rgba(86, 186, 119,0.8)' : 'rgba(100,100,100,0.3)')};
-        border: .2em solid #fff;
+        border: .1em solid #fff;
         content: '';
         z-index:-1;
         position: absolute;

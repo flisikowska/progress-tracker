@@ -44,7 +44,10 @@ export function FormattedDate(d) {
     return FormattedDate(d) + ' ' + DateToFormattedTime(d);
   }
   export function MinutesToFormattedTime(d){
-    return Math.floor((d/60)) !==0 ? ((Math.floor(d/60))+'h '+d%60+'min'):''+(d%60+'min');
+    const h = Math.floor(d/60);
+    const m = d%60;
+    if (h !== 0) return m !== 0 ? (h+'h '+m+'min') : (h+'h');
+    return m+'min';
   }
 
   export const addDays = (date, days) => {

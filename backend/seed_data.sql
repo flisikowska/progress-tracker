@@ -23,7 +23,7 @@ DECLARE
 	i INTEGER;
     user_record RECORD;
 BEGIN
-	FOR user_record IN SELECT * FROM public.user LOOP
+	FOR user_record IN SELECT * FROM public."user" LOOP
 		FOR i IN SELECT generate_series(0, 30) LOOP 
 				INSERT INTO public.activity(date, activity_type_id, user_id, amount)
 				VALUES (

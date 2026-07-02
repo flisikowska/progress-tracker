@@ -78,15 +78,15 @@ app.get('/', async (req, res) => {
   res.send(response);
 })
 
-app.get('/group', async (req, res) => {
-  const user_id = "100262135207672155021";
+app.get('/group', authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
   const query = `
-    SELECT 
+    SELECT
     g.name AS group_name,
     g.goal AS group_goal,
     u.name AS user_name,
     u.color AS user_color,
-    u.user_id 
+    u.user_id
     FROM public.group g
     JOIN public.user u ON u.group_id = g.group_id
     WHERE g.group_id = (SELECT CU.group_id FROM public.user CU WHERE CU.user_id = $1 LIMIT 1)
@@ -104,8 +104,8 @@ app.get('/group', async (req, res) => {
   res.send(groupData);
 });
 
-app.get('/activities', async (req, res) => {
-  const user_id = "100262135207672155021";
+app.get('/activities', authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
   if(req.query.date == null)
   {
     res.send([]);
@@ -140,21 +140,21 @@ app.get('/activities', async (req, res) => {
 })
 
 app.get('/current-week', jsonParser, authenticateToken, async (req, res) => {
-  const user_id = "100262135207672155021";
+  const user_id = req.user.userId;
   const beginning_of_current_week = getMonday();
   const query = `
-    SELECT 
+    SELECT
 	    U.user_id,
       AT.activity_type_id,
       AT.name AS activity_type_name,
       A.date,
       A.activity_id,
       A.amount AS activity_amount
-    FROM public.group 
+    FROM public.group
     JOIN public.user U ON public.group.group_id= U.group_id
     JOIN public.activity A ON A.user_id = U.user_id
     JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
-    WHERE 
+    WHERE
       public.group.group_id = (SELECT CU.group_id FROM public.user CU WHERE CU.user_id=$1 LIMIT 1)
 	  AND A.date >= $2
   `;
@@ -182,7 +182,7 @@ app.get('/current-week', jsonParser, authenticateToken, async (req, res) => {
 
 app.get('/last-10-weeks', async (req, res) => {
   const query = `
-    SELECT 
+    SELECT
         U.user_id,
         DATE_TRUNC('week', A.date) AS week_start,
         SUM(A.amount) AS total_amount
@@ -213,8 +213,8 @@ app.get('/activity-types', async (req, res) => {
   res.send(response);
 });
 
-app.delete('/activities/:id', async (req, res) => {
-  const user_id = "100262135207672155021";
+app.delete('/activities/:id', authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
   const activity_id=req.params.id;
   const query = `
     DELETE FROM public.activity 
@@ -224,8 +224,8 @@ app.delete('/activities/:id', async (req, res) => {
   res.send();
 })
 
-app.post('/activities', jsonParser,  async (req, res) =>{
-  const user_id="100262135207672155021";
+app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
+  const user_id = req.user.userId;
   const {activity_type_id, date, amount}= req.body;
   if (!activity_type_id || !date || amount == null)
     return;
@@ -262,7 +262,7 @@ app.post("/google-auth", jsonParser, async (req, res) => {
   const resp=await client.query(userQuery, [sub]);
   let user=resp.rows[0];
   if (!user) {
-    const query = `INSERT INTO public.user (user_id, name, group_id, color) 
+    const query = `INSERT INTO public.user (user_id, name, group_id, color)
           VALUES ($1, $2, $3, $4) RETURNING *`;
     const response = await client.query(query, [sub, name, group_id, color]);
     user = response.rows[0];
@@ -288,6 +288,15 @@ app.get("/user", authenticateToken, async (req, res) => {
       return res.sendStatus(404); 
     }
     res.status(200).json(response);
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'Strict',
+  });
+  res.status(200).json({ message: "Wylogowano pomyślnie" });
 });
 
 app.listen(port, '0.0.0.0', () => {

@@ -62,22 +62,25 @@ const StyledLoginContainer=styled.div`
     }
   }
 `;
-const onSuccess = async (response) => {
-    const { credential } = response;
-    const res = await axios.post('http://localhost:5000/google-auth', {
-      credential,
-    }, {
-      withCredentials: true,
-    });
-    console.log('Login successful:', res.data);
-};
-
 
 const onFailure = (error) => {
   console.log('Login failed:', error);
 };
 
-function Login() {
+function Login({onLogin}) {
+  const onSuccess = async (response) => {
+    const { credential } = response;
+    try {
+      await axios.post('http://localhost:5000/google-auth', {
+        credential,
+      }, {
+        withCredentials: true,
+      });
+      onLogin();
+    } catch (err){
+      console.log('Login failed: ', err);
+    }
+  };
   return (    
   <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
     <StyledContainer>
