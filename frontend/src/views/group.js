@@ -24,11 +24,49 @@ const StyledContainer = styled.div`
     text-align: center;
 `;
 
+const StyledStatsHeader = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 40px;
+    gap: 16px;
+`;
+
 const StyledStatsTitle = styled.h2`
     font-size: 1.2rem;
-    margin-top: 40px;
     text-align: left;
     pointer-events: none;
+    flex-shrink: 0;
+`;
+
+const UserLegend = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    &::-webkit-scrollbar { height: 3px; }
+    &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+`;
+
+const LegendItem = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+`;
+
+const LegendDot = styled.span`
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+`;
+
+const LegendName = styled.span`
+    font-size: 0.85rem;
+    color: #ccc;
 `;
 
 const StatsList = styled.div`
@@ -52,11 +90,11 @@ const StatRow = styled.div`
     padding:10px 14px;
     border-radius:6px;
     cursor:pointer;
-    background-color:${(props) => (props.$active ? 'rgba(86,186,119,0.25)' : 'rgba(255,255,255,0.06)')};
-    border:1px solid ${(props) => (props.$active ? 'rgba(86,186,119,0.8)' : 'transparent')};
+    background-color: var(--color-background);
+    border:1px solid transparent;
     transition:0.2s;
     &:hover{
-      background-color:rgba(255,255,255,0.15);
+      background-color: var(--primary);
     }
 `;
 
@@ -69,13 +107,14 @@ const Dot = styled.span`
 
 const Name = styled.span`
     font-weight:600;
-    color:#fff;
+    color: var(--text);
 `;
 
 const Time = styled.span`
     margin-left:auto;
     font-weight:600;
-    color:#eee;
+    font-size: 0.8rem;
+    color: var(--text);
 `;
 
 const Details = styled.div`
@@ -94,21 +133,24 @@ const DetailsHeader = styled.div`
     align-items:center;
     justify-content:space-between;
     margin-bottom:10px;
-    font-size:1.3rem;
+    font-size:1.2rem;
     font-weight:600;
-    color:#fff;
+    color:var(--text);
 `;
 
 const CloseBtn = styled.span`
     cursor:pointer;
     font-size:1.6rem;
     line-height:1;
-    color:#eee;
-    &:hover{ color:#fff; }
+    color:var(--text-inactive);
+    transition:0.2;
+    &:hover{ 
+        color:var(--text);
+ }
 `;
 
 function Group({ statsData, activityTypes, users, goal, usersActivities }) {
-    const areaChartWidth = 600;
+    const areaChartWidth = 860;
     const areaChartHeight = 400;
     const [selected, setSelected] = useState(null);
 
@@ -149,7 +191,6 @@ function Group({ statsData, activityTypes, users, goal, usersActivities }) {
                         {members.map((m) => (
                             <StatRow
                                 key={m.user_id}
-                                $active={selected?.user_id === m.user_id}
                                 onClick={() => setSelected(m)}
                             >
                                 <Dot style={{ backgroundColor: m.color }} />
@@ -161,7 +202,17 @@ function Group({ statsData, activityTypes, users, goal, usersActivities }) {
                 )}
             </StyledPieChart>
 
-            <StyledStatsTitle>Statystyki:</StyledStatsTitle>
+            <StyledStatsHeader>
+                <StyledStatsTitle>Statystyki grupy:</StyledStatsTitle>
+                <UserLegend>
+                    {users.map(u => (
+                        <LegendItem key={u.user_id}>
+                            <LegendDot style={{ backgroundColor: '#' + u.user_color }} />
+                            <LegendName>{u.user_name}</LegendName>
+                        </LegendItem>
+                    ))}
+                </UserLegend>
+            </StyledStatsHeader>
             <StackedAreaChart
                 data={statsData}
                 goal={goal}

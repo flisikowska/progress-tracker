@@ -6,11 +6,11 @@ const inner = Math.min(radius, 150);
 const outer = Math.max(radius, 150);
 
 const arc = d3.arc()
-  .outerRadius(inner - 10)
+  .outerRadius(inner + 8)
   .innerRadius(outer);
 
 const arcOver = d3.arc()
-  .outerRadius(inner - 10)
+  .outerRadius(inner + 8)
   .innerRadius(outer + 20);
 
 const usePieChart = (data, setComponent, selected) => {
@@ -44,20 +44,20 @@ const usePieChart = (data, setComponent, selected) => {
       .style("stroke-width", d => d.data.name === "Pozostało" ? "0px" : "2px")
       .attr("d", arc)
       .attr("id", d => `pieArc${d.data.user_id}`)
-      .attr("fill-opacity", 0.3)
+      .attr("fill-opacity", 0.6)
       .on("mouseenter", function (event, d) {
-        d3.select(this).attr("fill-opacity", 0.4);
-        d3.select(`#chartArea${d.data.user_id}`).attr('fill-opacity', '0.4');
+        d3.select(this).transition().duration(250).attr("fill-opacity", 0.7);
+        d3.select(`#chartArea${d.data.user_id}`).transition().duration(250).attr('fill-opacity', '0.7');
       })
       .on("mouseleave", function (event, d) {
-        d3.select(this).attr("fill-opacity", 0.3);
-        d3.select(`#chartArea${d.data.user_id}`).attr('fill-opacity', '0.3');
+        d3.select(this).transition().duration(250).attr("fill-opacity", 0.6);
+        d3.select(`#chartArea${d.data.user_id}`).transition().duration(250).attr('fill-opacity', '0.6');
       })
       .on("mouseenterchart", function (event, d) {
-        d3.select(this).attr("fill-opacity", 0.4);
+        d3.select(this).transition().duration(250).attr("fill-opacity", 0.7);
       })
       .on("mouseleavechart", function (event, d) {
-        d3.select(this).attr("fill-opacity", 0.3);
+        d3.select(this).transition().duration(250).attr("fill-opacity", 0.6);
       })
       .on("click", function (event, d) {
         setComponent(d.data.name === "Pozostało" ? null : d.data);

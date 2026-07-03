@@ -4,22 +4,28 @@ import TimePicker from './timePicker';
 import { FormattedDate } from '../helpers/functions';
 import DayPicker from '../components/dayPicker';
 import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
+import { Plus } from '@styled-icons/fa-solid/Plus';
 import axios from 'axios';
 
 const StyledButton= styled.div`
     z-index:10;
     padding:7px 10px;
     font-size:0.9rem;
-    font-weight:500;
+    font-weight:600;
     cursor:pointer;
-    border:3px solid #999;
-    border-radius:4px;
-     &:hover{
-      color:#555; 
+    background-color: var(--blue);
+    border-radius:20px;
+    color:var(--white);
+    display:flex;
+    align-items:center;
+    gap:6px;
+    >svg{
+        width:12px;
+        height:12px;
     }
     @media(max-width:570px){
         display:none;
-    }   
+    }
 `;
 
 const StyledWrapper=styled.div`
@@ -135,8 +141,8 @@ const ChooseButton= styled.div`
     width:100px;
     margin:auto;
     &:hover{
-        background-color:rgba(86, 186, 119,0.8);
-        border:2px solid rgba(86, 186, 119,0.8);
+        background-color:var(--blue);
+        border:2px solid var(--blue);
     }
 `;
 
@@ -175,7 +181,7 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
 
     const addActivity=(activity_type_id, date, amount)=>{
         const host='localhost';
-        axios.post(`http://${host}:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount})
+        axios.post(`http://${host}:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount}, { withCredentials: true })
         .then(res => {
            refreshUsersActivities();
            refreshUserActivities(selectedDay);
@@ -186,7 +192,7 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
 
     return (
         <>
-            <StyledButton onClick={()=> setActiveAddPopup(!active) }>Dodaj aktywność</StyledButton>
+            <StyledButton onClick={()=> setActiveAddPopup(!active) }><Plus/>Dodaj aktywność</StyledButton>
             <StyledWrapper id='addPopup' $active={active}>
                 <CloseOutline onClick={()=>setActiveAddPopup(false)}/>
                 <StyledHeader>Dodaj aktywność:</StyledHeader>

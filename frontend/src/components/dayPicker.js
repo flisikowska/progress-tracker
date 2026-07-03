@@ -14,7 +14,7 @@ const StyledDaySquare = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-radius: 3px;
+  border-radius: 9px;
   @media (max-width: 450px) {
     font-size: 0.75rem;
   }
@@ -22,8 +22,8 @@ const StyledDaySquare = styled.div`
   ${(props) =>
     props.selected &&
     css`
-      background: rgba(121, 193, 145, 0.7);
-      border:2px solid rgb(121, 193, 145);
+      background: var(--blue);
+      border:2px solid var(--blue);
       p{
         color:#fff;
       }
@@ -68,12 +68,12 @@ const DayPickerItem = ({
 
 const StyledDayPickerWrapper = styled.div`
     >svg{
-      color: #79c191;
+      color: var(--blue);
       cursor: pointer;
       width: 40px;
       height: 40px;
       :hover {
-        color:#55a670;
+        color: var(--blue);
       }
     }
     text-align: center;

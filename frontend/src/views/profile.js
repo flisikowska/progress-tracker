@@ -34,7 +34,7 @@ function Profile({activityTypes, userActivitiesForTheDay, refreshUsersActivities
   },[selectedDays]);
 
   const handleActivityDelete = (id) => {
-    axios.delete(`http://${host}:5000/activities/${id}`) 
+    axios.delete(`http://${host}:5000/activities/${id}`, { withCredentials: true })
       .then(res => {
         refreshUsersActivities();
         fetchUserActivities(selectedDays);

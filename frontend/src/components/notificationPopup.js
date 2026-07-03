@@ -3,13 +3,22 @@ import React, {useRef, useEffect} from 'react';
 import styled from 'styled-components';
 
 const StyledContainer=styled.div`
+width:35px;
+height:35px;
+background: var(--primary);
+border-radius:30px;
+display:flex;
+justify-content:center;
+align-items:center;
+position:relative;
+cursor:pointer;
+
 >svg{
-    width:30px;
-    height:30px;
-    color:black;
-    cursor:pointer;
-    margin:0 10px;
-    }
+    width:20px;
+    height:20px;
+    padding:0; 
+    margin:0;
+    color:var(--text);
 `;
     
 const StyledWrapper=styled.div`

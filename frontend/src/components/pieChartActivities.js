@@ -31,7 +31,7 @@ const StyledTitle = styled.div`
     font-weight:600;
     font-size:1.4rem;
     cursor:default;
-    color:#000;
+    color:var(--text);
 `;
 
 const StyledInfo = styled.div`

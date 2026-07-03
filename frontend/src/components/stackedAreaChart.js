@@ -6,7 +6,6 @@ import axios from 'axios';
 const MARGIN = { top: 30, right: 30, bottom: 50, left: 50 };
 
 const StyledContainer = styled.div`
-  max-width: 600px;
   margin: auto;
 `;
 
@@ -134,11 +133,11 @@ const StackedAreaChart = ({ data, goal, width, height, users}) => {
                     <g key={i} 
                         onMouseEnter={(e) => {
                             document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('mouseenterchart'));
-                            d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.5);
+                            d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.7);
                         }}
                         onMouseLeave={(e) => {
                             document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('mouseleavechart'));
-                            d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.3);
+                            d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.6);
                         }}
                         onClick={() => {
                             document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('click'));
@@ -151,7 +150,8 @@ const StackedAreaChart = ({ data, goal, width, height, users}) => {
                             d={areaBuilder(serie)}
                             stroke="none"
                             fill={colorScale[serie.key]}
-                            fillOpacity={0.3}
+                            fillOpacity={0.6}
+                            style={{ transition: 'fill-opacity 0.25s' }}
                         />
                         <path
                             d={lineBuilder(serie)}

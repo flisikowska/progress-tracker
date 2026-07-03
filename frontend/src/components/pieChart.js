@@ -13,6 +13,8 @@ const StyledContainer = styled.div`
     @media(max-width:1000px){
       flex-flow: column;
       height:unset;
+      margin-top:40px;
+
     }
 `;
 
@@ -22,9 +24,8 @@ const PieChartContainer = styled.div`
     margin:20px;
     z-index:1;
     @media(max-width:750px){
-      width:200px;
-      height:200px;
-      scale:70%;
+      width:260px;
+      height:260px;
     }
 `;
 

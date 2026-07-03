@@ -25,7 +25,7 @@ const StyledActivitiesWrapper = styled.div`
 
   }
   >div:first-child{
-    border:3px solid #999;
+    border:3px solid var(--text-inactive);
     >div{
       >p{
         color:#000;
@@ -44,14 +44,14 @@ const StyledActivitiesWrapper = styled.div`
 
 const StyledActivity=styled.div`
     width:150px;
-    border:3px solid #bbb;
-    border-radius:4px;
+    border:2px solid var(--primary-dark);
+    border-radius:12px;
     padding:10px;
     text-align:center;
     cursor:default;
     grid-row-end: span 10;
     >svg{
-      color: rgba(86, 186, 119);
+      color: var(--blue);
       margin:15px;
     }
     @media(max-width:420px){

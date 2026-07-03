@@ -120,17 +120,17 @@ app.get('/activities', authenticateToken, async (req, res) => {
   }
 
   const query = `
-    SELECT 
+    SELECT
 	    U.user_id,
       AT.activity_type_id,
       A.date AS activity_date,
       A.activity_id,
       A.amount AS time
-    FROM public.group 
+    FROM public.group
     JOIN public.user U ON public.group.group_id= U.group_id
     JOIN public.activity A ON A.user_id = U.user_id
     JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
-    WHERE 
+    WHERE
       public.group.group_id = (SELECT CU.group_id FROM public.user CU WHERE CU.user_id=$1 LIMIT 1)
     AND U.user_id = $1
 	  AND A.date IN (${datePlaceholders})
@@ -285,9 +285,17 @@ app.get("/user", authenticateToken, async (req, res) => {
     const query = `SELECT * FROM public.user WHERE user_id = $1`;
     const response = await executeQuery(query, [req.user.userId]);
     if (!response[0]) {
-      return res.sendStatus(404); 
+      return res.sendStatus(404);
     }
     res.status(200).json(response);
+});
+
+app.put("/user", jsonParser, authenticateToken, async (req, res) => {
+    const { name, color } = req.body;
+    if (!name || !color) return res.sendStatus(400);
+    const query = `UPDATE public.user SET name=$2, color=$3 WHERE user_id=$1 RETURNING *`;
+    const response = await executeQuery(query, [req.user.userId, name, color]);
+    res.status(200).json(response[0]);
 });
 
 app.post("/logout", (req, res) => {

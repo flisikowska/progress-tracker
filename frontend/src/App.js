@@ -7,6 +7,8 @@ import Menu from './components/menu';
 import NotificationPopup from './components/notificationPopup';
 import AddActivityPopup from './components/addActivityPopup';
 import Login from './views/login';
+import UserSettings from './views/userSettings';
+import { User } from '@styled-icons/fa-solid/User';
 import axios from 'axios';
 
 import yoga from './assets/yoga.png';
@@ -22,7 +24,7 @@ const AppContainer=styled.div`
     width:100%;
     min-height:100vh;
     padding: 50px 0 100px 0;
-    background-color: rgba(31,33,35,255);
+    background-color: var(--color-background);
     @media(max-width:570px){
       padding:10px 0 70px 0;
     }
@@ -31,12 +33,11 @@ const AppContainer=styled.div`
   const StyledWrapper= styled.div`
   width:900px;
   height:fit-content;
-  border-radius:4px;
+  border-radius:12px;
   position:relative;
-  border:1px solid #fff;
   padding:20px;
   margin:auto;
-  background-color:rgba(119,120,121,255);
+  background-color: var(--white);
   @media(max-width:1000px){
     width:90%;
   }
@@ -61,25 +62,59 @@ const HeaderWrapper=styled.div`
   #buttons{
     display:flex;
     flex-flow:row-nowrap;
+    align-items:center;
     padding-right:0px;
   }
 `;
 
 const StyledHeader=styled.h1`
-  font-size:1.1rem;
+  font-size:1rem;
   font-weight:500;
-  color: rgba(255,255,255,0.2);
+  color: var(--text-inactive);
   margin:0; 
   padding:0;
-  // color:#000;
+`;
+
+const ProfileButton = styled.div`
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin: 0 4px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--primary-dark);
+  transition: border-color 0.2s;
+  &::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: ${p => p.$color ? `#${p.$color}55` : 'var(--primary-dark)'};
+    top: 2px;
+    left: 2px;
+  }
+  &:hover {
+    border-color: var(--blue);
+  }
+  > svg {
+    width: 13px;
+    height: 13px;
+    color: var(--text);
+    position: relative;
+    z-index: 1;
+  }
 `;
 
 const GroupName=styled.span`
   display:block;
-  font-size:1.3rem;
+  font-size:1.2rem;
   font-weight:600;
-  color:#eee;
-    margin:0;
+  color:var(--text);
+  margin:0;
   padding:0;
 `;
 
@@ -94,6 +129,14 @@ const Loader=styled.div`
   @keyframes spin{ to { transform: rotate(360deg); } }
 `;
 
+const StyledSeparator=styled.div`
+  width:1px; 
+  height:22px; 
+  background:var(--primary);
+  margin:0 10px;
+  padding:0;
+`
+
 function App() {
   const [users, setUsers] = useState([]);
   const [usersActivities, setUsersActivities] = useState([]);
@@ -104,6 +147,7 @@ function App() {
   const [goal, setGoal] = useState(0);
   const [site, setSite] = useState('grupa');
   const [loggedIn, setLoggedIn] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [activeNotificationPopup, setActiveNotificationPopup] = useState(false);
   const [activeAddPopup, setActiveAddPopup] = useState(false);
   const host='localhost';
@@ -112,7 +156,7 @@ function App() {
     axios.get(`http://${host}:5000/user`, {
       withCredentials: true,
     })
-    .then(() => setLoggedIn(true))
+    .then(res => { setLoggedIn(true); setCurrentUser(res.data[0]); })
     .catch(()=> setLoggedIn(false));
   }, []);
 
@@ -142,14 +186,14 @@ function App() {
   }
 
   const fetchUserActivities=(selectedDays)=>{
-    axios.get(`http://${host}:5000/activities`, {params: {date: selectedDays}})
+    axios.get(`http://${host}:5000/activities`, {params: {date: selectedDays}, withCredentials: true})
     .then(res => {
         setUserActivitiesForTheDay(res.data);
       });
   }
 
   const fetchGroupInfo=()=>{
-    axios.get(`http://${host}:5000/group`)
+    axios.get(`http://${host}:5000/group`, { withCredentials: true })
     .then(res => {
         setGroupName(res.data.group_name);
         setGoal(res.data.group_goal);
@@ -158,7 +202,7 @@ function App() {
   }
 
   const fetchStatsActivities=()=>{
-    axios.get(`http://${host}:5000/last-10-weeks`)
+    axios.get(`http://${host}:5000/last-10-weeks`, { withCredentials: true })
     .then(res => {
         setStatsData(res.data);
     });
@@ -200,16 +244,22 @@ function App() {
         <Menu site={site} setActiveAddPopup={setActiveAddPopup} setSite={setSite}/>
         <StyledWrapper>
           <HeaderWrapper>  
-            <StyledHeader>{site==='grupa' ?(<>Raport grupy:<GroupName>{groupName}</GroupName></>):("Moja aktywność:")}</StyledHeader>
+            <StyledHeader>{site==='grupa' ?(<>Raport grupy:<GroupName>{groupName}</GroupName></>) : site==='moje' ? "Moja aktywność:" : "Profil"}</StyledHeader>
             <div id="buttons">
               <AddActivityPopup activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} refreshUserActivities={fetchUserActivities}/>
+              <StyledSeparator/>
               <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup}/>
+              <ProfileButton $active={site==='profil'} $color={currentUser?.color} onClick={() => setSite(site === 'profil' ? 'grupa' : 'profil')}>
+                <User />
+              </ProfileButton>
             </div>
           </HeaderWrapper>
           {site==='grupa' ?(
             <Group statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} usersActivities={usersActivities}/>
-          ):(
+          ) : site==='moje' ? (
             <Profile activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} logout={logout} />
+          ) : (
+            <UserSettings onSave={fetchGroupInfo} />
           )}
         </StyledWrapper>
       </>

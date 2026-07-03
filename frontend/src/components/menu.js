@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, {css} from 'styled-components';
 import { PersonRunning } from '@styled-icons/fa-solid/PersonRunning';
 import { BookPulse } from '@styled-icons/fluentui-system-regular/BookPulse';
 import { ChannelAdd } from '@styled-icons/fluentui-system-filled/ChannelAdd';
@@ -41,11 +41,10 @@ const StyledMenu = styled.div`
 
 const ItemWrapper = styled.div`
     > svg {
-        width: 25px;
-        height: 25px;
+        width: 23px;
+        height: 23px;
         padding-right:10px;
         cursor:pointer;
-        color: #fff;
     }
     align-items:center;
     cursor: pointer;
@@ -58,17 +57,28 @@ const ItemWrapper = styled.div`
   	padding: .7em 2em .5em;
     z-index: ${(props) => (props.$active ? '2' : '1')};
     &:before{
-        background-color: ${(props) => (props.$active ? 'rgba(86, 186, 119,0.8)' : 'rgba(100,100,100,0.3)')};
+        background-color: ${(props) => (props.$active ? 'var(--blue)' : 'var(--white)')};
         border: .1em solid #fff;
         content: '';
         z-index:-1;
         position: absolute;
         top: 0; right: 0; bottom: 0; left: 0;
         border-bottom: none;
-        border-radius: 4px 4px 0 0;
+        border-radius: 12px 12px 0 0;
         transform: scale(1.2, 1.3) perspective(.5em) rotateX(5deg);
         transform-origin: bottom;
     }
+
+${(props) =>
+    props.$active &&
+    css`
+      .item-name,
+      .item-icon {
+        color: ${(props) =>
+    props.$active ? 'var(--white)':'var(--text)'};
+      }
+    `}
+
     @media (max-width: 570px) {
         &:before{
             display:none;
@@ -88,7 +98,7 @@ const ItemWrapper = styled.div`
         &#add{
             display:block;
             >svg{
-                color:rgba(86, 186, 119);
+                color:var(--blue);
             }
         }
     }
@@ -97,7 +107,6 @@ const ItemWrapper = styled.div`
 const MenuItemName = styled.span`
     font-size: 1rem;
     cursor:pointer;
-    color: #fff;
     font-weight: 600;
     transition: 0.3s;
     @media (max-width: 450px) {
@@ -154,15 +163,15 @@ const Menu = ({site, setSite, setActiveAddPopup}) => {
   return (
       <StyledMenu id="menu">
         <ItemWrapper $active={site==='grupa'} onClick={()=>setSite('grupa')} >
-            <PersonRunning /> 
-            <MenuItemName>Raport</MenuItemName>
+            <PersonRunning  className="item-icon"/> 
+            <MenuItemName className="item-name">Raport</MenuItemName>
         </ItemWrapper>
         <ItemWrapper id="add" onClick={()=>setActiveAddPopup(true)}>
             <ChannelAdd />
         </ItemWrapper>
-        <ItemWrapper  $active={site==='moje'} onClick={()=>setSite('moje')}>
-            <BookPulse />
-            <MenuItemName>Profil</MenuItemName>
+        <ItemWrapper $active={site==='moje'} onClick={()=>setSite('moje')}>
+            <BookPulse  className="item-icon"/>
+            <MenuItemName className="item-name">Dziennik</MenuItemName>
         </ItemWrapper>
         <StyledCircle/>
       </StyledMenu>

@@ -27,7 +27,7 @@ html, body {
   width:100%;
   height:100%;
   margin: 0;
-  background-color: rgb(31,33,35);
+  background-color: var(--color-background);
   -webkit-tap-highlight-color: transparent;
   font-family: "DM Sans", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -37,4 +37,14 @@ html, body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+:root {
+  --color-background: #EFEDE8;
+  --white: #F8F7F4;
+  --primary: #EEEBE4;
+  --primary-dark: #BEBCB6;
+  --text: #2B2823;
+  --text-inactive: #8A8378;
+  --blue: #40C4FF;
 }

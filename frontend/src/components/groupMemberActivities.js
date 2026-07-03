@@ -48,7 +48,7 @@ const StyledActivity=styled.div`
     cursor:default;
     grid-row-end: span 10;
     >svg{
-      color: rgba(86, 186, 119);
+      color: var(--blue);
       margin:10px;
     }
 
