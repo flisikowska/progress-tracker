@@ -9,9 +9,7 @@ const arc = d3.arc()
   .outerRadius(inner + 8)
   .innerRadius(outer);
 
-const arcOver = d3.arc()
-  .outerRadius(inner + 8)
-  .innerRadius(outer + 20);
+const POP_OFFSET = 18; // stałe wysunięcie zaznaczonego segmentu (px)
 
 const usePieChart = (data, setComponent, selected) => {
   const selectedId = selected?.user_id;
@@ -42,22 +40,23 @@ const usePieChart = (data, setComponent, selected) => {
       .style("fill", d => d.data.color)
       .style("stroke", d => d.data.color)
       .style("stroke-width", d => d.data.name === "Pozostało" ? "0px" : "2px")
+      .style("cursor", d => d.data.name === "Pozostało" ? "default" : "pointer")
       .attr("d", arc)
       .attr("id", d => `pieArc${d.data.user_id}`)
       .attr("fill-opacity", 0.6)
       .on("mouseenter", function (event, d) {
-        d3.select(this).transition().duration(250).attr("fill-opacity", 0.7);
-        d3.select(`#chartArea${d.data.user_id}`).transition().duration(250).attr('fill-opacity', '0.7');
+        d3.select(this).transition('fade').duration(250).attr("fill-opacity", 0.7);
+        d3.select(`#chartArea${d.data.user_id}`).transition('fade').duration(250).attr('fill-opacity', '0.7');
       })
       .on("mouseleave", function (event, d) {
-        d3.select(this).transition().duration(250).attr("fill-opacity", 0.6);
-        d3.select(`#chartArea${d.data.user_id}`).transition().duration(250).attr('fill-opacity', '0.6');
+        d3.select(this).transition('fade').duration(250).attr("fill-opacity", 0.6);
+        d3.select(`#chartArea${d.data.user_id}`).transition('fade').duration(250).attr('fill-opacity', '0.6');
       })
       .on("mouseenterchart", function (event, d) {
-        d3.select(this).transition().duration(250).attr("fill-opacity", 0.7);
+        d3.select(this).transition('fade').duration(250).attr("fill-opacity", 0.7);
       })
       .on("mouseleavechart", function (event, d) {
-        d3.select(this).transition().duration(250).attr("fill-opacity", 0.6);
+        d3.select(this).transition('fade').duration(250).attr("fill-opacity", 0.6);
       })
       .on("click", function (event, d) {
         setComponent(d.data.name === "Pozostało" ? null : d.data);
@@ -76,30 +75,30 @@ const usePieChart = (data, setComponent, selected) => {
     const width = parseInt(d3.select('#pieChart').style('width'), 10);
     const height = width;
 
-    g.selectAll('path')
-      .transition()
-      .duration(800)
-      .attr('d', arc);
-
-    if (selectedId == null) {
-      g.transition()
-        .duration(800)
-        .attr('transform', `translate(${width / 2},${height / 2}) rotate(0)`);
-      return;
+    // obrót całego koła: wybrany segment na górę (albo reset do 0)
+    let rotation = 0;
+    if (selectedId != null) {
+      g.selectAll('path').each(function (d) {
+        if (d.data.user_id === selectedId) {
+          rotation = 90 - ((d.startAngle * (180 / Math.PI)) + ((d.endAngle - d.startAngle) * (180 / Math.PI) / 2));
+        }
+      });
     }
+    g.transition('pop')
+      .duration(800)
+      .attr('transform', `translate(${width / 2},${height / 2}) rotate(${rotation})`);
 
-    g.selectAll('path').each(function (d) {
-      if (d.data.user_id === selectedId) {
-        const angle = 90 - ((d.startAngle * (180 / Math.PI)) + ((d.endAngle - d.startAngle) * (180 / Math.PI) / 2));
-        g.transition()
-          .duration(800)
-          .attr('transform', `translate(${width / 2},${height / 2}) rotate(${angle})`);
-        d3.select(this)
-          .transition()
-          .duration(800)
-          .attr('d', arcOver);
-      }
-    });
+    // jedna tranzycja na segment: wybrany wysunięty, reszta wyzerowana
+    g.selectAll('path')
+      .transition('pop')
+      .duration(800)
+      .attr('transform', function (d) {
+        if (selectedId != null && d.data.user_id === selectedId) {
+          const mid = (d.startAngle + d.endAngle) / 2;
+          return `translate(${Math.sin(mid) * POP_OFFSET},${-Math.cos(mid) * POP_OFFSET})`;
+        }
+        return 'translate(0,0)';
+      });
   }, [selectedId, data]);
 };
 

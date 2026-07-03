@@ -19,14 +19,12 @@ const StyledContainer = styled.div`
 
 
 const StyledTitle = styled.h5`
-  color: #000;
-  text-transform: uppercase;
-  min-height: 15px;
+  color: var(--text);
   margin: 0;
   padding: 0;
   cursor:default;
-  font-weight: 400;
-  font-size: 0.7rem;
+  font-weight: 500;
+  font-size: 1rem;
 `;
 
 const StyledWrapper = styled.div`
@@ -47,12 +45,12 @@ const PickerName = styled.p`
   font-size: 13px;
   font-size: 0.6rem;
   opacity: 0.6;
-  color: #fff;
+  color: var(--white);
   padding: 0;
   margin: 0;
   font-weight: 600;
   text-transform: uppercase;
-  background-color: #aaa;
+  background-color: var(--primary-dark);
   z-index: -1;
   padding: 0 15px;
   border-radius: 3px;
@@ -76,7 +74,7 @@ const StyledSwiper = styled(Swiper)`
     font-weight: 600;
     opacity: 1;
     width: 100%;
-    color:  rgba(121, 193, 145);
+    color: var(--blue);
   }
 `;
 
@@ -101,7 +99,7 @@ const TimePicker = ({ id, name, onChange, value, title }) => {
 
   return (
     <div id={id}>
-      <StyledTitle>{title}</StyledTitle>
+      {title && <StyledTitle>{title}</StyledTitle>}
       <StyledContainer name={name}>
         <StyledWrapper>
           <StyledSwiper

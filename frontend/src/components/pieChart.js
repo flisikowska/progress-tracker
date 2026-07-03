@@ -13,7 +13,7 @@ const StyledContainer = styled.div`
     @media(max-width:1000px){
       flex-flow: column;
       height:unset;
-      margin-top:40px;
+      margin:40px auto;
 
     }
 `;
@@ -33,7 +33,6 @@ const StyledPieChart = styled.div`
     display: flex;
     width:100%;
     height:100%;
-    cursor:pointer;
     align-items: center;
     justify-content: center;
     margin: 0 auto;
@@ -47,14 +46,20 @@ const StyledPieChart = styled.div`
 const StyledRemainingTime = styled.div`
     pointer-events:none;
     position:absolute;
+    color: var(--text);
     top:50%;
     left:50%;
     transform:translate(-50%, -50%);
     z-index:3;
     text-align:center;
-        font-size:1.2rem;
-        font-weight:600;
-        cursor:default;
+    font-size:1.2rem;
+    font-weight:600;
+    cursor:default;
+    line-height:1rem;
+    span{
+        font-size:0.9rem;
+        font-weight:500;
+    }
 `;
 
 
@@ -75,7 +80,7 @@ function PieChart({ goal, users, usersActivities, setComponent, selected }) {
       {
         name: 'Pozostało',
         amount: timeLeft,
-        color: '#777879',
+        color: 'var(--primary)',
         activities: [],
       },
     ]), [usersActivities, users, timeLeft]);
@@ -88,9 +93,9 @@ function PieChart({ goal, users, usersActivities, setComponent, selected }) {
                 <StyledPieChart id="pieChart" />
                 <StyledRemainingTime>
                     {timeLeft<=0?
-                    <p>Cel został osiągnięty!</p>
+                    <p>Cel osiągnięty!<br/><span>{MinutesToFormattedTime(goal)} razem</span></p>
                     :
-                    <p>{MinutesToFormattedTime(goal - timeLeft)} <br/> z {MinutesToFormattedTime(goal)} celu</p>}
+                    <p>{MinutesToFormattedTime(goal - timeLeft)} <br/> <span>z {MinutesToFormattedTime(goal)} celu</span></p>}
                 </StyledRemainingTime>
             </PieChartContainer>
         </StyledContainer>

@@ -10,23 +10,22 @@ const COLORS = [
 
 const StyledContainer = styled.div`
   width: 100%;
-  max-width: 400px;
   padding: 20px 0;
 `;
 
 const Label = styled.p`
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.5);
+  color: var(--text);
   margin: 0 0 8px 0;
 `;
 
 const Input = styled.input`
   width: 100%;
+  max-width:250px;
   padding: 10px 12px;
-  border-radius: 4px;
-  border: 1px solid #555;
-  background: rgba(255,255,255,0.07);
-  color: #fff;
+  border-radius: 20px;
+  border: 1px solid var(--primary-dark);
+  color: var(--text);
   font-size: 1rem;
   outline: none;
   margin-bottom: 24px;
@@ -53,10 +52,10 @@ const ColorDot = styled.div`
 
 const SaveButton = styled.button`
   padding: 10px 24px;
-  border-radius: 4px;
-  border: none;
-  background: var(--blue);
-  color: #fff;
+  border-radius: 20px;
+  background: var(--pale-blue);
+  border:2px solid var(--blue);
+  color: var(--white);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -70,7 +69,7 @@ const SuccessMsg = styled.span`
   font-size: 0.9rem;
 `;
 
-function UserSettings({ onSave }) {
+function UserSettings({ onSave, logout }) {
   const host = 'localhost';
   const [name, setName] = useState('');
   const [color, setColor] = useState('');

@@ -227,8 +227,8 @@ app.delete('/activities/:id', authenticateToken, async (req, res) => {
 app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
   const user_id = req.user.userId;
   const {activity_type_id, date, amount}= req.body;
-  if (!activity_type_id || !date || amount == null)
-    return;
+  if (!activity_type_id || !date || amount == null || amount <= 0)
+    return res.sendStatus(400);
   const query=`
     INSERT INTO public.activity(date, activity_type_id, user_id, amount)
     VALUES ($1, $2, $3, $4)

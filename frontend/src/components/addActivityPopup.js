@@ -28,6 +28,14 @@ const StyledButton= styled.div`
     }
 `;
 
+const Overlay=styled.div`
+    display: ${(props) => (props.$active ? 'block' : 'none')};
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    z-index:9;
+`;
+
 const StyledWrapper=styled.div`
     display: ${(props) => (props.$active ? 'flex' : 'none')};
     position:fixed;
@@ -42,8 +50,12 @@ const StyledWrapper=styled.div`
     width:910px;
     height:90%;
     background-color:rgba(255,255,255);
-    border-radius:4px;
+    border-radius:12px;
     z-index: 10;
+    overflow-y:auto;
+    > * {
+        flex-shrink: 0;
+    }
     @media(max-width:1000px){
         width:90%;
     }
@@ -62,7 +74,7 @@ const StyledWrapper=styled.div`
         right:0;
         width:30px;
         height:30px;
-        color:#000;
+        color:var(--text);
         margin:20px;
         cursor:pointer;
     }
@@ -73,49 +85,49 @@ const StyledWrapper=styled.div`
     `;
 
 const ActivitiesWrapper= styled.div`
-    height: 300px;
+    height: 150px;
     width:550px;
     @media(max-width:1000px){
         width:80%;
     }
-    overflow-y: scroll;
+    overflow-y: auto;
     display: grid;
     margin:20px auto;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0px;
-    align-items:center;
+    align-content:start;
     @media(max-width:700px){
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
     @media(max-width:520px){
-        grid-template-columns: repeat(1, 1fr);
-        height: 200px;
+        grid-template-columns: repeat(2, 1fr);
+        height: 400px;
         >div{
             width:90%;
-            margin:10px auto;
+            margin:8px auto;
         }
     }
 `;
 
 const StyledActivity= styled.div`
-    padding:15px;
-    margin:10px;
-    width:150px;
+    padding:10px;
+    margin:6px;
+    width:110px;
     cursor:pointer;
     text-align:center;
-    height:100px;
+    height:80px;
     border-radius:12px;
-    border: 2px solid #ccc;
+    border: 1px solid var(--primary);
     ${(props) =>
     props.$chosen &&
     css`
-        border: 2px solid  rgba(121, 193, 145, 0.7);
-        box-shadow: 0 0 4px  rgba(121, 193, 145, 0.7);
+        border: 2px solid var(--pale-blue);
+        box-shadow: 0 0 4px var(--pale-blue);
     `};
     >p{
         font-weight:600;
-        font-size:0.9rem;
-        margin-top:10px;
+        font-size:0.8rem;
+        margin-top:8px;
         @media(max-width:450px){
             font-size:0.7rem;
         }
@@ -123,27 +135,68 @@ const StyledActivity= styled.div`
 `;
 
 const StyledHeader= styled.div`
-    font-size:1.1rem;
-    color:#000;
-    margin: 5px auto;
+    font-size:1rem;
+    color:var(--text);
     font-weight:500;
+    width:550px;
+    max-width:100%;
+    margin: 5px auto;
+    text-align:left;
+    @media(max-width:1000px){
+        width:80%;
+    }
+`;
+
+const SearchInput= styled.input`
+    width:550px;
+    max-width:100%;
+    margin: 8px auto 0 auto;
+    padding:8px 14px;
+    border-radius:12px;
+    border:1px solid var(--primary-dark);
+    color:var(--text);
+    font-size:0.9rem;
+    outline:none;
+    &:focus{ border-color: var(--blue); }
+    @media(max-width:1000px){
+        width:80%;
+    }
+`;
+
+const NoResults= styled.p`
+    grid-column: 1 / -1;
+    color: var(--text-inactive);
+    font-size:0.9rem;
+    text-align:center;
+    margin:20px 0;
 `;
 
 const ChooseButton= styled.div`
     padding:10px 0;
     cursor:pointer;
     text-align:center;
-    border-radius:4px;
-    border:2px solid #ccc;
+    border-radius:20px;
+    border:2px solid var(--primary);
     font-weight:600;
-    font-size:0.9rem;
+    font-size:1rem;
     transition:0.2s;
-    width:100px;
-    margin:auto;
+    width:300px;
+    margin:20px auto 0 auto;
+    background-color: var(--blue);
+    color:var(--white);
     &:hover{
         background-color:var(--blue);
         border:2px solid var(--blue);
     }
+`;
+
+const ErrorMsg= styled.p`
+    color:#d9534f;
+    font-size:0.85rem;
+    font-weight:600;
+    text-align:center;
+    margin:12px auto 0 auto;
+    min-height:1rem;
 `;
 
 
@@ -152,6 +205,22 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
     const activePopupRef = useRef(active);
     const [selectedDay, setSelectedDay] = useState(FormattedDate(new Date()));
     const [amount, setAmount]= useState(0);
+    const [search, setSearch] = useState('');
+    const [error, setError] = useState('');
+    const [pickerKey, setPickerKey] = useState(0);
+    const wrapperRef = useRef(null);
+
+    useEffect(() => {
+        if (active && wrapperRef.current) {
+            requestAnimationFrame(() => {
+                if (wrapperRef.current) wrapperRef.current.scrollTop = 0;
+            });
+        }
+    }, [active]);
+
+    const filteredActivities = activityTypes.filter(a =>
+        a.name.toLowerCase().includes(search.trim().toLowerCase())
+    );
 
     useEffect(() => {
         window.addEventListener('mouseup', (event) => {
@@ -179,43 +248,69 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
     }, [active]);
 
 
+    const handleAdd=()=>{
+        if (!chosenItem) {
+            setError('Wybierz aktywność');
+            return;
+        }
+        if (!amount || amount <= 0) {
+            setError('Podaj czas większy niż 0');
+            return;
+        }
+        setError('');
+        addActivity(chosenItem, selectedDay, amount);
+    }
+
     const addActivity=(activity_type_id, date, amount)=>{
         const host='localhost';
         axios.post(`http://${host}:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount}, { withCredentials: true })
         .then(res => {
            refreshUsersActivities();
-           refreshUserActivities(selectedDay);
+           refreshUserActivities();
            setActiveAddPopup(false);
            refreshStatsActivities();
+           setChosenItem(null);
+           setAmount(0);
+           setSearch('');
+           setError('');
+           setPickerKey(k => k + 1);
         });
       }
 
     return (
         <>
             <StyledButton onClick={()=> setActiveAddPopup(!active) }><Plus/>Dodaj aktywność</StyledButton>
-            <StyledWrapper id='addPopup' $active={active}>
+            <Overlay $active={active} onClick={()=>setActiveAddPopup(false)}/>
+            <StyledWrapper ref={wrapperRef} id='addPopup' $active={active}>
                 <CloseOutline onClick={()=>setActiveAddPopup(false)}/>
-                <StyledHeader>Dodaj aktywność:</StyledHeader>
-                <ActivitiesWrapper className="scrollable">
-                {activityTypes.map((activity, index) => (
+                <StyledHeader>Aktywność</StyledHeader>
+                <SearchInput
+                    placeholder="Szukaj aktywności..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+                <ActivitiesWrapper>
+                {filteredActivities.map((activity) => (
                     <StyledActivity
                         key={activity.id}
-                        $chosen={chosenItem === index}
-                        onClick={() => setChosenItem(index)}
+                        $chosen={chosenItem === activity.id}
+                        onClick={() => { setChosenItem(activity.id); setError(''); }}
                     >
-                        <img src={activity.icon} alt={activity.name} width="40" height="40" />
+                        <img src={activity.icon} alt={activity.name} width="32" height="32" />
                         <p>{activity.name}</p>
                     </StyledActivity>
                 ))}
+                {filteredActivities.length === 0 && <NoResults>Brak pasujących aktywności</NoResults>}
                 </ActivitiesWrapper>
+                <StyledHeader>Ile czasu spędziłeś?</StyledHeader>
                 <TimePicker
+                        key={pickerKey}
                         id='timePicker'
-                        title="ile czasu spędziłaś?"
                         name="activityTime"
-                        onChange={(e) => {setAmount(parseInt(e.hours)*60+parseInt(e.minutes))}}
+                        onChange={(e) => {const a = parseInt(e.hours)*60+parseInt(e.minutes); setAmount(a); if (a > 0) setError('');}}
                         value={{hours:0,minutes:0}}
                         />
-                        <StyledHeader>Że niby kiedy?</StyledHeader>
+                        <StyledHeader>Kiedy?</StyledHeader>
                         <DayPicker
                             fetchSelectedDaysToParent={(selectedDays) => {
                                 if (selectedDays.length === 1) setSelectedDay(selectedDays[0]);
@@ -223,7 +318,8 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
                             multipleDaySelect={false}
                             daysCount={7}
         />
-                <ChooseButton onClick={()=>addActivity(activityTypes[chosenItem].id, selectedDay, amount)}>Wybierz</ChooseButton>
+                {error && <ErrorMsg>{error}</ErrorMsg>}
+                <ChooseButton onClick={handleAdd}>Dodaj aktywność</ChooseButton>
             </StyledWrapper>
         </>
 

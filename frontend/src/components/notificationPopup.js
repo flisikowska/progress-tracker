@@ -29,7 +29,8 @@ const StyledWrapper=styled.div`
     text-align:left;
     padding:15px;
     margin-top:10px;
-    right:75px;
+    right:30px;
+    top:20px;
     width:400px;
     height:450px;
     background-color:rgba(255,255,255, 0.8);

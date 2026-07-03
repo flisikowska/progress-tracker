@@ -1,7 +1,7 @@
 import './App.css';
 import React, {useState, useEffect} from 'react';
 import styled from 'styled-components';
-import Profile from './views/profile';
+import Diary from './views/diary';
 import Group from './views/group';
 import Menu from './components/menu';
 import NotificationPopup from './components/notificationPopup';
@@ -9,6 +9,7 @@ import AddActivityPopup from './components/addActivityPopup';
 import Login from './views/login';
 import UserSettings from './views/userSettings';
 import { User } from '@styled-icons/fa-solid/User';
+import { FormattedDate } from './helpers/functions';
 import axios from 'axios';
 
 import yoga from './assets/yoga.png';
@@ -34,6 +35,7 @@ const AppContainer=styled.div`
   width:900px;
   height:fit-content;
   border-radius:12px;
+  border:2px solid #fff;
   position:relative;
   padding:20px;
   margin:auto;
@@ -75,7 +77,7 @@ const StyledHeader=styled.h1`
   padding:0;
 `;
 
-const ProfileButton = styled.div`
+const UserButton = styled.div`
   width: 35px;
   height: 35px;
   border-radius: 50%;
@@ -93,12 +95,19 @@ const ProfileButton = styled.div`
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background-color: ${p => p.$color ? `#${p.$color}55` : 'var(--primary-dark)'};
+    background-color: ${p => p.$color ? `#${p.$color}85` : 'var(--primary-dark)'};
     top: 2px;
     left: 2px;
+    transition:0.2s;
   }
   &:hover {
-    border-color: var(--blue);
+    &::before {
+      width: 34px;
+      height: 34px;
+      top:0px;
+      left:0px;
+      background-color: ${p => p.$color ? `#${p.$color}1` : 'var(--primary-dark)'};
+    }
   }
   > svg {
     width: 13px;
@@ -137,6 +146,19 @@ const StyledSeparator=styled.div`
   padding:0;
 `
 
+const LogoutButton= styled.div`
+    width:fit-content;
+    color:#000;
+    font-weight:500;
+    font-size:1rem;
+    cursor:pointer;
+    border:2px solid var(--primary-dark);
+    border-radius: 20px;
+    padding:7px 10px;
+    margin-left:auto;
+`;
+
+
 function App() {
   const [users, setUsers] = useState([]);
   const [usersActivities, setUsersActivities] = useState([]);
@@ -148,9 +170,30 @@ function App() {
   const [site, setSite] = useState('grupa');
   const [loggedIn, setLoggedIn] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedDays, setSelectedDays] = useState([FormattedDate(new Date())]);
   const [activeNotificationPopup, setActiveNotificationPopup] = useState(false);
   const [activeAddPopup, setActiveAddPopup] = useState(false);
   const host='localhost';
+
+  const fetchCurrentUser=()=>{
+    return axios.get(`http://${host}:5000/user`, { withCredentials: true })
+      .then(res => setCurrentUser(res.data[0]));
+  }
+
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      res => res,
+      err => {
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          setLoggedIn(false);
+          // zatrzymaj łańcuch — brak .then i brak nieobsłużonego rejecta
+          return new Promise(() => {});
+        }
+        return Promise.reject(err);
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, []);
 
   useEffect(() => {
     axios.get(`http://${host}:5000/user`, {
@@ -162,6 +205,7 @@ function App() {
 
   useEffect(() => {
     if (loggedIn) {
+      fetchCurrentUser();
       fetchUsersActivities();
       fetchStatsActivities();
       fetchGroupInfo();
@@ -185,8 +229,9 @@ function App() {
       });
   }
 
-  const fetchUserActivities=(selectedDays)=>{
-    axios.get(`http://${host}:5000/activities`, {params: {date: selectedDays}, withCredentials: true})
+  const fetchUserActivities=(days = selectedDays)=>{
+    const query = days.map(d => `date=${encodeURIComponent(d)}`).join('&');
+    axios.get(`http://${host}:5000/activities?${query}`, {withCredentials: true})
     .then(res => {
         setUserActivitiesForTheDay(res.data);
       });
@@ -245,21 +290,26 @@ function App() {
         <StyledWrapper>
           <HeaderWrapper>  
             <StyledHeader>{site==='grupa' ?(<>Raport grupy:<GroupName>{groupName}</GroupName></>) : site==='moje' ? "Moja aktywność:" : "Profil"}</StyledHeader>
+            {site==='userSettings' ?
+            <LogoutButton onClick={logout}>Wyloguj się</LogoutButton>
+            :
+            (
             <div id="buttons">
               <AddActivityPopup activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} refreshUserActivities={fetchUserActivities}/>
               <StyledSeparator/>
               <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup}/>
-              <ProfileButton $active={site==='profil'} $color={currentUser?.color} onClick={() => setSite(site === 'profil' ? 'grupa' : 'profil')}>
+              <UserButton $color={currentUser?.color} onClick={() => setSite("userSettings")}>
                 <User />
-              </ProfileButton>
+              </UserButton>
             </div>
+)}
           </HeaderWrapper>
           {site==='grupa' ?(
             <Group statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} usersActivities={usersActivities}/>
           ) : site==='moje' ? (
-            <Profile activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} logout={logout} />
+            <Diary activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
           ) : (
-            <UserSettings onSave={fetchGroupInfo} />
+            <UserSettings logout={logout} onSave={() => { fetchGroupInfo(); fetchCurrentUser(); }} />
           )}
         </StyledWrapper>
       </>

@@ -108,7 +108,6 @@ const MenuItemName = styled.span`
     font-size: 1rem;
     cursor:pointer;
     font-weight: 600;
-    transition: 0.3s;
     @media (max-width: 450px) {
         font-size: 0.75rem;
         margin-top: 5px;

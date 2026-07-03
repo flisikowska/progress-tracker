@@ -8,7 +8,7 @@ const StyledDaySquare = styled.div`
   cursor: pointer;
   width: 60px;
   height: 65px;                                   
-  color: #000;
+  color: var(--text);
   font-size: 1rem;
   position: relative;
   display: flex;
@@ -22,7 +22,7 @@ const StyledDaySquare = styled.div`
   ${(props) =>
     props.selected &&
     css`
-      background: var(--blue);
+      background: var(--pale-blue);
       border:2px solid var(--blue);
       p{
         color:#fff;
@@ -68,7 +68,7 @@ const DayPickerItem = ({
 
 const StyledDayPickerWrapper = styled.div`
     >svg{
-      color: var(--blue);
+      color: var(--pale-blue);
       cursor: pointer;
       width: 40px;
       height: 40px;

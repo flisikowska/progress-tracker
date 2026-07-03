@@ -12,22 +12,8 @@ const StyledContainer= styled.div`
   margin:0;
 `
 
-const StyledButton= styled.div`
-    width:fit-content;
-    color:#000;
-    font-weight:500;
-    font-size:1rem;
-    cursor:pointer;
-    border:2px solid #999;
-    border-radius: 4px;
-    padding:7px 10px;
-    margin-left:auto;
-`;
-
-function Profile({activityTypes, userActivitiesForTheDay, refreshUsersActivities, fetchUserActivities, logout}) {
+function Diary({activityTypes, userActivitiesForTheDay, refreshUsersActivities, fetchUserActivities, selectedDays, setSelectedDays}) {
   const host='localhost';
-
-  const [selectedDays, setSelectedDays] = useState([FormattedDate(new Date())]);
 
   useEffect(()=>{
     fetchUserActivities(selectedDays);
@@ -51,10 +37,9 @@ function Profile({activityTypes, userActivitiesForTheDay, refreshUsersActivities
           daysCount={7}
         />
         <UserActivities activityTypes={activityTypes} deleteActivity={handleActivityDelete} activities={userActivitiesForTheDay}/>
-        <StyledButton onClick={logout}>Wyloguj się</StyledButton>
       </StyledContainer>
   )
 };
 
-export default Profile;
+export default Diary;
 

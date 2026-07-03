@@ -40,28 +40,17 @@ const StyledLoginContainer=styled.div`
   display:flex;
   flex-flow: row nowrap;
   margin-top:20px;
-  >div{
-    color:#000;
-    font-weight:500;
-    font-size:1rem;
-    cursor:pointer;
-    padding:7px 10px 7px 0;
-    &:hover{
-      color:#555;
-    }
-  }
-    >div:nth-of-type(2){
-      border:2px solid #999;
-      border-radius: 4px;
-      padding:7px 10px;
 
-  }
-  @media(max-width:770px){
-    >div{
-      font-size:0.8rem;
-    }
-  }
 `;
+
+const GoogleLoginContainer= styled.div`
+  width: fit-content;
+  margin: 30px 0;
+  /* przycisk Google renderuje się w iframe — jego wnętrza nie da się stylować,
+     wygląd ustawiamy propsami komponentu GoogleLogin, tu tylko układ wokół */
+  display: flex;
+  justify-content: flex-start;
+`
 
 const onFailure = (error) => {
   console.log('Login failed:', error);
@@ -86,11 +75,20 @@ function Login({onLogin}) {
     <StyledContainer>
         <StyledGirl/>
         <Right>
-          <StyledHeader>Cześć<p>Zbierz drużynę i razem osiągnijcie wymarzony cel!</p></StyledHeader>
+          <StyledHeader>Cześć!<p>Zbierz drużynę i razem osiągnijcie wymarzony cel</p></StyledHeader>
+          <GoogleLoginContainer>
             <GoogleLogin
               onSuccess={onSuccess}
               onError={onFailure}
+              theme="filled_blue"
+              shape="pill"
+              size="large"
+              text="continue_with"
+              width="250"
+              locale="pl"
             />
+          </GoogleLoginContainer>
+          
       </Right>
       </StyledContainer>
     </GoogleOAuthProvider>

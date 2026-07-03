@@ -23,7 +23,7 @@ const StyledActivitiesWrapper = styled.div`
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
   >div:first-child{
-    border:3px solid #999;
+    border:3px solid var(--primary-dark);
     >div{
       color:#000;
       font-size:1rem;
@@ -41,8 +41,8 @@ const StyledActivitiesWrapper = styled.div`
 const StyledActivity=styled.div`
     pointer-events:none;
     width:130px;
-    border:3px solid #bbb;
-    border-radius:4px;
+    border:2px solid var(--primary);
+    border-radius:12px;
     padding:10px;
     text-align:center;
     cursor:default;
@@ -76,6 +76,14 @@ const StyledTime=styled.div`
     font-weight:600;
 `
 
+const StyledDate=styled.div`
+    font-size:0.75rem;
+    padding:0;
+    margin-top:8px;
+    color:var(--text-inactive);
+    text-align:center;
+`
+
 const StyledIcon=styled.img`
   width:40px;
   height:40px;
@@ -99,12 +107,14 @@ function GroupMemberActivities({activityTypes, summary, activities}){
               {
                 activity_type_id,
                 time,
+                date,
               }, key
             ) => (
                   <StyledActivity key={key} className='grid-item'>
                     <StyledTime>{MinutesToFormattedTime(time)}</StyledTime>
                     <StyledIcon src={activityTypes.find(a=> a.id===activity_type_id).icon} alt={activityTypes.find(a=> a.id===activity_type_id).icon_name} />
                     <ActivityTitle>{activityTypes.find(a=> a.id===activity_type_id).name}</ActivityTitle>
+                    {date && <StyledDate>{date.split('-').reverse().slice(0,2).join('.')}</StyledDate>}
                   </StyledActivity>
 
             ),

@@ -37,6 +37,7 @@ const StyledStatsTitle = styled.h2`
     text-align: left;
     pointer-events: none;
     flex-shrink: 0;
+    color:var(--text);
 `;
 
 const UserLegend = styled.div`
@@ -44,8 +45,11 @@ const UserLegend = styled.div`
     align-items: center;
     gap: 14px;
     overflow-x: auto;
-    padding-bottom: 2px;
+    margin-right:20px;
+    padding: 8px 0;
+    cursor:default;
     &::-webkit-scrollbar { height: 3px; }
+    &::-webkit-scrollbar:hover { height: 3px; }
     &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
 `;
 
@@ -66,7 +70,7 @@ const LegendDot = styled.span`
 
 const LegendName = styled.span`
     font-size: 0.85rem;
-    color: #ccc;
+    color: var(--text-inactive);
 `;
 
 const StatsList = styled.div`
@@ -140,13 +144,26 @@ const DetailsHeader = styled.div`
 
 const CloseBtn = styled.span`
     cursor:pointer;
-    font-size:1.6rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    height:30px;
+    padding:0 12px;
+    flex-shrink:0;
+    font-size:0.85rem;
+    font-weight:600;
     line-height:1;
-    color:var(--text-inactive);
-    transition:0.2;
-    &:hover{ 
-        color:var(--text);
- }
+    border-radius:20px;
+    color:var(--white);
+    background:var(--text-inactive);
+    transition:0.2s;
+    > span{
+        font-size:1.1rem;
+    }
+    &:hover{
+    background:var(--text);
+    }
 `;
 
 function Group({ statsData, activityTypes, users, goal, usersActivities }) {
@@ -178,7 +195,7 @@ function Group({ statsData, activityTypes, users, goal, usersActivities }) {
                     <Details>
                         <DetailsHeader>
                             {selected.name}
-                            <CloseBtn onClick={() => setSelected(null)}>×</CloseBtn>
+                            <CloseBtn onClick={() => setSelected(null)}>Zamknij <span>×</span></CloseBtn>
                         </DetailsHeader>
                         <GroupMemberActivities
                             activityTypes={activityTypes}
@@ -203,7 +220,7 @@ function Group({ statsData, activityTypes, users, goal, usersActivities }) {
             </StyledPieChart>
 
             <StyledStatsHeader>
-                <StyledStatsTitle>Statystyki grupy:</StyledStatsTitle>
+                <StyledStatsTitle>Statystyki grupy</StyledStatsTitle>
                 <UserLegend>
                     {users.map(u => (
                         <LegendItem key={u.user_id}>
