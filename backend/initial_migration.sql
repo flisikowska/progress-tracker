@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS public."group"
     group_id SERIAL NOT NULL,
     name text COLLATE pg_catalog."default" NOT NULL,
     goal integer NOT NULL,
-    CONSTRAINT group_pkey PRIMARY KEY (group_id)
+    goal_period text COLLATE pg_catalog."default" NOT NULL DEFAULT 'week',
+    CONSTRAINT group_pkey PRIMARY KEY (group_id),
+    CONSTRAINT group_goal_period_check CHECK (goal_period IN ('week', 'month', 'year'))
 )
 
 TABLESPACE pg_default;
@@ -24,12 +26,7 @@ CREATE TABLE IF NOT EXISTS public."user"
 (
     user_id SERIAL NOT NULL,
     name text COLLATE pg_catalog."default" NOT NULL,
-    group_id integer,
-    CONSTRAINT user_pkey PRIMARY KEY (user_id),
-    CONSTRAINT group_id FOREIGN KEY (group_id)
-        REFERENCES public."group" (group_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE RESTRICT
+    CONSTRAINT user_pkey PRIMARY KEY (user_id)
 )
 
 TABLESPACE pg_default;

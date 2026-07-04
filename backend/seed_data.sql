@@ -1,13 +1,23 @@
 INSERT INTO public."group"(
-	name, goal)
-	VALUES ('Aktywne pierożki', 1200);
+	name, goal, goal_period)
+	VALUES ('Aktywne pierożki', 1200, 'week'),
+	('Bieganie po zmroku', 6000, 'month');
 
 INSERT INTO public."user"(
-	user_id, name, group_id, color)
-	VALUES ('657342135207672346843', 'Kasia', 1, 'F5B1C7'),
-	( '235766135207672635456', 'Karolina', 1, 'B8BDE1'),
-	('100262135207672155021', 'Emilia', 1, '7DCEF5'),
-	('335463135207672456832', 'Angelika', 1, '40B7B0');
+	user_id, name, color)
+	VALUES ('657342135207672346843', 'Kasia', 'F5B1C7'),
+	( '235766135207672635456', 'Karolina', 'B8BDE1'),
+	('100262135207672155021', 'Emilia', '7DCEF5'),
+	('335463135207672456832', 'Angelika', '40B7B0');
+
+INSERT INTO public.user_group(
+	user_id, group_id)
+	VALUES ('657342135207672346843', 1),
+	('235766135207672635456', 1),
+	('100262135207672155021', 1),
+	('335463135207672456832', 1),
+	-- Emilia należy dodatkowo do drugiej grupy
+	('100262135207672155021', 2);
 	
 	
 INSERT INTO public.activity_type(

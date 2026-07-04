@@ -12,14 +12,6 @@ import { User } from '@styled-icons/fa-solid/User';
 import { FormattedDate } from './helpers/functions';
 import axios from 'axios';
 
-import yoga from './assets/yoga.png';
-import walking from './assets/walking.png';
-import tennis from './assets/tennis.png';
-import swimming from './assets/swimming.png';
-import pilates from './assets/pilates.png';
-import soccer from './assets/soccer.png';
-import basketball from './assets/basketball.png';
-import confused from './assets/confused.png';
 
 const AppContainer=styled.div`
     width:100%;
@@ -127,11 +119,25 @@ const GroupName=styled.span`
   padding:0;
 `;
 
+const GroupSelect=styled.select`
+  display:block;
+  margin-top:7px;
+  font-size:1rem;
+  font-weight:500;
+  color:var(--text);
+  background:transparent;
+  border:none;
+  border-bottom:2px solid var(--primary);
+  cursor:pointer;
+  padding:2px 20px 2px 2px;
+  &:focus{ outline:none; }
+`;
+
 const Loader=styled.div`
   width:48px;
   height:48px;
   margin:120px auto;
-  border:5px solid rgba(255,255,255,0.2);
+  border:5px solid var(--primary-dark);
   border-top-color:#eee;
   border-radius:50%;
   animation: spin 0.8s linear infinite;
@@ -144,6 +150,9 @@ const StyledSeparator=styled.div`
   background:var(--primary);
   margin:0 10px;
   padding:0;
+  @media(max-width:570px){
+    display:none;
+  }
 `
 
 const LogoutButton= styled.div`
@@ -158,6 +167,63 @@ const LogoutButton= styled.div`
     margin-left:auto;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+`;
+
+const ModalCard = styled.div`
+  background: var(--white);
+  border-radius: 12px;
+  padding: 28px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  color: var(--text);
+  > p { font-size: 1rem; margin: 8px 0; }
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.2rem;
+  margin: 0 0 12px 0;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 22px;
+`;
+
+const AcceptBtn = styled.button`
+  padding: 9px 22px;
+  border-radius: 20px;
+  background: var(--pale-blue);
+  border: 2px solid var(--blue);
+  color: var(--white);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { background: var(--blue); }
+`;
+
+const DeclineBtn = styled.button`
+  padding: 9px 22px;
+  border-radius: 20px;
+  background: transparent;
+  border: 2px solid var(--red);
+  color: var(--red);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.2s;
+  &:hover { background: var(--red); color: var(--white); }
+`;
+
 
 function App() {
   const [users, setUsers] = useState([]);
@@ -166,13 +232,18 @@ function App() {
   const [activityTypes, setActivityTypes] = useState([]);
   const [userActivitiesForTheDay, setUserActivitiesForTheDay] = useState([]);
   const [groupName, setGroupName] = useState('');
+  const [groups, setGroups]= useState([]);
+  const [activeGroupId, setActiveGroupId] = useState(null);
   const [goal, setGoal] = useState(0);
+  const [goalPeriod, setGoalPeriod] = useState('week');
   const [site, setSite] = useState('grupa');
   const [loggedIn, setLoggedIn] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedDays, setSelectedDays] = useState([FormattedDate(new Date())]);
   const [activeNotificationPopup, setActiveNotificationPopup] = useState(false);
   const [activeAddPopup, setActiveAddPopup] = useState(false);
+  const [pendingInvite, setPendingInvite] = useState(null);
+  const [inviteInfo, setInviteInfo] = useState(null);
   const host='localhost';
 
   const fetchCurrentUser=()=>{
@@ -186,7 +257,6 @@ function App() {
       err => {
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {
           setLoggedIn(false);
-          // zatrzymaj łańcuch — brak .then i brak nieobsłużonego rejecta
           return new Promise(() => {});
         }
         return Promise.reject(err);
@@ -206,12 +276,61 @@ function App() {
   useEffect(() => {
     if (loggedIn) {
       fetchCurrentUser();
+      fetchActivityTypes();
+      fetchMyGroups();
+    }
+  }, [loggedIn]);
+
+  // dane zależne od wybranej grupy - przeładuj po zmianie aktywnej grupy
+  useEffect(() => {
+    if (loggedIn && activeGroupId) {
       fetchUsersActivities();
       fetchStatsActivities();
       fetchGroupInfo();
-      fetchActivityTypes();
+    } else if (loggedIn && !activeGroupId) {
+      // brak grupy (np. po opuszczeniu ostatniej) - wyczyść stare dane
+      setGroupName('');
+      setUsers([]);
+      setUsersActivities([]);
+      setStatsData([]);
+      setGoal(0);
     }
-  }, [loggedIn]);
+  }, [loggedIn, activeGroupId]);
+
+  // odczyt tokenu zaproszenia z linku (?invite=...) - trzymamy go na czas logowania
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('invite') || localStorage.getItem('pendingInvite');
+    if (token) {
+      setPendingInvite(token);
+      localStorage.setItem('pendingInvite', token);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  // po zalogowaniu pobierz podgląd grupy z zaproszenia (bez dołączania)
+  useEffect(() => {
+    if (loggedIn && pendingInvite) {
+      axios.get(`http://${host}:5000/invite-info?token=${pendingInvite}`, { withCredentials: true })
+        .then(res => setInviteInfo(res.data))
+        .catch(() => clearInvite());
+    }
+  }, [loggedIn, pendingInvite]);
+
+  const clearInvite = () => {
+    setInviteInfo(null);
+    setPendingInvite(null);
+    localStorage.removeItem('pendingInvite');
+  };
+
+  const acceptInvite = () => {
+    axios.post(`http://${host}:5000/join`, { token: pendingInvite }, { withCredentials: true })
+      .then(res => {
+        const newId = res.data.group_id;
+        fetchMyGroups().then(() => { setActiveGroupId(newId); setSite('grupa'); });
+      })
+      .finally(clearInvite);
+  };
 
   const logout=()=>{
     axios.post(`http://${host}:5000/logout`, {}, {
@@ -220,8 +339,21 @@ function App() {
     .finally(() => setLoggedIn(false));
   }
 
-  const fetchUsersActivities=()=>{
-    axios.get(`http://${host}:5000/current-week`, {
+  const fetchMyGroups=()=>{
+    return axios.get(`http://${host}:5000/my-groups`, { withCredentials: true })
+    .then(res => {
+        setGroups(res.data);
+        setActiveGroupId(prev =>
+          prev && res.data.some(g => g.group_id === prev)
+            ? prev
+            : res.data[0]?.group_id ?? null
+        );
+      });
+  }
+
+  const fetchUsersActivities=(groupId = activeGroupId)=>{
+    if (!groupId) return;
+    axios.get(`http://${host}:5000/current-period?group_id=${groupId}`, {
       withCredentials: true,
     })
     .then(res => {
@@ -237,41 +369,28 @@ function App() {
       });
   }
 
-  const fetchGroupInfo=()=>{
-    axios.get(`http://${host}:5000/group`, { withCredentials: true })
+  const fetchGroupInfo=(groupId = activeGroupId)=>{
+    if (!groupId) return;
+    axios.get(`http://${host}:5000/group?group_id=${groupId}`, { withCredentials: true })
     .then(res => {
         setGroupName(res.data.group_name);
         setGoal(res.data.group_goal);
+        setGoalPeriod(res.data.group_goal_period);
         setUsers(res.data.users);
       });
   }
 
-  const fetchStatsActivities=()=>{
-    axios.get(`http://${host}:5000/last-10-weeks`, { withCredentials: true })
+  const fetchStatsActivities=(groupId = activeGroupId)=>{
+    if (!groupId) return;
+    axios.get(`http://${host}:5000/last-10-weeks?group_id=${groupId}`, { withCredentials: true })
     .then(res => {
         setStatsData(res.data);
     });
 }
 
-  const activityIcons = {
-    tennis,
-    yoga,
-    walking, 
-    soccer,
-    swimming,
-    basketball,
-    pilates
-};
-
   const fetchActivityTypes=()=>{
     axios.get(`http://${host}:5000/activity-types`)
-        .then(res => {
-            const activitiesWithIcons = res.data.map(activity => ({
-                ...activity,
-                icon: activityIcons[activity.icon] || confused,
-            }));
-            setActivityTypes(activitiesWithIcons);
-        })
+        .then(res => setActivityTypes(res.data))
   }
 
   if (loggedIn === null) {
@@ -284,18 +403,40 @@ function App() {
 
   return (
     <AppContainer>
+    {inviteInfo && (
+      <ModalOverlay>
+        <ModalCard>
+          <ModalTitle>Zaproszenie do grupy</ModalTitle>
+          <p>Czy chcesz dołączyć do grupy <b>{inviteInfo.name}</b>?</p>
+          <ModalButtons>
+            <DeclineBtn onClick={clearInvite}>Odrzuć</DeclineBtn>
+            <AcceptBtn onClick={acceptInvite}>Dołącz</AcceptBtn>
+          </ModalButtons>
+        </ModalCard>
+      </ModalOverlay>
+    )}
     {loggedIn ?(
       <>
         <Menu site={site} setActiveAddPopup={setActiveAddPopup} setSite={setSite}/>
         <StyledWrapper>
           <HeaderWrapper>  
-            <StyledHeader>{site==='grupa' ?(<>Raport grupy:<GroupName>{groupName}</GroupName></>) : site==='moje' ? "Moja aktywność:" : "Profil"}</StyledHeader>
+            <StyledHeader>{site==='grupa' ?(
+              <>Raport grupy:
+                {groups.length > 1 ? (
+                  <GroupSelect value={activeGroupId ?? ''} onChange={e => setActiveGroupId(Number(e.target.value))}>
+                    {groups.map(g => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                  </GroupSelect>
+                ) : (
+                  <GroupName>{groupName}</GroupName>
+                )}
+              </>
+            ) : site==='moje' ? "Moja aktywność:" : "Profil"}</StyledHeader>
             {site==='userSettings' ?
             <LogoutButton onClick={logout}>Wyloguj się</LogoutButton>
             :
             (
             <div id="buttons">
-              <AddActivityPopup activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} refreshUserActivities={fetchUserActivities}/>
+              <AddActivityPopup groups={groups} activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} refreshUserActivities={fetchUserActivities}/>
               <StyledSeparator/>
               <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup}/>
               <UserButton $color={currentUser?.color} onClick={() => setSite("userSettings")}>
@@ -305,11 +446,11 @@ function App() {
 )}
           </HeaderWrapper>
           {site==='grupa' ?(
-            <Group statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} usersActivities={usersActivities}/>
+            <Group hasGroup={!!activeGroupId} statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} goalPeriod={goalPeriod} usersActivities={usersActivities}/>
           ) : site==='moje' ? (
             <Diary activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
           ) : (
-            <UserSettings logout={logout} onSave={() => { fetchGroupInfo(); fetchCurrentUser(); }} />
+            <UserSettings logout={logout} onSave={() => { fetchGroupInfo(); fetchCurrentUser(); }} onGroupCreated={(newId) => { fetchMyGroups().then(() => setActiveGroupId(newId)); }} onGroupsChanged={() => fetchMyGroups()} />
           )}
         </StyledWrapper>
       </>

@@ -17,7 +17,7 @@ const StyledG = styled.g`
   color: #333;
 `;
 
-const StackedAreaChart = ({ data, goal, width, height, users}) => { 
+const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) => {
   const axesRef = useRef(null);
   const boundsWidth = width - MARGIN.right - MARGIN.left;
   const boundsHeight = height - MARGIN.top - MARGIN.bottom;
@@ -26,13 +26,12 @@ const StackedAreaChart = ({ data, goal, width, height, users}) => {
   );  
 
   const processData = (rawData) => {
-    if (!rawData || Object.keys(rawData).length === 0) 
+    if (!rawData || Object.keys(rawData).length === 0)
         return [];
     const weeks = Object.keys(rawData);
-    
-    if (!weeks.length) 
+
+    if (!weeks.length)
         return [];
-    const people = Object.keys(rawData[weeks[0]]);
 
     return weeks.map(week => {
         const formattedWeek = new Date(week).toLocaleDateString('pl-PL', {
@@ -40,14 +39,19 @@ const StackedAreaChart = ({ data, goal, width, height, users}) => {
             month: '2-digit',
           });
         const entry = { x: formattedWeek };
-        people.forEach(person => {
-            entry[person] = rawData[week][person];
+        // każdy członek grupy ma wartość w każdym tygodniu (brak aktywności = 0),
+        // inaczej d3.stack robi NaN i obszar nie jest wypełniany
+        users.forEach(u => {
+            entry[u.user_id] = rawData[week][u.user_id] || 0;
         });
         return entry;
     });
     };
-    const processedData = useMemo(() => processData(data), [data]);
-    const stackKeys = users.map(m=> m.user_id);
+    const processedData = useMemo(() => processData(data), [data, users]);
+    const stackKeys = (selectedUserId != null
+        ? users.filter(m => m.user_id == selectedUserId)
+        : users
+    ).map(m => m.user_id);
     const stackSeries = d3.stack()
       .keys(stackKeys)
       .order(d3.stackOrderNone)

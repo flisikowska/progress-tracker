@@ -76,7 +76,11 @@ ${(props) =>
       .item-icon {
         color: ${(props) =>
     props.$active ? 'var(--white)':'var(--text)'};
-      }
+      
+     @media (max-width: 570px) {
+       color: ${(props) =>
+    props.$active ? 'var(--text)':'var(--text-inactive)'};
+       }}
     `}
 
     @media (max-width: 570px) {
@@ -90,10 +94,10 @@ ${(props) =>
         >svg{
             width: 23px;
             height: 23px;
-            color: ${(props) => (props.$active ? '#000' : '#bbb')};
+            color: ${(props) => (props.$active ? 'var(--text)' : 'var(--text-inactive)')};
         }
         >span{
-            color: ${(props) => (props.$active ? '#000' : '#bbb')};
+            color: ${(props) => (props.$active ? 'var(--text)' : 'var(--text-inactive)')};
         }
         &#add{
             display:block;
@@ -111,7 +115,7 @@ const MenuItemName = styled.span`
     @media (max-width: 450px) {
         font-size: 0.75rem;
         margin-top: 5px;
-        color: #eee;
+        color: var(--text);
     }
 `;
 

@@ -55,3 +55,28 @@ export function FormattedDate(d) {
     newDate.setDate(newDate.getDate() + days);
     return newDate;
   };
+
+  // Początek następnego okresu celu = moment resetu (spójnie z backendem: tydzień od poniedziałku)
+  export function getPeriodEnd(period, now = new Date()) {
+    if (period === 'month') return new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    if (period === 'year') return new Date(now.getFullYear() + 1, 0, 1);
+    // 'week' - poniedziałek jako pierwszy dzień
+    const day = now.getDay() || 7; // Pon=1 ... Niedz=7
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (day - 1));
+    monday.setDate(monday.getDate() + 7);
+    return monday;
+  }
+
+  // Ile zostało do końca okresu celu - zwraca { text, days } (days = pełne dni do ostatniego dnia włącznie)
+  export function timeLeftInPeriod(period, now = new Date()) {
+    const end = getPeriodEnd(period, now);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastDay = new Date(end);
+    lastDay.setDate(lastDay.getDate() - 1); // ostatni dzień okresu (przed resetem)
+    const days = Math.round((lastDay - today) / 86400000);
+    let text;
+    if (days <= 0) text = 'Kończy się dziś';
+    else if (days === 1) text = 'Kończy się jutro';
+    else text = `Zostało ${days} dni`;
+    return { text, days };
+  }

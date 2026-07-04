@@ -5,6 +5,7 @@ import { FormattedDate } from '../helpers/functions';
 import DayPicker from '../components/dayPicker';
 import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
 import { Plus } from '@styled-icons/fa-solid/Plus';
+import { ActivityIcon } from '../helpers/activityIcons';
 import axios from 'axios';
 
 const StyledButton= styled.div`
@@ -80,7 +81,7 @@ const StyledWrapper=styled.div`
     }
     #timePicker{
         height:125px;
-        margin:30px 0;
+        margin:20px 0;
     }
     `;
 
@@ -163,6 +164,12 @@ const SearchInput= styled.input`
     }
 `;
 
+const StyledActivityIcon= styled(ActivityIcon)`
+    width:32px;
+    height:32px;
+    color: var(--icon);
+`;
+
 const NoResults= styled.p`
     grid-column: 1 / -1;
     color: var(--text-inactive);
@@ -199,8 +206,36 @@ const ErrorMsg= styled.p`
     min-height:1rem;
 `;
 
+const GroupChecks= styled.div`
+    width:550px;
+    max-width:100%;
+    margin:8px auto 0 auto;
+    display:flex;
+    flex-flow:row wrap;
+    justify-content:flex-start;
+    gap:10px;
+    @media(max-width:1000px){
+        width:80%;
+    }
+`;
 
-const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsActivities, refreshUsersActivities, refreshUserActivities})=>{
+const GroupCheck= styled.label`
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px;
+    font-size:0.85rem;
+    color:var(--text);
+    cursor:pointer;
+    user-select:none;
+    > input{
+        accent-color: var(--blue);
+        cursor:pointer;
+    }
+`;
+
+
+const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, refreshStatsActivities, refreshUsersActivities, refreshUserActivities})=>{
     const [chosenItem, setChosenItem] = useState(null);
     const activePopupRef = useRef(active);
     const [selectedDay, setSelectedDay] = useState(FormattedDate(new Date()));
@@ -208,6 +243,7 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
     const [search, setSearch] = useState('');
     const [error, setError] = useState('');
     const [pickerKey, setPickerKey] = useState(0);
+    const [selectedGroups, setSelectedGroups] = useState([]);
     const wrapperRef = useRef(null);
 
     useEffect(() => {
@@ -217,6 +253,15 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
             });
         }
     }, [active]);
+
+    // przy każdym otwarciu popupu zaznacz wszystkie grupy
+    useEffect(() => {
+        if (active) setSelectedGroups(groups.map(g => g.group_id));
+    }, [active, groups]);
+
+    const toggleGroup = (id) => {
+        setSelectedGroups(prev => prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]);
+    };
 
     const filteredActivities = activityTypes.filter(a =>
         a.name.toLowerCase().includes(search.trim().toLowerCase())
@@ -263,7 +308,7 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
 
     const addActivity=(activity_type_id, date, amount)=>{
         const host='localhost';
-        axios.post(`http://${host}:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount}, { withCredentials: true })
+        axios.post(`http://${host}:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount, group_ids: selectedGroups}, { withCredentials: true })
         .then(res => {
            refreshUsersActivities();
            refreshUserActivities();
@@ -296,7 +341,7 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
                         $chosen={chosenItem === activity.id}
                         onClick={() => { setChosenItem(activity.id); setError(''); }}
                     >
-                        <img src={activity.icon} alt={activity.name} width="32" height="32" />
+                        <StyledActivityIcon name={activity.icon} />
                         <p>{activity.name}</p>
                     </StyledActivity>
                 ))}
@@ -318,6 +363,23 @@ const AddActivityPopup=({activityTypes, setActiveAddPopup, active, refreshStatsA
                             multipleDaySelect={false}
                             daysCount={7}
         />
+                {groups.length > 1 && (
+                    <>
+                        <StyledHeader>Widoczne w grupach</StyledHeader>
+                        <GroupChecks>
+                            {groups.map(g => (
+                                <GroupCheck key={g.group_id}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedGroups.includes(g.group_id)}
+                                        onChange={() => toggleGroup(g.group_id)}
+                                    />
+                                    {g.name}
+                                </GroupCheck>
+                            ))}
+                        </GroupChecks>
+                    </>
+                )}
                 {error && <ErrorMsg>{error}</ErrorMsg>}
                 <ChooseButton onClick={handleAdd}>Dodaj aktywność</ChooseButton>
             </StyledWrapper>

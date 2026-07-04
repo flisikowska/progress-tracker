@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import girl from '../assets/girl2.png';
+import girl from '../assets/Girl.png';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 
@@ -29,25 +29,17 @@ const StyledHeader=styled.h1`
 `
 
 const StyledGirl=styled.div`
-  width:600px;
-  height:450px;
+margin-left:auto;
+  width:400px;
+  aspect-ratio: 2/3;
   background: URL(${girl});
   background-size:contain;
   background-repeat:no-repeat;
 `;
 
-const StyledLoginContainer=styled.div`
-  display:flex;
-  flex-flow: row nowrap;
-  margin-top:20px;
-
-`;
-
 const GoogleLoginContainer= styled.div`
   width: fit-content;
   margin: 30px 0;
-  /* przycisk Google renderuje się w iframe — jego wnętrza nie da się stylować,
-     wygląd ustawiamy propsami komponentu GoogleLogin, tu tylko układ wokół */
   display: flex;
   justify-content: flex-start;
 `
@@ -75,12 +67,12 @@ function Login({onLogin}) {
     <StyledContainer>
         <StyledGirl/>
         <Right>
-          <StyledHeader>Cześć!<p>Zbierz drużynę i razem osiągnijcie wymarzony cel</p></StyledHeader>
+          <StyledHeader>Cześć!<p>Zbierz drużynę i razem osiągnijcie wymarzony cel.</p></StyledHeader>
           <GoogleLoginContainer>
             <GoogleLogin
               onSuccess={onSuccess}
               onError={onFailure}
-              theme="filled_blue"
+              theme="outline"
               shape="pill"
               size="large"
               text="continue_with"

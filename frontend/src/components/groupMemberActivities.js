@@ -2,6 +2,7 @@ import React, {useEffect} from 'react';
 import styled from 'styled-components';
 import { ResizeGridItems } from "../helpers/functions"
 import { MinutesToFormattedTime } from '../helpers/functions';
+import { ActivityIcon } from '../helpers/activityIcons';
 
 const StyledActivitiesWrapper = styled.div`
   width:100%;
@@ -48,7 +49,7 @@ const StyledActivity=styled.div`
     cursor:default;
     grid-row-end: span 10;
     >svg{
-      color: var(--blue);
+      color: var(--text-inactive);
       margin:10px;
     }
 
@@ -84,10 +85,11 @@ const StyledDate=styled.div`
     text-align:center;
 `
 
-const StyledIcon=styled.img`
+const StyledIcon=styled(ActivityIcon)`
   width:40px;
   height:40px;
   margin:10px 0;
+  color: var(--icon);
 `;
 
 function GroupMemberActivities({activityTypes, summary, activities}){
@@ -112,7 +114,7 @@ function GroupMemberActivities({activityTypes, summary, activities}){
             ) => (
                   <StyledActivity key={key} className='grid-item'>
                     <StyledTime>{MinutesToFormattedTime(time)}</StyledTime>
-                    <StyledIcon src={activityTypes.find(a=> a.id===activity_type_id).icon} alt={activityTypes.find(a=> a.id===activity_type_id).icon_name} />
+                    <StyledIcon name={activityTypes.find(a=> a.id===activity_type_id)?.icon} />
                     <ActivityTitle>{activityTypes.find(a=> a.id===activity_type_id).name}</ActivityTitle>
                     {date && <StyledDate>{date.split('-').reverse().slice(0,2).join('.')}</StyledDate>}
                   </StyledActivity>

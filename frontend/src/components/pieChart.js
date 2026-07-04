@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
-import { MinutesToFormattedTime } from '../helpers/functions';
+import { MinutesToFormattedTime, timeLeftInPeriod } from '../helpers/functions';
 import usePieChart from '../helpers/usePieChart';
+import { HourglassHalf } from '@styled-icons/fa-solid/HourglassHalf';
 
 const StyledContainer = styled.div`
     width:350px;
@@ -14,7 +15,9 @@ const StyledContainer = styled.div`
       flex-flow: column;
       height:unset;
       margin:40px auto;
-
+    }
+    @media(max-width:400px){
+      width:100%;
     }
 `;
 
@@ -26,6 +29,12 @@ const PieChartContainer = styled.div`
     @media(max-width:750px){
       width:260px;
       height:260px;
+    }
+    @media(max-width:400px){
+      width:90vw;
+      height:auto;
+      aspect-ratio:1 / 1;
+      margin:10px auto;
     }
 `;
 
@@ -62,12 +71,35 @@ const StyledRemainingTime = styled.div`
     }
 `;
 
+const PeriodCountdown = styled.div`
+    margin-top:12px;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:3px 11px;
+    border-radius:14px;
+    background:${p => p.$urgent ? 'var(--red)' : 'var(--primary)'};
+    color:${p => p.$urgent ? 'var(--white)' : 'var(--text)'};
+    font-size:0.72rem;
+    font-weight:600;
+    white-space:nowrap;
+    > svg{ width:11px; height:11px; }
+`;
 
-function PieChart({ goal, users, usersActivities, setComponent, selected }) {
+
+const PERIOD_LABELS = {
+    week: 'tygodniowego',
+    month: 'miesięcznego',
+    year: 'rocznego',
+};
+
+function PieChart({ goal, goalPeriod, users, usersActivities, setComponent, selected }) {
+    const periodLabel = PERIOD_LABELS[goalPeriod] || PERIOD_LABELS.week;
     const calculateAmount = (d) => {
         return d.activities.reduce((total, activity) => total + activity.time, 0);
     };
     const timeLeft= goal - usersActivities.reduce((sum, d) => sum + calculateAmount(d), 0);
+    const periodLeft = timeLeftInPeriod(goalPeriod);
 
     const data = useMemo(() => ([
       ...usersActivities.map(d => ({
@@ -95,7 +127,10 @@ function PieChart({ goal, users, usersActivities, setComponent, selected }) {
                     {timeLeft<=0?
                     <p>Cel osiągnięty!<br/><span>{MinutesToFormattedTime(goal)} razem</span></p>
                     :
-                    <p>{MinutesToFormattedTime(goal - timeLeft)} <br/> <span>z {MinutesToFormattedTime(goal)} celu</span></p>}
+                    <p>{MinutesToFormattedTime(goal - timeLeft)} <br/> <span>z {MinutesToFormattedTime(goal)} celu {periodLabel}</span></p>}
+                    <PeriodCountdown $urgent={periodLeft.days <= 1}>
+                        <HourglassHalf /> {periodLeft.text}
+                    </PeriodCountdown>
                 </StyledRemainingTime>
             </PieChartContainer>
         </StyledContainer>

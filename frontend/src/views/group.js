@@ -142,6 +142,31 @@ const DetailsHeader = styled.div`
     color:var(--text);
 `;
 
+const EmptyState = styled.div`
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:80px 20px;
+    gap:10px;
+`;
+
+const EmptyTitle = styled.h2`
+    font-size:1.3rem;
+    color:var(--text);
+    margin:0;
+`;
+
+const EmptyText = styled.p`
+    font-size:0.95rem;
+    color:var(--text-inactive);
+    margin:0;
+    max-width:360px;
+    line-height:1.5;
+`;
+
 const CloseBtn = styled.span`
     cursor:pointer;
     display:flex;
@@ -166,26 +191,44 @@ const CloseBtn = styled.span`
     }
 `;
 
-function Group({ statsData, activityTypes, users, goal, usersActivities }) {
+function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, usersActivities }) {
     const areaChartWidth = 860;
     const areaChartHeight = 400;
     const [selected, setSelected] = useState(null);
 
+    if (!hasGroup) {
+        return (
+            <EmptyState>
+                <EmptyTitle>Nie należysz do żadnej grupy</EmptyTitle>
+                <EmptyText>
+                    Utwórz nową grupę albo dołącz do istniejącej przez link zapraszający.
+                    Zrobisz to w ustawieniach profilu.
+                </EmptyText>
+            </EmptyState>
+        );
+    }
+
+
     const calculateAmount = (d) => d.activities.reduce((total, a) => total + a.time, 0);
 
-    const members = usersActivities.map((d) => ({
-        user_id: d.user_id,
-        name: users.find((u) => u.user_id == d.user_id)?.user_name,
-        color: '#' + users.find((u) => u.user_id == d.user_id)?.user_color,
-        amount: calculateAmount(d),
-        activities: d.activities,
-    }));
+    // Wszyscy członkowie grupy - także ci bez aktywności (0 minut), posortowani malejąco po czasie
+    const members = users.map((u) => {
+        const d = usersActivities.find((ua) => ua.user_id == u.user_id);
+        return {
+            user_id: u.user_id,
+            name: u.user_name,
+            color: '#' + u.user_color,
+            amount: d ? calculateAmount(d) : 0,
+            activities: d ? d.activities : [],
+        };
+    }).sort((a, b) => b.amount - a.amount);
 
     return (
         <StyledContainer>
             <StyledPieChart>
                 <PieChart
                     goal={goal}
+                    goalPeriod={goalPeriod}
                     users={users}
                     usersActivities={usersActivities}
                     setComponent={setSelected}
@@ -220,9 +263,11 @@ function Group({ statsData, activityTypes, users, goal, usersActivities }) {
             </StyledPieChart>
 
             <StyledStatsHeader>
-                <StyledStatsTitle>Statystyki grupy</StyledStatsTitle>
+                <StyledStatsTitle>
+                    {selected ? `Statystyki – ${selected.name}` : 'Statystyki grupy'}
+                </StyledStatsTitle>
                 <UserLegend>
-                    {users.map(u => (
+                    {(selected ? users.filter(u => u.user_id == selected.user_id) : users).map(u => (
                         <LegendItem key={u.user_id}>
                             <LegendDot style={{ backgroundColor: '#' + u.user_color }} />
                             <LegendName>{u.user_name}</LegendName>
@@ -236,6 +281,7 @@ function Group({ statsData, activityTypes, users, goal, usersActivities }) {
                 width={areaChartWidth}
                 height={areaChartHeight}
                 users={users}
+                selectedUserId={selected ? selected.user_id : null}
             />
         </StyledContainer>
     );

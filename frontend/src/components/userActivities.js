@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { ResizeGridItems } from "../helpers/functions"
 import {CloseOutline} from '@styled-icons/evaicons-outline/CloseOutline';
 import { MinutesToFormattedTime } from '../helpers/functions';
+import { ActivityIcon } from '../helpers/activityIcons';
 
 const StyledActivitiesWrapper = styled.div`
   margin: 20px auto;
@@ -51,7 +52,7 @@ const StyledActivity=styled.div`
     cursor:default;
     grid-row-end: span 10;
     >svg{
-      color: var(--blue);
+      color: var(--text-inactive);
       margin:15px;
     }
     @media(max-width:420px){
@@ -98,10 +99,11 @@ justify-content:space-between;
   }
 `
 
-const StyledIcon=styled.img`
+const StyledIcon=styled(ActivityIcon)`
   width:40px;
   height:40px;
   margin:10px 0;
+  color: var(--icon);
 `;
 
 function UserActivities({activityTypes, deleteActivity, activities}){
@@ -122,7 +124,7 @@ function UserActivities({activityTypes, deleteActivity, activities}){
             ) => (
               <StyledActivity key={key}  className='grid-item'>
                 <StyledHeader><p>{MinutesToFormattedTime(time)}</p><CloseOutline onClick={()=> deleteActivity(activity_id)}/></StyledHeader>
-                <StyledIcon src={activityTypes.find(a=> a.id===activity_type_id).icon} alt={activityTypes.find(a=> a.id===activity_type_id).icon_name} />
+                <StyledIcon name={activityTypes.find(a=> a.id===activity_type_id)?.icon} />
                 <ActivityTitle>{activityTypes.find(a=> a.id===activity_type_id).name}</ActivityTitle>
               </StyledActivity>
             ),

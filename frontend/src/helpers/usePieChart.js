@@ -5,6 +5,10 @@ const radius = 90;
 const inner = Math.min(radius, 150);
 const outer = Math.max(radius, 150);
 
+// Stały układ współrzędnych wykresu - dzięki temu SVG (width:100%) skaluje się z kontenerem
+const SIZE = outer * 2; // 300
+const CENTER = outer;   // 150
+
 const arc = d3.arc()
   .outerRadius(inner + 8)
   .innerRadius(outer);
@@ -16,10 +20,6 @@ const usePieChart = (data, setComponent, selected) => {
 
   // rysowanie wykresu
   useEffect(() => {
-    const pieChartElement = d3.select('#pieChart');
-    const width = parseInt(pieChartElement.style('width'), 10);
-    const height = width;
-
     const pie = d3.pie()
       .sort(null)
       .value(d => d.amount);
@@ -28,10 +28,10 @@ const usePieChart = (data, setComponent, selected) => {
       .attr("width", '100%')
       .attr("height", '100%')
       .attr("overflow", 'unset')
-      .attr('viewBox', '0 0 ' + Math.min(width, height) + ' ' + Math.min(width, height))
+      .attr('viewBox', `0 0 ${SIZE} ${SIZE}`)
       .attr('preserveAspectRatio', 'xMidYMid meet')
       .append("g")
-      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+      .attr("transform", `translate(${CENTER},${CENTER})`);
 
     svg
       .selectAll("path")
@@ -72,28 +72,29 @@ const usePieChart = (data, setComponent, selected) => {
     const g = d3.select('#pieChart').select('svg').select('g');
     if (g.empty()) return;
 
-    const width = parseInt(d3.select('#pieChart').style('width'), 10);
-    const height = width;
+    const FULL = 2 * Math.PI - 0.01; // segment obejmujący (prawie) całe koło
 
-    // obrót całego koła: wybrany segment na górę (albo reset do 0)
+    // obrót całego koła: wybrany segment na górę (albo reset do 0).
+    // Dla pełnego koła nie obracamy - i tak wygląda tak samo, a wirowanie wygląda źle.
     let rotation = 0;
     if (selectedId != null) {
       g.selectAll('path').each(function (d) {
-        if (d.data.user_id === selectedId) {
+        if (d.data.user_id === selectedId && (d.endAngle - d.startAngle) < FULL) {
           rotation = 90 - ((d.startAngle * (180 / Math.PI)) + ((d.endAngle - d.startAngle) * (180 / Math.PI) / 2));
         }
       });
     }
     g.transition('pop')
       .duration(800)
-      .attr('transform', `translate(${width / 2},${height / 2}) rotate(${rotation})`);
+      .attr('transform', `translate(${CENTER},${CENTER}) rotate(${rotation})`);
 
-    // jedna tranzycja na segment: wybrany wysunięty, reszta wyzerowana
+    // jedna tranzycja na segment: wybrany wysunięty, reszta wyzerowana.
+    // Pełnego koła nie wysuwamy - przesunęłoby cały wykres.
     g.selectAll('path')
       .transition('pop')
       .duration(800)
       .attr('transform', function (d) {
-        if (selectedId != null && d.data.user_id === selectedId) {
+        if (selectedId != null && d.data.user_id === selectedId && (d.endAngle - d.startAngle) < FULL) {
           const mid = (d.startAngle + d.endAngle) / 2;
           return `translate(${Math.sin(mid) * POP_OFFSET},${-Math.cos(mid) * POP_OFFSET})`;
         }

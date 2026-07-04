@@ -54,11 +54,8 @@ const StyledWrapper=styled.div`
         font-weight:bold;
     }
     @media(max-width:570px){
-        width:100%;
-        height:100%;
-        right:0;
-        transform: translate(${(props) => (props.$active ? '0' : '120%')});
-        transition:  2s;
+        width:70vw;
+        height:60vh;
         #info{
             font-size:0.7rem;    
         }
@@ -97,9 +94,9 @@ const NotificationPopup=({active, setActiveNotificationPopup})=>{
     }, [active]);
 
     return (
-        <StyledContainer>
-            <Notifications onClick={()=> setActiveNotificationPopup(!active) }/>
-            <StyledWrapper className='scrollable' id='popup' $active={active}>
+        <StyledContainer onClick={()=> setActiveNotificationPopup(!active)}>
+            <Notifications />
+            <StyledWrapper className='scrollable' id='popup' $active={active} onClick={e => e.stopPropagation()}>
                 <div>
                     <p id='time'>12.03 10:30</p>
                     <p id='info'>Karolina dodał/a "bieganie-30 min"</p>
