@@ -38,8 +38,7 @@ const AppContainer=styled.div`
   @media(max-width:570px){
     width:96%;
     padding:20px 10px;
-    border-radius:0;
-    margin:0 auto;
+    margin:20px auto;
   }
 `;
 

@@ -399,7 +399,6 @@ app.post("/google-auth", jsonParser, async (req, res) => {
   console.log(`POST /google-auth started`);
   try
   {
-    const default_group_id=1;
     const color='000000';
     const { credential, client_id } = req.body;
     const client = new Client(dbConfig);
@@ -420,17 +419,13 @@ app.post("/google-auth", jsonParser, async (req, res) => {
             VALUES ($1, $2, $3) RETURNING *`;
       const response = await client.query(query, [sub, name, color]);
       user = response.rows[0];
-      await client.query(
-        `INSERT INTO public.user_group (user_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-        [user.user_id, default_group_id]
-      );
     }
-    const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, { expiresIn: '1h' }); 
+    const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false, 
-      sameSite: 'Strict', 
-      maxAge: 3600000 
+      secure: false,
+      sameSite: 'Strict',
+      maxAge: 3600000
     });
     res.status(200).json({ message: "Zalogowano pomyślnie" });
     // } catch (err) {
