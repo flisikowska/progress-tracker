@@ -39,7 +39,7 @@ var jsonParser= bodyParser.json();
 // TODO: Control origin with the env. Do not whitelist localhost in prod
 const corsOptions = {
   credentials: true,
-  origin: [ 'https://trenujemy.flisikowska.com', 'http://localhost:3000', 'http://localhost:5000', 'http://192.168.1.126:3000', 'http://192.168.1.126:5000'] // Whitelist the domains you want to allow
+  origin: process.env.CORS_ORIGINS.split(',').map(o=>o.trim())
 };
 
 app.use(cookieParser());

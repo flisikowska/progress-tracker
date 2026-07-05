@@ -104,9 +104,9 @@ function PieChart({ goal, goalPeriod, users, usersActivities, setComponent, sele
     const data = useMemo(() => ([
       ...usersActivities.map(d => ({
         user_id: d.user_id,
-        name: users.find(u => u.user_id == d.user_id)?.user_name,
+        name: users.find(u => u.user_id === d.user_id)?.user_name,
         amount: calculateAmount(d),
-        color: '#' + users.find(u => u.user_id == d.user_id)?.user_color,
+        color: '#' + users.find(u => u.user_id === d.user_id)?.user_color,
         activities: d.activities,
       })),
       {

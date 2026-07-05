@@ -1,5 +1,5 @@
 import './App.css';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import styled from 'styled-components';
 import Diary from './views/diary';
 import Group from './views/group';
@@ -11,7 +11,6 @@ import UserSettings from './views/userSettings';
 import { User } from '@styled-icons/fa-solid/User';
 import { FormattedDate } from './helpers/functions';
 import axios from 'axios';
-
 
 const AppContainer=styled.div`
     width:100%;
@@ -243,14 +242,12 @@ function App() {
   const [activeAddPopup, setActiveAddPopup] = useState(false);
   const [pendingInvite, setPendingInvite] = useState(null);
   const [inviteInfo, setInviteInfo] = useState(null);
-  // TODO: Clean up
-  // const host='http://localhost:5000';
-  const host='https://trenujemy.flisikowska.com';
+  const host = process.env.REACT_APP_API_HOST;
 
-  const fetchCurrentUser=()=>{
+  const fetchCurrentUser=useCallback(()=>{
     return axios.get(`${host}/user`, { withCredentials: true })
       .then(res => setCurrentUser(res.data[0]));
-  }
+  }, [host])
 
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
@@ -272,31 +269,7 @@ function App() {
     })
     .then(res => { setLoggedIn(true); setCurrentUser(res.data[0]); })
     .catch(()=> setLoggedIn(false));
-  }, []);
-
-  useEffect(() => {
-    if (loggedIn) {
-      fetchCurrentUser();
-      fetchActivityTypes();
-      fetchMyGroups();
-    }
-  }, [loggedIn]);
-
-  // dane zależne od wybranej grupy - przeładuj po zmianie aktywnej grupy
-  useEffect(() => {
-    if (loggedIn && activeGroupId) {
-      fetchUsersActivities();
-      fetchStatsActivities();
-      fetchGroupInfo();
-    } else if (loggedIn && !activeGroupId) {
-      // brak grupy (np. po opuszczeniu ostatniej) - wyczyść stare dane
-      setGroupName('');
-      setUsers([]);
-      setUsersActivities([]);
-      setStatsData([]);
-      setGoal(0);
-    }
-  }, [loggedIn, activeGroupId]);
+  }, [host]);
 
   // odczyt tokenu zaproszenia z linku (?invite=...) - trzymamy go na czas logowania
   useEffect(() => {
@@ -316,7 +289,7 @@ function App() {
         .then(res => setInviteInfo(res.data))
         .catch(() => clearInvite());
     }
-  }, [loggedIn, pendingInvite]);
+  }, [loggedIn, pendingInvite, host]);
 
   const clearInvite = () => {
     setInviteInfo(null);
@@ -340,7 +313,7 @@ function App() {
     .finally(() => setLoggedIn(false));
   }
 
-  const fetchMyGroups=()=>{
+  const fetchMyGroups=useCallback(()=>{
     return axios.get(`${host}/my-groups`, { withCredentials: true })
     .then(res => {
         setGroups(res.data);
@@ -350,9 +323,9 @@ function App() {
             : res.data[0]?.group_id ?? null
         );
       });
-  }
+  }, [host])
 
-  const fetchUsersActivities=(groupId = activeGroupId)=>{
+  const fetchUsersActivities=useCallback((groupId = activeGroupId)=>{
     if (!groupId) return;
     axios.get(`${host}/current-period?group_id=${groupId}`, {
       withCredentials: true,
@@ -360,17 +333,17 @@ function App() {
     .then(res => {
         setUsersActivities(res.data);
       });
-  }
+  }, [host, activeGroupId])
 
-  const fetchUserActivities=(days = selectedDays)=>{
+  const fetchUserActivities=useCallback((days = selectedDays)=>{
     const query = days.map(d => `date=${encodeURIComponent(d)}`).join('&');
     axios.get(`${host}/activities?${query}`, {withCredentials: true})
     .then(res => {
         setUserActivitiesForTheDay(res.data);
       });
-  }
+  }, [host, selectedDays])
 
-  const fetchGroupInfo=(groupId = activeGroupId)=>{
+  const fetchGroupInfo=useCallback((groupId = activeGroupId)=>{
     if (!groupId) return;
     axios.get(`${host}/group?group_id=${groupId}`, { withCredentials: true })
     .then(res => {
@@ -379,20 +352,45 @@ function App() {
         setGoalPeriod(res.data.group_goal_period);
         setUsers(res.data.users);
       });
-  }
+  }, [host, activeGroupId])
 
-  const fetchStatsActivities=(groupId = activeGroupId)=>{
+  const fetchStatsActivities=useCallback((groupId = activeGroupId)=>{
     if (!groupId) return;
     axios.get(`${host}/last-10-weeks?group_id=${groupId}`, { withCredentials: true })
     .then(res => {
         setStatsData(res.data);
     });
-}
+}, [host, activeGroupId])
 
-  const fetchActivityTypes=()=>{
+  const fetchActivityTypes=useCallback(()=>{
     axios.get(`${host}/activity-types`)
         .then(res => setActivityTypes(res.data))
-  }
+  }, [host])
+
+  // po zalogowaniu pobierz dane początkowe
+  useEffect(() => {
+    if (loggedIn) {
+      fetchCurrentUser();
+      fetchActivityTypes();
+      fetchMyGroups();
+    }
+  }, [loggedIn, fetchCurrentUser, fetchActivityTypes, fetchMyGroups]);
+
+  // dane zależne od wybranej grupy - przeładuj po zmianie aktywnej grupy
+  useEffect(() => {
+    if (loggedIn && activeGroupId) {
+      fetchUsersActivities();
+      fetchStatsActivities();
+      fetchGroupInfo();
+    } else if (loggedIn && !activeGroupId) {
+      // brak grupy (np. po opuszczeniu ostatniej) - wyczyść stare dane
+      setGroupName('');
+      setUsers([]);
+      setUsersActivities([]);
+      setStatsData([]);
+      setGoal(0);
+    }
+  }, [loggedIn, activeGroupId, fetchUsersActivities, fetchStatsActivities, fetchGroupInfo]);
 
   if (loggedIn === null) {
     return (

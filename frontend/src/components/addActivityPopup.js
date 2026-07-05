@@ -8,6 +8,8 @@ import { Plus } from '@styled-icons/fa-solid/Plus';
 import { ActivityIcon } from '../helpers/activityIcons';
 import axios from 'axios';
 
+const host = process.env.REACT_APP_API_HOST;
+
 const StyledButton= styled.div`
     z-index:10;
     padding:7px 10px;
@@ -307,9 +309,6 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
     }
 
     const addActivity=(activity_type_id, date, amount)=>{
-        // TODO: Control from env
-        const host='https://trenujemy.flisikowska.com';
-        // const host='http://localhost:5000';
         axios.post(`${host}/activities`, {activity_type_id: activity_type_id, date: date, amount: amount, group_ids: selectedGroups}, { withCredentials: true })
         .then(res => {
            refreshUsersActivities();

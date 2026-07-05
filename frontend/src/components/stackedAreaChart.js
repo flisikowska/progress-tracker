@@ -1,7 +1,6 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useRef, useEffect, useCallback } from 'react';
 import * as d3 from 'd3';
 import styled from 'styled-components';
-import axios from 'axios';
 
 const MARGIN = { top: 30, right: 30, bottom: 50, left: 50 };
 
@@ -25,7 +24,7 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
     users.map(({ user_id, user_color }) => [user_id, `#${user_color}`])
   );  
 
-  const processData = (rawData) => {
+  const processData = useCallback((rawData) => {
     if (!rawData || Object.keys(rawData).length === 0)
         return [];
     const weeks = Object.keys(rawData);
@@ -46,10 +45,10 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
         });
         return entry;
     });
-    };
-    const processedData = useMemo(() => processData(data), [data, users]);
+    }, [users]);
+    const processedData = useMemo(() => processData(data), [data, processData]);
     const stackKeys = (selectedUserId != null
-        ? users.filter(m => m.user_id == selectedUserId)
+        ? users.filter(m => m.user_id === selectedUserId)
         : users
     ).map(m => m.user_id);
     const stackSeries = d3.stack()
@@ -60,7 +59,7 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
     const maxMinutes = d3.max(series, s => d3.max(s, d => d[1])) || goal; 
     const yScale = useMemo(() => d3.scaleLinear()
     .domain([0, Math.max(maxMinutes, goal)])
-    .range([boundsHeight, 0]), [boundsHeight, maxMinutes]);
+    .range([boundsHeight, 0]), [boundsHeight, maxMinutes, goal]);
 
   const xScale = useMemo(() => d3.scalePoint()
       .domain(processedData.map(d => d.x).reverse())
@@ -118,7 +117,7 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
       .attr('fill', '#555')
       .text('cel');
 
-  }, [xScale, yScale, boundsHeight]);
+  }, [xScale, yScale, boundsHeight, boundsWidth, goal]);
 
   const areaBuilder = d3.area()
       .x(d => xScale(d.data.x))

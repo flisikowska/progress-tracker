@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
 import DayPicker from '../components/dayPicker';
-import { FormattedDate } from '../helpers/functions';
 import styled from 'styled-components';
 import UserActivities from '../components/userActivities';
 import axios from 'axios';
+
+const host = process.env.REACT_APP_API_HOST;
+
 
 const StyledContainer= styled.div`
   width:100%;
@@ -13,13 +14,9 @@ const StyledContainer= styled.div`
 `
 
 function Diary({activityTypes, userActivitiesForTheDay, refreshUsersActivities, fetchUserActivities, selectedDays, setSelectedDays}) {
-  // TODO: Control from env
-  // const host='localhost:5000';
-  const host='https://trenujemy.flisikowska.com';
-
   useEffect(()=>{
     fetchUserActivities(selectedDays);
-  },[selectedDays]);
+  },[selectedDays, fetchUserActivities]);
 
   const handleActivityDelete = (id) => {
     axios.delete(`${host}/activities/${id}`, { withCredentials: true })

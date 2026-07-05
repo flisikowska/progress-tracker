@@ -4,6 +4,8 @@ import girl from '../assets/Girl.png';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 
+const host = process.env.REACT_APP_API_HOST;
+
 const StyledContainer= styled.div`
   box-sizing:border-box;
   width:100%;
@@ -128,9 +130,6 @@ const onFailure = (error) => {
 };
 
 function Login({onLogin}) {
-  // TODO: Control from env
-  // const host = "http://localhost:5000";
-  const host = "https://trenujemy.flisikowska.com";
   const onSuccess = async (response) => {
     const { credential } = response;
     try {

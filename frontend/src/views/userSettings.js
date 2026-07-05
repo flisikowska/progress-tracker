@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 import { Link } from '@styled-icons/fa-solid/Link';
 import { Check } from '@styled-icons/fa-solid/Check';
+
+const host = process.env.REACT_APP_API_HOST;
 
 const COLORS = [
   'F5B1C7', 'F4A0A0', 'F5C97B', 'A8D8A8',
@@ -298,10 +300,6 @@ const GOAL_PERIODS = [
 ];
 
 function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
-  // TODO: Control from env
-  // const host = 'localhost:5000';
-  const host = 'https://trenujemy.flisikowska.com';
-
   const [name, setName] = useState('');
   const [color, setColor] = useState('');
   const [saved, setSaved] = useState(false);
@@ -326,10 +324,10 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
 
   const closeCreateModal = () => setShowCreateModal(false);
 
-  const fetchMyGroups = () => {
+  const fetchMyGroups = useCallback(() => {
     axios.get(`${host}/my-groups`, { withCredentials: true })
       .then(res => setMyGroups(res.data));
-  };
+  }, []);
 
   useEffect(() => {
     axios.get(`${host}/user`, { withCredentials: true })
@@ -338,7 +336,7 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
         setColor(res.data[0].color);
       });
     fetchMyGroups();
-  }, []);
+  }, [fetchMyGroups]);
 
   const confirmLeaveGroup = () => {
     const group = groupToLeave;
