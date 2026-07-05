@@ -244,10 +244,12 @@ function App() {
   const [activeAddPopup, setActiveAddPopup] = useState(false);
   const [pendingInvite, setPendingInvite] = useState(null);
   const [inviteInfo, setInviteInfo] = useState(null);
-  const host='localhost';
+  // TODO: Clean up
+  // const host='http://localhost:5000';
+  const host='https://trenujemy.flisikowska.com';
 
   const fetchCurrentUser=()=>{
-    return axios.get(`http://${host}:5000/user`, { withCredentials: true })
+    return axios.get(`${host}/user`, { withCredentials: true })
       .then(res => setCurrentUser(res.data[0]));
   }
 
@@ -266,7 +268,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    axios.get(`http://${host}:5000/user`, {
+    axios.get(`${host}/user`, {
       withCredentials: true,
     })
     .then(res => { setLoggedIn(true); setCurrentUser(res.data[0]); })
@@ -311,7 +313,7 @@ function App() {
   // po zalogowaniu pobierz podgląd grupy z zaproszenia (bez dołączania)
   useEffect(() => {
     if (loggedIn && pendingInvite) {
-      axios.get(`http://${host}:5000/invite-info?token=${pendingInvite}`, { withCredentials: true })
+      axios.get(`${host}/invite-info?token=${pendingInvite}`, { withCredentials: true })
         .then(res => setInviteInfo(res.data))
         .catch(() => clearInvite());
     }
@@ -324,7 +326,7 @@ function App() {
   };
 
   const acceptInvite = () => {
-    axios.post(`http://${host}:5000/join`, { token: pendingInvite }, { withCredentials: true })
+    axios.post(`${host}/join`, { token: pendingInvite }, { withCredentials: true })
       .then(res => {
         const newId = res.data.group_id;
         fetchMyGroups().then(() => { setActiveGroupId(newId); setSite('grupa'); });
@@ -333,14 +335,14 @@ function App() {
   };
 
   const logout=()=>{
-    axios.post(`http://${host}:5000/logout`, {}, {
+    axios.post(`${host}/logout`, {}, {
       withCredentials: true,
     })
     .finally(() => setLoggedIn(false));
   }
 
   const fetchMyGroups=()=>{
-    return axios.get(`http://${host}:5000/my-groups`, { withCredentials: true })
+    return axios.get(`${host}/my-groups`, { withCredentials: true })
     .then(res => {
         setGroups(res.data);
         setActiveGroupId(prev =>
@@ -353,7 +355,7 @@ function App() {
 
   const fetchUsersActivities=(groupId = activeGroupId)=>{
     if (!groupId) return;
-    axios.get(`http://${host}:5000/current-period?group_id=${groupId}`, {
+    axios.get(`${host}/current-period?group_id=${groupId}`, {
       withCredentials: true,
     })
     .then(res => {
@@ -363,7 +365,7 @@ function App() {
 
   const fetchUserActivities=(days = selectedDays)=>{
     const query = days.map(d => `date=${encodeURIComponent(d)}`).join('&');
-    axios.get(`http://${host}:5000/activities?${query}`, {withCredentials: true})
+    axios.get(`${host}/activities?${query}`, {withCredentials: true})
     .then(res => {
         setUserActivitiesForTheDay(res.data);
       });
@@ -371,7 +373,7 @@ function App() {
 
   const fetchGroupInfo=(groupId = activeGroupId)=>{
     if (!groupId) return;
-    axios.get(`http://${host}:5000/group?group_id=${groupId}`, { withCredentials: true })
+    axios.get(`${host}/group?group_id=${groupId}`, { withCredentials: true })
     .then(res => {
         setGroupName(res.data.group_name);
         setGoal(res.data.group_goal);
@@ -382,14 +384,14 @@ function App() {
 
   const fetchStatsActivities=(groupId = activeGroupId)=>{
     if (!groupId) return;
-    axios.get(`http://${host}:5000/last-10-weeks?group_id=${groupId}`, { withCredentials: true })
+    axios.get(`${host}/last-10-weeks?group_id=${groupId}`, { withCredentials: true })
     .then(res => {
         setStatsData(res.data);
     });
 }
 
   const fetchActivityTypes=()=>{
-    axios.get(`http://${host}:5000/activity-types`)
+    axios.get(`${host}/activity-types`)
         .then(res => setActivityTypes(res.data))
   }
 

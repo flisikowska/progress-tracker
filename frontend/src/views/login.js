@@ -49,10 +49,13 @@ const onFailure = (error) => {
 };
 
 function Login({onLogin}) {
+  // TODO: Control from env
+  // const host = "http://localhost:5000";
+  const host = "https://trenujemy.flisikowska.com";
   const onSuccess = async (response) => {
     const { credential } = response;
     try {
-      await axios.post('http://localhost:5000/google-auth', {
+      await axios.post(`${host}/google-auth`, {
         credential,
       }, {
         withCredentials: true,

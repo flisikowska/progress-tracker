@@ -13,14 +13,16 @@ const StyledContainer= styled.div`
 `
 
 function Diary({activityTypes, userActivitiesForTheDay, refreshUsersActivities, fetchUserActivities, selectedDays, setSelectedDays}) {
-  const host='localhost';
+  // TODO: Control from env
+  // const host='localhost:5000';
+  const host='https://trenujemy.flisikowska.com';
 
   useEffect(()=>{
     fetchUserActivities(selectedDays);
   },[selectedDays]);
 
   const handleActivityDelete = (id) => {
-    axios.delete(`http://${host}:5000/activities/${id}`, { withCredentials: true })
+    axios.delete(`${host}/activities/${id}`, { withCredentials: true })
       .then(res => {
         refreshUsersActivities();
         fetchUserActivities(selectedDays);

@@ -7,27 +7,48 @@ import ggl from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
+import { runMigrations } from './migrate.js';
 
-dotenv.config();
+dotenv.config({ path: ['.env.local', '.env'] });
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const staticDir = path.join(__dirname, 'public');
 
 const { OAuth2Client } = ggl;
 const googleClient = new OAuth2Client();
 
 const { Client } = pg;
 
+const dbConfig = {
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  host: process.env.PGHOST,
+  port: Number(process.env.PGPORT) || 5432,
+  database: process.env.PGDATABASE,
+};
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 var jsonParser= bodyParser.json();
 
+// TODO: Control origin with the env. Do not whitelist localhost in prod
 const corsOptions = {
   credentials: true,
-  origin: ['http://localhost:3000', 'http://localhost:5000', 'http://192.168.1.126:3000', 'http://192.168.1.126:5000'] // Whitelist the domains you want to allow
+  origin: [ 'https://trenujemy.flisikowska.com', 'http://localhost:3000', 'http://localhost:5000', 'http://192.168.1.126:3000', 'http://192.168.1.126:5000'] // Whitelist the domains you want to allow
 };
 
 app.use(cookieParser());
 app.use(cors(corsOptions));
+
+// Serve the frontend build (copied to ./public in the Docker image)
+if (existsSync(staticDir)) {
+  app.use(express.static(staticDir));
+}
 
 const authenticateToken = (req, res, next) => {
   console.log(req.cookies);
@@ -65,13 +86,7 @@ function getPeriodStart(period) {
 }
 
 async function executeQuery(query, params) {
-  const client = new Client({
-    user: 'postgres',
-    password: '123456',
-    host: 'localhost',
-    port: 5432,
-    database: 'progress_tracker',
-  });
+  const client = new Client(dbConfig);
   
   try {
     await client.connect();
@@ -174,6 +189,10 @@ app.get('/group-invite', authenticateToken, async (req, res) => {
     await executeQuery(`UPDATE public.group SET invite_token = $1 WHERE group_id = $2`, [token, group_id]);
   }
   res.send({ invite_token: token });
+})
+
+app.get('/health_check', (req, res) => {
+  res.sendStatus(200);
 })
 
 //TODO https://node-postgres.com/guides/async-express
@@ -376,50 +395,53 @@ app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
 })
 
 app.post("/google-auth", jsonParser, async (req, res) => {
-  const default_group_id=1;
-  const color='000000';
-  const { credential, client_id } = req.body;
-  const client = new Client({
-    user: "postgres",
-    password: "123456",
-    host: "localhost",
-    port: 5432,
-    database: "progress_tracker",
-  });
-  await client.connect();
-  // try {
-  const ticket = await googleClient.verifyIdToken({
-    idToken: credential,
-    audience: client_id,
-  });
-  const payload = ticket.getPayload();
-  const sub = payload["sub"]; 
-  const name = payload["given_name"]; 
-  const userQuery = `SELECT * FROM public.user WHERE user_id = $1`;
-  const resp=await client.query(userQuery, [sub]);
-  let user=resp.rows[0];
-  if (!user) {
-    const query = `INSERT INTO public.user (user_id, name, color)
-          VALUES ($1, $2, $3) RETURNING *`;
-    const response = await client.query(query, [sub, name, color]);
-    user = response.rows[0];
-    await client.query(
-      `INSERT INTO public.user_group (user_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-      [user.user_id, default_group_id]
-    );
+
+  console.log(`POST /google-auth started`);
+  try
+  {
+    const default_group_id=1;
+    const color='000000';
+    const { credential, client_id } = req.body;
+    const client = new Client(dbConfig);
+    await client.connect();
+    // try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: client_id,
+    });
+    const payload = ticket.getPayload();
+    const sub = payload["sub"]; 
+    const name = payload["given_name"]; 
+    const userQuery = `SELECT * FROM public.user WHERE user_id = $1`;
+    const resp=await client.query(userQuery, [sub]);
+    let user=resp.rows[0];
+    if (!user) {
+      const query = `INSERT INTO public.user (user_id, name, color)
+            VALUES ($1, $2, $3) RETURNING *`;
+      const response = await client.query(query, [sub, name, color]);
+      user = response.rows[0];
+      await client.query(
+        `INSERT INTO public.user_group (user_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+        [user.user_id, default_group_id]
+      );
+    }
+    const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, { expiresIn: '1h' }); 
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false, 
+      sameSite: 'Strict', 
+      maxAge: 3600000 
+    });
+    res.status(200).json({ message: "Zalogowano pomyślnie" });
+    // } catch (err) {
+    //   res.status(400).json({ err });
+    // }
+    await client.end();
   }
-  const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, { expiresIn: '1h' }); 
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: false, 
-    sameSite: 'Strict', 
-    maxAge: 3600000 
-  });
-  res.status(200).json({ message: "Zalogowano pomyślnie" });
-  // } catch (err) {
-  //   res.status(400).json({ err });
-  // }
-  await client.end();
+  catch(err){
+    console.log(err);
+    throw err;
+  }
 });
 
 app.get("/user", authenticateToken, async (req, res) => {
@@ -447,6 +469,16 @@ app.post("/logout", (req, res) => {
   });
   res.status(200).json({ message: "Wylogowano pomyślnie" });
 });
+
+// SPA fallback: any GET not matched by the API routes above returns index.html
+if (existsSync(staticDir)) {
+  app.get('/{*splat}', (req, res) => {
+    console.log(`Reached fallback at: ${req.url}`);
+    res.sendFile(path.join(staticDir, 'index.html'));
+  });
+}
+
+await runMigrations(dbConfig);
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`Example app listening on port ${port}`);

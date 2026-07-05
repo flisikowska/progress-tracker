@@ -307,8 +307,10 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
     }
 
     const addActivity=(activity_type_id, date, amount)=>{
-        const host='localhost';
-        axios.post(`http://${host}:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount, group_ids: selectedGroups}, { withCredentials: true })
+        // TODO: Control from env
+        const host='https://trenujemy.flisikowska.com';
+        // const host='http://localhost:5000';
+        axios.post(`${host}/activities`, {activity_type_id: activity_type_id, date: date, amount: amount, group_ids: selectedGroups}, { withCredentials: true })
         .then(res => {
            refreshUsersActivities();
            refreshUserActivities();
