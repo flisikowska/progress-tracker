@@ -36,7 +36,6 @@ const app = express();
 const port = process.env.PORT || 5000;
 var jsonParser= bodyParser.json();
 
-// TODO: Control origin with the env. Do not whitelist localhost in prod
 const corsOptions = {
   credentials: true,
   origin: process.env.CORS_ORIGINS.split(',').map(o=>o.trim())
@@ -385,10 +384,26 @@ app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
   const response=await executeQuery(query, [date, activity_type_id, user_id, amount]);
   const activity = response[0];
 
+  // dane do treści powiadomienia: imię autora + nazwa typu aktywności
+  const actorRows = await executeQuery(`SELECT name FROM public.user WHERE user_id = $1`, [user_id]);
+  const actorName = actorRows[0]?.name ?? 'Ktoś';
+  const typeRows = await executeQuery(`SELECT name FROM public.activity_type WHERE activity_type_id = $1`, [activity_type_id]);
+  const typeName = typeRows[0]?.name ?? 'aktywność';
+
   for (const gid of targetGroups) {
     await executeQuery(
       `INSERT INTO public.activity_group (activity_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [activity.activity_id, gid]
+    );
+     // powiadomienie dla każdego członka grupy OPRÓCZ autora aktywności
+     // nazwę grupy bierzemy z JOIN-a, żeby wpis niósł info z której grupy pochodzi
+    await executeQuery(
+      `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount)
+       SELECT ug.user_id, g.group_id, g.name, $2, $3, $4
+       FROM public.user_group ug
+       JOIN public."group" g ON g.group_id = ug.group_id
+       WHERE ug.group_id = $1 AND ug.user_id <> $5`,
+      [gid, actorName, typeName, amount, user_id]
     );
   }
   res.send(activity);
@@ -478,3 +493,40 @@ await runMigrations(dbConfig);
 app.listen(port, '0.0.0.0', () => {
   console.log(`Example app listening on port ${port}`);
 })
+
+
+// Jedna wspólna lista powiadomień usera ze WSZYSTKICH grup (najnowsze na górze)
+app.get('/notifications', authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  const rows = await executeQuery(
+    `SELECT notification_id, group_id, group_name, actor_name, activity_type_name, amount, is_read, created_at
+     FROM public.notification
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+    [user_id]
+  );
+  res.send(rows);
+});
+
+// Oznacz wszystkie powiadomienia usera (ze wszystkich grup) jako przeczytane
+app.post('/notifications/mark-read', authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  await executeQuery(
+    `UPDATE public.notification SET is_read = true
+     WHERE user_id = $1 AND is_read = false`,
+    [user_id]
+  );
+  res.sendStatus(204);
+});
+
+
+// Usuń wszystkie powiadomienia usera (ze wszystkich grup)
+app.delete('/notifications', authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  await executeQuery(
+    `DELETE FROM public.notification WHERE user_id = $1`,
+    [user_id]
+  );
+  res.sendStatus(204);
+});
+

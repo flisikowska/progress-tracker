@@ -58,7 +58,7 @@ const DayPickerItem = ({
   return (
       <StyledDaySquare className="dayPickerItem" onClick={onClick} selected={selected}>
         <StyledDay>{day.split('-')[2]}</StyledDay>
-        <StyledDate>{day.split('-')[1]}/{day.split('-')[0].slice(2)}</StyledDate>
+        <StyledDate>{day.split('-')[1]}.{day.split('-')[0].slice(2)}</StyledDate>
       </StyledDaySquare>
   );
 };

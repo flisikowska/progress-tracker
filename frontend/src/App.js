@@ -5,6 +5,7 @@ import Diary from './views/diary';
 import Group from './views/group';
 import Menu from './components/menu';
 import NotificationPopup from './components/notificationPopup';
+import Footer from './components/footer';
 import AddActivityPopup from './components/addActivityPopup';
 import Login from './views/login';
 import UserSettings from './views/userSettings';
@@ -437,7 +438,7 @@ function App() {
             <div id="buttons">
               <AddActivityPopup groups={groups} activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} refreshUserActivities={fetchUserActivities}/>
               <StyledSeparator/>
-              <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup}/>
+              <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup} host={host} />
               <UserButton $color={currentUser?.color} onClick={() => setSite("userSettings")}>
                 <User />
               </UserButton>
@@ -452,6 +453,7 @@ function App() {
             <UserSettings logout={logout} onSave={() => { fetchGroupInfo(); fetchCurrentUser(); }} onGroupCreated={(newId) => { fetchMyGroups().then(() => setActiveGroupId(newId)); }} onGroupsChanged={() => fetchMyGroups()} />
           )}
         </StyledWrapper>
+        <Footer/>
       </>
     ):(
       <StyledWrapper>

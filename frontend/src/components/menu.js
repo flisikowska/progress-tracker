@@ -1,8 +1,8 @@
 import React from 'react';
 import styled, {css} from 'styled-components';
-import { PersonRunning } from '@styled-icons/fa-solid/PersonRunning';
-import { BookPulse } from '@styled-icons/fluentui-system-regular/BookPulse';
 import { ChannelAdd } from '@styled-icons/fluentui-system-filled/ChannelAdd';
+import { PeopleGroup } from '@styled-icons/fa-solid/PeopleGroup';
+import { Calendar3 } from '@styled-icons/bootstrap/Calendar3';
 
 const StyledMenu = styled.div`
     display:flex;
@@ -41,8 +41,9 @@ const StyledMenu = styled.div`
 
 const ItemWrapper = styled.div`
     > svg {
-        width: 23px;
-        height: 23px;
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
         padding-right:10px;
         cursor:pointer;
     }
@@ -76,7 +77,7 @@ ${(props) =>
       .item-icon {
         color: ${(props) =>
     props.$active ? 'var(--white)':'var(--text)'};
-      
+
      @media (max-width: 570px) {
        color: ${(props) =>
     props.$active ? 'var(--text)':'var(--text-inactive)'};
@@ -109,7 +110,7 @@ ${(props) =>
 `;
 
 const MenuItemName = styled.span`
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor:pointer;
     font-weight: 600;
     @media (max-width: 450px) {
@@ -158,23 +159,18 @@ const StyledCircle = styled.div`
 
 
 const Menu = ({site, setSite, setActiveAddPopup}) => {
-//   const { user, requestsCount } = useSelector((state) => ({
-//     user: state.user,
-//     requestsCount: state.requestsCount,
-//   }));
-
   return (
       <StyledMenu id="menu">
         <ItemWrapper $active={site==='grupa'} onClick={()=>setSite('grupa')} >
-            <PersonRunning  className="item-icon"/> 
-            <MenuItemName className="item-name">Raport</MenuItemName>
+            <PeopleGroup className="item-icon"/>
+            <MenuItemName className="item-name">Grupa</MenuItemName>
         </ItemWrapper>
         <ItemWrapper id="add" onClick={()=>setActiveAddPopup(true)}>
             <ChannelAdd />
         </ItemWrapper>
         <ItemWrapper $active={site==='moje'} onClick={()=>setSite('moje')}>
-            <BookPulse  className="item-icon"/>
-            <MenuItemName className="item-name">Dziennik</MenuItemName>
+            <Calendar3 className="item-icon"/>
+            <MenuItemName className="item-name">Aktywności</MenuItemName>
         </ItemWrapper>
         <StyledCircle/>
       </StyledMenu>

@@ -118,11 +118,16 @@ const GoogleLoginContainer= styled.div`
   justify-content: flex-start;
 `
 
-const LoginHint= styled.p`
-  margin: 5px 0 0 10px;
+const TermsNote = styled.p`
+  margin: 10px 0 0 0;
   font-size: 0.7rem;
   font-weight: 300;
   color: var(--text-inactive);
+  > a {
+    color: var(--blue);
+    text-decoration: underline;
+    cursor: pointer;
+  }
 `
 
 const onFailure = (error) => {
@@ -167,7 +172,9 @@ function Login({onLogin}) {
                 locale="pl"
               />
             </GoogleLoginContainer>
-            <LoginHint>Za darmo, bez zakładania osobnego konta</LoginHint>
+            <TermsNote>
+              Logując się, akceptujesz <a href="/regulamin">Regulamin</a> oraz <a href="/polityka-prywatnosci">Politykę prywatności</a>.
+            </TermsNote>
           </Right>
         </Content>
       </StyledContainer>
