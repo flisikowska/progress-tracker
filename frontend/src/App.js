@@ -79,26 +79,11 @@ const UserButton = styled.div`
   align-items: center;
   justify-content: center;
   border: 1px solid var(--primary-dark);
-  transition: border-color 0.2s;
-  &::before {
-    content: '';
-    position: absolute;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: ${p => p.$color ? `#${p.$color}85` : 'var(--primary-dark)'};
-    top: 2px;
-    left: 2px;
-    transition:0.2s;
-  }
+  transition:  0.3s;
+  background-color: ${p => p.$color ? `#${p.$color}85` : 'var(--primary-dark)'};
   &:hover {
-    &::before {
-      width: 34px;
-      height: 34px;
-      top:0px;
-      left:0px;
-      background-color: ${p => p.$color ? `#${p.$color}1` : 'var(--primary-dark)'};
-    }
+      background-color: ${p => p.$color ? `#${p.$color}` : 'var(--primary-dark)'};
+
   }
   > svg {
     width: 13px;
@@ -364,7 +349,7 @@ function App() {
 }, [host, activeGroupId])
 
   const fetchActivityTypes=useCallback(()=>{
-    axios.get(`${host}/activity-types`)
+    axios.get(`${host}/activity-types`, { withCredentials: true })
         .then(res => setActivityTypes(res.data))
   }, [host])
 
@@ -453,7 +438,7 @@ function App() {
             <UserSettings logout={logout} onSave={() => { fetchGroupInfo(); fetchCurrentUser(); }} onGroupCreated={(newId) => { fetchMyGroups().then(() => setActiveGroupId(newId)); }} onGroupsChanged={() => fetchMyGroups()} />
           )}
         </StyledWrapper>
-        <Footer/>
+        {site==='userSettings' && <Footer/>}
       </>
     ):(
       <StyledWrapper>

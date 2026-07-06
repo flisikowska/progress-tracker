@@ -88,34 +88,28 @@ const StyledWrapper=styled.div`
     `;
 
 const ActivitiesWrapper= styled.div`
-    height: 150px;
     width:550px;
+    max-width:100%;
+    margin:20px auto;
+    display:flex;
+    flex-flow:row nowrap;
+    gap:0px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding-bottom:8px;
     @media(max-width:1000px){
         width:80%;
     }
-    overflow-y: auto;
-    display: grid;
-    margin:20px auto;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0px;
-    align-content:start;
-    @media(max-width:700px){
-        grid-template-columns: repeat(3, 1fr);
-    }
-    @media(max-width:520px){
-        grid-template-columns: repeat(2, 1fr);
-        height: 400px;
-        >div{
-            width:90%;
-            margin:8px auto;
-        }
-    }
+    &::-webkit-scrollbar { height:6px; }
+    &::-webkit-scrollbar:hover { height:6px; }
+    &::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.2); border-radius:3px; }
 `;
 
 const StyledActivity= styled.div`
     padding:10px;
     margin:6px;
     width:110px;
+    flex-shrink:0;
     cursor:pointer;
     text-align:center;
     height:80px;

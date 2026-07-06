@@ -13,7 +13,6 @@ const StyledContainer = styled.div`
   justify-content:center;
   align-items:center;
   position:relative;
-  cursor:pointer;
   >svg{
     width:20px;
     height:20px;
@@ -61,19 +60,31 @@ const StyledWrapper = styled.div`
   }
 `;
 
-const Actions = styled.div`
+const Header = styled.div`
   display:flex;
+  align-items:center;
+  justify-content:flex-end;
   gap:8px;
   margin-bottom:10px;
+`;
+
+const HeaderActions = styled.div`
+  display:flex;
+  gap:14px;
+  flex-shrink:0;
   button{
-    flex:1;
-    padding:6px;
+    padding:0;
     font-size:0.8rem;
-    border-radius:5px;
-    border:2px solid var(--primary);
-    background:#fff;
+    border:none;
+    background:none;
+    color:var(--blue);
+    font-weight:600;
     cursor:pointer;
-    &:disabled{ opacity:0.4; cursor:default; }
+    &:hover{ text-decoration:underline; }
+    &:disabled{ opacity:0.4; cursor:default; text-decoration:none; }
+  }
+  *:nth-child(2){
+    color:var(--red);
   }
 `;
 
@@ -168,10 +179,12 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host }) => {
       <Notifications />
       {unreadCount > 0 && <Badge>{unreadCount}</Badge>}
       <StyledWrapper className='scrollable' id='popup' $active={active} onClick={(e) => e.stopPropagation()}>
-        <Actions>
-          <button onClick={markAllRead} disabled={unreadCount === 0}>Oznacz jako przeczytane</button>
-          <button onClick={deleteAll} disabled={notifications.length === 0}>Usuń wszystkie</button>
-        </Actions>
+        <Header>
+          <HeaderActions>
+            <button onClick={markAllRead} disabled={unreadCount === 0}>Odczytaj wszystkie</button>
+            <button onClick={deleteAll} disabled={notifications.length === 0}>Wyczyść</button>
+          </HeaderActions>
+        </Header>
         {notifications.length === 0 ? (
           <Empty>Brak powiadomień</Empty>
         ) : (

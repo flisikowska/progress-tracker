@@ -36,6 +36,9 @@ import cardio from '../assets/cardio.png';
 import treadmill from '../assets/treadmill.png';
 import tabletennis from '../assets/ping-pong.png';
 import hockey from '../assets/ice-hockey.png';
+import sex from '../assets/sex.png';
+import gardening from '../assets/gardening.png';
+import rowingMachine from '../assets/rowing-machine.png';
 
 // klucz ikony (kolumna activity_type.icon) -> obrazek PNG
 const ICONS = {
@@ -75,6 +78,9 @@ const ICONS = {
   stretching,
   cardio,
   treadmill,
+  seks: sex,
+  ogrodnictwo: gardening,
+  wioslarz: rowingMachine,
 };
 
 // Medal jako fallback dla nieznanych kluczy (bez własnej grafiki)

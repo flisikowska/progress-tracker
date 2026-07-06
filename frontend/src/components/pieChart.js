@@ -45,6 +45,7 @@ const StyledPieChart = styled.div`
     align-items: center;
     justify-content: center;
     margin: 0 auto;
+    svg { overflow: visible; }
     @media(max-width:1000px) {
         transform: rotate(90deg); 
         transform-origin: 50% 50%; 

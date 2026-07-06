@@ -32,6 +32,19 @@ const dbConfig = {
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Sesja: 30 dni, odświeżana przy każdym zapytaniu (rolling), żeby aktywny user nie wypadał.
+const TOKEN_TTL = '30d';
+const TOKEN_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+const cookieOptions = {
+  httpOnly: true,
+  secure: false,
+  sameSite: 'Strict',
+};
+const issueAuthCookie = (res, userId) => {
+  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: TOKEN_TTL });
+  res.cookie('token', token, { ...cookieOptions, maxAge: TOKEN_MAX_AGE });
+};
+
 const app = express();
 const port = process.env.PORT || 5000;
 var jsonParser= bodyParser.json();
@@ -59,8 +72,10 @@ const authenticateToken = (req, res, next) => {
     if (err) {
       return res.sendStatus(403);
     }
-    req.user = { userId: user.userId }; 
-    next(); 
+    req.user = { userId: user.userId };
+    // Rolling session: odśwież token/cookie przy każdym zapytaniu, żeby aktywny user nie wygasał.
+    issueAuthCookie(res, user.userId);
+    next();
   });
 };
 
@@ -342,12 +357,18 @@ app.get('/last-10-weeks', authenticateToken, async (req, res) => {
   res.send(result);
 });
 
-app.get('/activity-types', async (req, res) => {
+app.get('/activity-types', authenticateToken, async (req, res) => {
+  // Sortujemy wg tego, jak często dany user wybierał aktywność (priorytet = najczęściej wybierane).
+  // Nowe/nieużywane typy (0 aktywności) lądują na końcu, alfabetycznie.
   const query = `
-  SELECT activity_type_id AS id, icon, name
-	FROM public.activity_type;
+  SELECT at.activity_type_id AS id, at.icon, at.name
+	FROM public.activity_type at
+	LEFT JOIN public.activity a
+	  ON a.activity_type_id = at.activity_type_id AND a.user_id = $1
+	GROUP BY at.activity_type_id, at.icon, at.name
+	ORDER BY COUNT(a.activity_id) DESC, at.name ASC;
 `;
-  const response = await executeQuery(query, []);
+  const response = await executeQuery(query, [req.user.userId]);
   res.send(response);
 });
 
@@ -435,13 +456,7 @@ app.post("/google-auth", jsonParser, async (req, res) => {
       const response = await client.query(query, [sub, name, color]);
       user = response.rows[0];
     }
-    const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, { expiresIn: '1h' });
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'Strict',
-      maxAge: 3600000
-    });
+    issueAuthCookie(res, user.user_id);
     res.status(200).json({ message: "Zalogowano pomyślnie" });
     // } catch (err) {
     //   res.status(400).json({ err });
@@ -472,28 +487,9 @@ app.put("/user", jsonParser, authenticateToken, async (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: false,
-    sameSite: 'Strict',
-  });
+  res.clearCookie('token', cookieOptions);
   res.status(200).json({ message: "Wylogowano pomyślnie" });
 });
-
-// SPA fallback: any GET not matched by the API routes above returns index.html
-if (existsSync(staticDir)) {
-  app.get('/{*splat}', (req, res) => {
-    console.log(`Reached fallback at: ${req.url}`);
-    res.sendFile(path.join(staticDir, 'index.html'));
-  });
-}
-
-await runMigrations(dbConfig);
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Example app listening on port ${port}`);
-})
-
 
 // Jedna wspólna lista powiadomień usera ze WSZYSTKICH grup (najnowsze na górze)
 app.get('/notifications', authenticateToken, async (req, res) => {
@@ -519,7 +515,6 @@ app.post('/notifications/mark-read', authenticateToken, async (req, res) => {
   res.sendStatus(204);
 });
 
-
 // Usuń wszystkie powiadomienia usera (ze wszystkich grup)
 app.delete('/notifications', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
@@ -529,4 +524,18 @@ app.delete('/notifications', authenticateToken, async (req, res) => {
   );
   res.sendStatus(204);
 });
+
+// SPA fallback: any GET not matched by the API routes above returns index.html
+if (existsSync(staticDir)) {
+  app.get('/{*splat}', (req, res) => {
+    console.log(`Reached fallback at: ${req.url}`);
+    res.sendFile(path.join(staticDir, 'index.html'));
+  });
+}
+
+await runMigrations(dbConfig);
+
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Example app listening on port ${port}`);
+})
 

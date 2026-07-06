@@ -1,8 +1,8 @@
 import React from 'react';
 import styled, {css} from 'styled-components';
-import { ChannelAdd } from '@styled-icons/fluentui-system-filled/ChannelAdd';
 import { PeopleGroup } from '@styled-icons/fa-solid/PeopleGroup';
 import { Calendar3 } from '@styled-icons/bootstrap/Calendar3';
+import clock from '../assets/clock.png';
 
 const StyledMenu = styled.div`
     display:flex;
@@ -15,7 +15,7 @@ const StyledMenu = styled.div`
     #add{
         display:none;
         width:2em;
-        >svg{
+        >svg, >img{
             padding:0;
             width:30px;
             height:30px;
@@ -102,9 +102,6 @@ ${(props) =>
         }
         &#add{
             display:block;
-            >svg{
-                color:var(--blue);
-            }
         }
     }
 `;
@@ -113,11 +110,6 @@ const MenuItemName = styled.span`
     font-size: 0.9rem;
     cursor:pointer;
     font-weight: 600;
-    @media (max-width: 450px) {
-        font-size: 0.75rem;
-        margin-top: 5px;
-        color: var(--text);
-    }
 `;
 
 const StyledCircle = styled.div`
@@ -165,14 +157,16 @@ const Menu = ({site, setSite, setActiveAddPopup}) => {
             <PeopleGroup className="item-icon"/>
             <MenuItemName className="item-name">Grupa</MenuItemName>
         </ItemWrapper>
-        <ItemWrapper id="add" onClick={()=>setActiveAddPopup(true)}>
-            <ChannelAdd />
-        </ItemWrapper>
+        {site!=='userSettings' && (
+          <ItemWrapper id="add" onClick={()=>setActiveAddPopup(true)}>
+              <img src={clock} alt="Dodaj aktywność" />
+          </ItemWrapper>
+        )}
         <ItemWrapper $active={site==='moje'} onClick={()=>setSite('moje')}>
             <Calendar3 className="item-icon"/>
             <MenuItemName className="item-name">Aktywności</MenuItemName>
         </ItemWrapper>
-        <StyledCircle/>
+        {site!=='userSettings' && <StyledCircle/>}
       </StyledMenu>
   );
 };
