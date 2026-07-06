@@ -526,6 +526,7 @@ app.delete('/notifications', authenticateToken, async (req, res) => {
 });
 
 // SPA fallback: any GET not matched by the API routes above returns index.html
+// It must always be declared as the last endpoint
 if (existsSync(staticDir)) {
   app.get('/{*splat}', (req, res) => {
     console.log(`Reached fallback at: ${req.url}`);
@@ -538,4 +539,3 @@ await runMigrations(dbConfig);
 app.listen(port, '0.0.0.0', () => {
   console.log(`Example app listening on port ${port}`);
 })
-
