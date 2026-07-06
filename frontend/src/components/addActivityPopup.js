@@ -125,9 +125,7 @@ const StyledActivity= styled.div`
         font-weight:600;
         font-size:0.65rem;
         margin-top:8px;
-        @media(max-width:450px){
-            font-size:0.7rem;
-        }
+     
     }
 `;
 
@@ -157,6 +155,10 @@ const SearchInput= styled.input`
     &:focus{ border-color: var(--blue); }
     @media(max-width:1000px){
         width:80%;
+    }
+    /* iOS zoomuje przy focusie inputa z czcionką <16px - na mobilce trzymamy 16px */
+    @media(max-width:570px){
+        font-size:16px;
     }
 `;
 
