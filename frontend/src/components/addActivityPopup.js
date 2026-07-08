@@ -115,18 +115,17 @@ const StyledActivity= styled.div`
     height:80px;
     border-radius:12px;
     border: 1px solid var(--primary);
+    >p{
+        font-weight:600;
+        font-size:0.63rem;
+        margin-top:8px;
+    }
     ${(props) =>
     props.$chosen &&
     css`
         border: 2px solid var(--pale-blue);
         box-shadow: 0 0 4px var(--pale-blue);
     `};
-    >p{
-        font-weight:600;
-        font-size:0.65rem;
-        margin-top:8px;
-     
-    }
 `;
 
 const StyledHeader= styled.div`

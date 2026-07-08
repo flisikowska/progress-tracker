@@ -39,9 +39,6 @@ const StyledTotal = styled.div`
   @media(max-width:450px){
     font-size:1.1rem;
   }
-  @media(max-width:420px){
-    width:130px;
-  }
   >p{
     font-size:1rem;
       font-weight:500;
@@ -70,11 +67,11 @@ const ActivityTitle= styled.h1`
     padding:0;
     pointer-events:none;
     font-weight:600;
-    font-size:1rem;
+    font-size:0.95rem;
     margin: 0 auto;
     text-align:center;
     @media(max-width:450px){
-        font-size:0.85rem;
+        font-size:0.8rem;
     }
 `;
 

@@ -73,7 +73,6 @@ const StyledWeekday = styled.p`
 `;
 
 const StyledDay = styled.div`
-  /* plynnie skalowana wysokosc zamiast aspect-ratio - bez skokow na breakpointach */
   height: clamp(38px, 7vw, 64px);
   box-sizing: border-box;
   border: 2px solid transparent;
@@ -87,14 +86,20 @@ const StyledDay = styled.div`
   color: var(--text);
   font-size: clamp(0.8rem, 2.2vw, 0.95rem);
   user-select: none;
+  @media (max-width: 768px) {
+    padding-bottom: 8px;
+  }
   >span {
     position: absolute;
-    bottom: 3px;
+    bottom: 7px;
     left: 0;
     right: 0;
     font-size: clamp(0.5rem, 1.6vw, 0.65rem);
     line-height: 1;
     color: var(--dark-blue);
+    @media (max-width: 450px) {
+      bottom: 5px;
+    }
   }
   ${(props) =>
     props.active &&
