@@ -122,15 +122,29 @@ const formatTime = (iso) => {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
-const NotificationPopup = ({ active, setActiveNotificationPopup, host }) => {
+const NotificationPopup = ({ active, setActiveNotificationPopup, host, onNotificationsChanged = () => {} }) => {
   const [notifications, setNotifications] = useState([]);
   const activePopupRef = useRef(active);
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
+  // zawsze wolaj najnowszy callback (unikamy stale closure przy zmianie propa)
+  const onChangeRef = useRef(onNotificationsChanged);
+  useEffect(() => { onChangeRef.current = onNotificationsChanged; }, [onNotificationsChanged]);
+  // najwyzsze widziane id - by wykryc NOWA notyfikacje (nowa aktywnosc czlonka grupy)
+  const lastMaxIdRef = useRef(null);
+
   // jedna wspólna lista ze wszystkich grup
   const fetchNotifications = useCallback(() => {
     axios.get(`${host}/notifications`, { withCredentials: true })
-      .then((res) => setNotifications(res.data))
+      .then((res) => {
+        setNotifications(res.data);
+        const maxId = res.data.reduce((m, n) => Math.max(m, n.notification_id), 0);
+        // pojawilo sie nowe id (poza pierwszym pobraniem) -> ktos dodal aktywnosc, odswiezamy pie/statystyki
+        if (lastMaxIdRef.current !== null && maxId > lastMaxIdRef.current) {
+          onChangeRef.current();
+        }
+        lastMaxIdRef.current = maxId;
+      })
       .catch(() => {});
   }, [host]);
 
@@ -154,17 +168,15 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host }) => {
   // zamykanie po kliknięciu poza popupem (jak było wcześniej)
   useEffect(() => {
     const handler = (event) => {
-      if (window.innerWidth >= 450) {
-        if (!activePopupRef.current) return;
-        const popup = document.getElementById('popup');
-        if (event.target !== popup) {
-          let parent = event.target.parentNode;
-          while (parent !== null) {
-            if (parent === popup) return;
-            parent = parent.parentNode;
-          }
-          setTimeout(() => setActiveNotificationPopup(false), 1);
+      if (!activePopupRef.current) return;
+      const popup = document.getElementById('popup');
+      if (event.target !== popup) {
+        let parent = event.target.parentNode;
+        while (parent !== null) {
+          if (parent === popup) return;
+          parent = parent.parentNode;
         }
+        setTimeout(() => setActiveNotificationPopup(false), 1);
       }
     };
     window.addEventListener('mouseup', handler);

@@ -360,7 +360,7 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
                             multipleDaySelect={false}
                             daysCount={7}
         />
-                {groups.length > 1 && (
+                {groups.length > 0 && (
                     <>
                         <StyledHeader>Widoczne w grupach</StyledHeader>
                         <GroupChecks>

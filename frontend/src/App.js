@@ -12,7 +12,7 @@ import UserSettings from './views/userSettings';
 import { User } from '@styled-icons/fa-solid/User';
 import { FormattedDate } from './helpers/functions';
 import axios from 'axios';
-
+import PeriodSelector from './components/periodSelector';
 const AppContainer=styled.div`
     width:100%;
     min-height:100vh;
@@ -217,7 +217,10 @@ function App() {
   const [userActivitiesForTheDay, setUserActivitiesForTheDay] = useState([]);
   const [groupName, setGroupName] = useState('');
   const [groups, setGroups]= useState([]);
-  const [activeGroupId, setActiveGroupId] = useState(null);
+  const [activeGroupId, setActiveGroupId] = useState(() => {
+    const saved = localStorage.getItem('activeGroupId');
+    return saved ? Number(saved) : null;
+  });
   const [goal, setGoal] = useState(0);
   const [goalPeriod, setGoalPeriod] = useState('week');
   const [site, setSite] = useState('grupa');
@@ -228,6 +231,7 @@ function App() {
   const [activeAddPopup, setActiveAddPopup] = useState(false);
   const [pendingInvite, setPendingInvite] = useState(null);
   const [inviteInfo, setInviteInfo] = useState(null);
+  const [activePeriod, setActivePeriod]= useState('dzien');
   const host = process.env.REACT_APP_API_HOST;
 
   const fetchCurrentUser=useCallback(()=>{
@@ -311,6 +315,12 @@ function App() {
       });
   }, [host])
 
+  // trzymaj aktywna grupe w localStorage, zeby przetrwala odswiezenie strony
+  useEffect(() => {
+    if (activeGroupId != null) localStorage.setItem('activeGroupId', String(activeGroupId));
+    else localStorage.removeItem('activeGroupId');
+  }, [activeGroupId])
+
   const fetchUsersActivities=useCallback((groupId = activeGroupId)=>{
     if (!groupId) return;
     axios.get(`${host}/current-period?group_id=${groupId}`, {
@@ -362,14 +372,12 @@ function App() {
     }
   }, [loggedIn, fetchCurrentUser, fetchActivityTypes, fetchMyGroups]);
 
-  // dane zależne od wybranej grupy - przeładuj po zmianie aktywnej grupy
   useEffect(() => {
     if (loggedIn && activeGroupId) {
       fetchUsersActivities();
       fetchStatsActivities();
       fetchGroupInfo();
     } else if (loggedIn && !activeGroupId) {
-      // brak grupy (np. po opuszczeniu ostatniej) - wyczyść stare dane
       setGroupName('');
       setUsers([]);
       setUsersActivities([]);
@@ -405,7 +413,8 @@ function App() {
         <Menu site={site} setActiveAddPopup={setActiveAddPopup} setSite={setSite}/>
         <StyledWrapper>
           <HeaderWrapper>  
-            <StyledHeader>{site==='grupa' ?(
+            <StyledHeader>
+              {site==='grupa' ? (
               <>Raport grupy:
                 {groups.length > 1 ? (
                   <GroupSelect value={activeGroupId ?? ''} onChange={e => setActiveGroupId(Number(e.target.value))}>
@@ -415,7 +424,9 @@ function App() {
                   <GroupName>{groupName}</GroupName>
                 )}
               </>
-            ) : site==='moje' ? "Moja aktywność:" : "Profil"}</StyledHeader>
+            ) : site==='moje' ? 
+            <PeriodSelector activePeriod={activePeriod} setActivePeriod={(e)=> setActivePeriod(e)}/> : 
+            "Profil"}</StyledHeader>
             {site==='userSettings' ?
             <LogoutButton onClick={logout}>Wyloguj się</LogoutButton>
             :
@@ -423,7 +434,7 @@ function App() {
             <div id="buttons">
               <AddActivityPopup groups={groups} activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} refreshUserActivities={fetchUserActivities}/>
               <StyledSeparator/>
-              <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup} host={host} />
+              <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup} host={host} onNotificationsChanged={() => { fetchUsersActivities(); fetchStatsActivities(); }} />
               <UserButton $color={currentUser?.color} onClick={() => setSite("userSettings")}>
                 <User />
               </UserButton>
@@ -433,7 +444,7 @@ function App() {
           {site==='grupa' ?(
             <Group hasGroup={!!activeGroupId} statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} goalPeriod={goalPeriod} usersActivities={usersActivities}/>
           ) : site==='moje' ? (
-            <Diary activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
+            <Diary activePeriod={activePeriod} activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
           ) : (
             <UserSettings logout={logout} onSave={() => { fetchGroupInfo(); fetchCurrentUser(); }} onGroupCreated={(newId) => { fetchMyGroups().then(() => setActiveGroupId(newId)); }} onGroupsChanged={() => fetchMyGroups()} />
           )}

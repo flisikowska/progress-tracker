@@ -7,7 +7,7 @@ const StyledDaySquare = styled.div`
   margin: 0 6px;
   cursor: pointer;
   width: 60px;
-  height: 65px;                                   
+  height: 65px;
   color: var(--text);
   font-size: 1rem;
   position: relative;
@@ -16,9 +16,12 @@ const StyledDaySquare = styled.div`
   justify-content: center;
   border-radius: 9px;
   @media (max-width: 450px) {
+    width: 44px;
+    height: 56px;
+    margin: 0 3px;
     font-size: 0.75rem;
   }
-    
+
   ${(props) =>
     props.selected &&
     css`
@@ -35,7 +38,8 @@ const StyledDay = styled.p`
   margin: 3px auto 0 auto;
   pointer-events:none;
   @media (max-width: 450px) {
-    font-size: 1rem;
+    font-size: 0.9rem;
+    margin: 2px auto 0 auto;
   }
 `;
 
@@ -45,7 +49,8 @@ const StyledDate = styled.p`
   margin-top:7px;
   color: black;
   @media (max-width: 450px) {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
+    margin-top: 4px;
   }
 `;
 
@@ -75,6 +80,10 @@ const StyledDayPickerWrapper = styled.div`
       :hover {
         color: var(--blue);
       }
+      @media (max-width: 450px) {
+        width: 28px;
+        height: 28px;
+      }
     }
     text-align: center;
     margin: 20px 0;
@@ -94,27 +103,18 @@ const StyledDaysWrapper = styled.div`
   & > {
     *:nth-child(1),
     *:nth-last-child(1) {
-      @media (max-width: 900px) {
+      @media (max-width: 700px) {
         display: none;
       }
     }
 
     *:nth-child(2),
     *:nth-last-child(2) {
-      @media (max-width: 600px) and (min-width: 450px) {
-        display: none;
-      }
-      @media (max-width: 450px) {
-        display: none;
-      }
-    }
-
-    *:nth-child(3),
-    *:nth-last-child(3) {
       @media (max-width: 250px) {
         display: none;
       }
     }
+
   }
 `;
 

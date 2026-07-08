@@ -250,6 +250,26 @@ app.get('/group', authenticateToken, async (req, res) => {
 
 app.get('/activities', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
+
+  const selectFrom = `
+    SELECT
+	    A.user_id,
+      AT.activity_type_id,
+      A.date::text AS activity_date,
+      A.activity_id,
+      A.amount AS time
+    FROM public.activity A
+    JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
+  `;
+
+  // zakres dat (np. widok roczny) - jedno zapytanie zamiast listy pojedynczych dat
+  if(req.query.from && req.query.to) {
+    const query = `${selectFrom} WHERE A.user_id = $1 AND A.date >= $2::date AND A.date <= $3::date`;
+    const response = await executeQuery(query, [user_id, req.query.from, req.query.to]);
+    res.send(response);
+    return;
+  }
+
   if(req.query.date == null)
   {
     res.send([]);
@@ -263,18 +283,7 @@ app.get('/activities', authenticateToken, async (req, res) => {
     return;
   }
 
-  const query = `
-    SELECT
-	    A.user_id,
-      AT.activity_type_id,
-      A.date AS activity_date,
-      A.activity_id,
-      A.amount AS time
-    FROM public.activity A
-    JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
-    WHERE A.user_id = $1
-	  AND A.date IN (${datePlaceholders})
-  `;
+  const query = `${selectFrom} WHERE A.user_id = $1 AND A.date IN (${datePlaceholders})`;
   const response = await executeQuery(query, [user_id, ...dates]);
   res.send(response);
 })
