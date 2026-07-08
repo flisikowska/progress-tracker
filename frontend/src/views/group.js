@@ -213,7 +213,7 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, us
 
     // Wszyscy członkowie grupy - także ci bez aktywności (0 minut), posortowani malejąco po czasie
     const members = users.map((u) => {
-        const d = usersActivities.find((ua) => ua.user_id == u.user_id);
+        const d = usersActivities.find((ua) => ua.user_id === u.user_id);
         return {
             user_id: u.user_id,
             name: u.user_name,
@@ -267,10 +267,10 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, us
                     {selected ? `Statystyki – ${selected.name}` : 'Statystyki grupy'}
                 </StyledStatsTitle>
                 <UserLegend>
-                    {(selected ? users.filter(u => u.user_id == selected.user_id) : users).map(u => (
-                        <LegendItem key={u.user_id}>
-                            <LegendDot style={{ backgroundColor: '#' + u.user_color }} />
-                            <LegendName>{u.user_name}</LegendName>
+                    {(selected ? members.filter(m => m.user_id === selected.user_id) : members).map(m => (
+                        <LegendItem key={m.user_id}>
+                            <LegendDot style={{ backgroundColor: m.color }} />
+                            <LegendName>{m.name}</LegendName>
                         </LegendItem>
                     ))}
                 </UserLegend>

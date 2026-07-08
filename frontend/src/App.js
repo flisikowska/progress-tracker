@@ -1,18 +1,18 @@
 import './App.css';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import styled from 'styled-components';
 import Diary from './views/diary';
 import Group from './views/group';
 import Menu from './components/menu';
 import NotificationPopup from './components/notificationPopup';
+import Footer from './components/footer';
 import AddActivityPopup from './components/addActivityPopup';
 import Login from './views/login';
 import UserSettings from './views/userSettings';
 import { User } from '@styled-icons/fa-solid/User';
 import { FormattedDate } from './helpers/functions';
 import axios from 'axios';
-
-
+import PeriodSelector from './components/periodSelector';
 const AppContainer=styled.div`
     width:100%;
     min-height:100vh;
@@ -38,8 +38,7 @@ const AppContainer=styled.div`
   @media(max-width:570px){
     width:96%;
     padding:20px 10px;
-    border-radius:0;
-    margin:0 auto;
+    margin:20px auto;
   }
 `;
 
@@ -80,26 +79,11 @@ const UserButton = styled.div`
   align-items: center;
   justify-content: center;
   border: 1px solid var(--primary-dark);
-  transition: border-color 0.2s;
-  &::before {
-    content: '';
-    position: absolute;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: ${p => p.$color ? `#${p.$color}85` : 'var(--primary-dark)'};
-    top: 2px;
-    left: 2px;
-    transition:0.2s;
-  }
+  transition:  0.3s;
+  background-color: ${p => p.$color ? `#${p.$color}85` : 'var(--primary-dark)'};
   &:hover {
-    &::before {
-      width: 34px;
-      height: 34px;
-      top:0px;
-      left:0px;
-      background-color: ${p => p.$color ? `#${p.$color}1` : 'var(--primary-dark)'};
-    }
+      background-color: ${p => p.$color ? `#${p.$color}` : 'var(--primary-dark)'};
+
   }
   > svg {
     width: 13px;
@@ -233,7 +217,10 @@ function App() {
   const [userActivitiesForTheDay, setUserActivitiesForTheDay] = useState([]);
   const [groupName, setGroupName] = useState('');
   const [groups, setGroups]= useState([]);
-  const [activeGroupId, setActiveGroupId] = useState(null);
+  const [activeGroupId, setActiveGroupId] = useState(() => {
+    const saved = localStorage.getItem('activeGroupId');
+    return saved ? Number(saved) : null;
+  });
   const [goal, setGoal] = useState(0);
   const [goalPeriod, setGoalPeriod] = useState('week');
   const [site, setSite] = useState('grupa');
@@ -244,12 +231,13 @@ function App() {
   const [activeAddPopup, setActiveAddPopup] = useState(false);
   const [pendingInvite, setPendingInvite] = useState(null);
   const [inviteInfo, setInviteInfo] = useState(null);
-  const host='localhost';
+  const [activePeriod, setActivePeriod]= useState('dzien');
+  const host = process.env.REACT_APP_API_HOST;
 
-  const fetchCurrentUser=()=>{
-    return axios.get(`http://${host}:5000/user`, { withCredentials: true })
+  const fetchCurrentUser=useCallback(()=>{
+    return axios.get(`${host}/user`, { withCredentials: true })
       .then(res => setCurrentUser(res.data[0]));
-  }
+  }, [host])
 
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
@@ -266,36 +254,12 @@ function App() {
   }, []);
 
   useEffect(() => {
-    axios.get(`http://${host}:5000/user`, {
+    axios.get(`${host}/user`, {
       withCredentials: true,
     })
     .then(res => { setLoggedIn(true); setCurrentUser(res.data[0]); })
     .catch(()=> setLoggedIn(false));
-  }, []);
-
-  useEffect(() => {
-    if (loggedIn) {
-      fetchCurrentUser();
-      fetchActivityTypes();
-      fetchMyGroups();
-    }
-  }, [loggedIn]);
-
-  // dane zależne od wybranej grupy - przeładuj po zmianie aktywnej grupy
-  useEffect(() => {
-    if (loggedIn && activeGroupId) {
-      fetchUsersActivities();
-      fetchStatsActivities();
-      fetchGroupInfo();
-    } else if (loggedIn && !activeGroupId) {
-      // brak grupy (np. po opuszczeniu ostatniej) - wyczyść stare dane
-      setGroupName('');
-      setUsers([]);
-      setUsersActivities([]);
-      setStatsData([]);
-      setGoal(0);
-    }
-  }, [loggedIn, activeGroupId]);
+  }, [host]);
 
   // odczyt tokenu zaproszenia z linku (?invite=...) - trzymamy go na czas logowania
   useEffect(() => {
@@ -311,11 +275,11 @@ function App() {
   // po zalogowaniu pobierz podgląd grupy z zaproszenia (bez dołączania)
   useEffect(() => {
     if (loggedIn && pendingInvite) {
-      axios.get(`http://${host}:5000/invite-info?token=${pendingInvite}`, { withCredentials: true })
+      axios.get(`${host}/invite-info?token=${pendingInvite}`, { withCredentials: true })
         .then(res => setInviteInfo(res.data))
         .catch(() => clearInvite());
     }
-  }, [loggedIn, pendingInvite]);
+  }, [loggedIn, pendingInvite, host]);
 
   const clearInvite = () => {
     setInviteInfo(null);
@@ -324,7 +288,7 @@ function App() {
   };
 
   const acceptInvite = () => {
-    axios.post(`http://${host}:5000/join`, { token: pendingInvite }, { withCredentials: true })
+    axios.post(`${host}/join`, { token: pendingInvite }, { withCredentials: true })
       .then(res => {
         const newId = res.data.group_id;
         fetchMyGroups().then(() => { setActiveGroupId(newId); setSite('grupa'); });
@@ -333,14 +297,14 @@ function App() {
   };
 
   const logout=()=>{
-    axios.post(`http://${host}:5000/logout`, {}, {
+    axios.post(`${host}/logout`, {}, {
       withCredentials: true,
     })
     .finally(() => setLoggedIn(false));
   }
 
-  const fetchMyGroups=()=>{
-    return axios.get(`http://${host}:5000/my-groups`, { withCredentials: true })
+  const fetchMyGroups=useCallback(()=>{
+    return axios.get(`${host}/my-groups`, { withCredentials: true })
     .then(res => {
         setGroups(res.data);
         setActiveGroupId(prev =>
@@ -349,49 +313,78 @@ function App() {
             : res.data[0]?.group_id ?? null
         );
       });
-  }
+  }, [host])
 
-  const fetchUsersActivities=(groupId = activeGroupId)=>{
+  // trzymaj aktywna grupe w localStorage, zeby przetrwala odswiezenie strony
+  useEffect(() => {
+    if (activeGroupId != null) localStorage.setItem('activeGroupId', String(activeGroupId));
+    else localStorage.removeItem('activeGroupId');
+  }, [activeGroupId])
+
+  const fetchUsersActivities=useCallback((groupId = activeGroupId)=>{
     if (!groupId) return;
-    axios.get(`http://${host}:5000/current-period?group_id=${groupId}`, {
+    axios.get(`${host}/current-period?group_id=${groupId}`, {
       withCredentials: true,
     })
     .then(res => {
         setUsersActivities(res.data);
       });
-  }
+  }, [host, activeGroupId])
 
-  const fetchUserActivities=(days = selectedDays)=>{
+  const fetchUserActivities=useCallback((days = selectedDays)=>{
     const query = days.map(d => `date=${encodeURIComponent(d)}`).join('&');
-    axios.get(`http://${host}:5000/activities?${query}`, {withCredentials: true})
+    axios.get(`${host}/activities?${query}`, {withCredentials: true})
     .then(res => {
         setUserActivitiesForTheDay(res.data);
       });
-  }
+  }, [host, selectedDays])
 
-  const fetchGroupInfo=(groupId = activeGroupId)=>{
+  const fetchGroupInfo=useCallback((groupId = activeGroupId)=>{
     if (!groupId) return;
-    axios.get(`http://${host}:5000/group?group_id=${groupId}`, { withCredentials: true })
+    axios.get(`${host}/group?group_id=${groupId}`, { withCredentials: true })
     .then(res => {
         setGroupName(res.data.group_name);
         setGoal(res.data.group_goal);
         setGoalPeriod(res.data.group_goal_period);
         setUsers(res.data.users);
       });
-  }
+  }, [host, activeGroupId])
 
-  const fetchStatsActivities=(groupId = activeGroupId)=>{
+  const fetchStatsActivities=useCallback((groupId = activeGroupId)=>{
     if (!groupId) return;
-    axios.get(`http://${host}:5000/last-10-weeks?group_id=${groupId}`, { withCredentials: true })
+    axios.get(`${host}/last-10-weeks?group_id=${groupId}`, { withCredentials: true })
     .then(res => {
         setStatsData(res.data);
     });
-}
+}, [host, activeGroupId])
 
-  const fetchActivityTypes=()=>{
-    axios.get(`http://${host}:5000/activity-types`)
+  const fetchActivityTypes=useCallback(()=>{
+    axios.get(`${host}/activity-types`, { withCredentials: true })
         .then(res => setActivityTypes(res.data))
-  }
+  }, [host])
+
+  // po zalogowaniu pobierz dane początkowe
+  useEffect(() => {
+    if (loggedIn) {
+      fetchCurrentUser();
+      fetchActivityTypes();
+      fetchMyGroups();
+    }
+  }, [loggedIn, fetchCurrentUser, fetchActivityTypes, fetchMyGroups]);
+
+  useEffect(() => {
+    if (loggedIn && activeGroupId) {
+      fetchUsersActivities();
+      fetchStatsActivities();
+      fetchGroupInfo();
+    } else if (loggedIn && !activeGroupId) {
+      setGroupName('');
+      setUsers([]);
+      setUsersActivities([]);
+      setStatsData([]);
+      setGoal(0);
+    }
+  }, [loggedIn, activeGroupId, fetchUsersActivities, fetchStatsActivities, fetchGroupInfo]);
 
   if (loggedIn === null) {
     return (
@@ -420,7 +413,8 @@ function App() {
         <Menu site={site} setActiveAddPopup={setActiveAddPopup} setSite={setSite}/>
         <StyledWrapper>
           <HeaderWrapper>  
-            <StyledHeader>{site==='grupa' ?(
+            <StyledHeader>
+              {site==='grupa' ? (
               <>Raport grupy:
                 {groups.length > 1 ? (
                   <GroupSelect value={activeGroupId ?? ''} onChange={e => setActiveGroupId(Number(e.target.value))}>
@@ -430,7 +424,9 @@ function App() {
                   <GroupName>{groupName}</GroupName>
                 )}
               </>
-            ) : site==='moje' ? "Moja aktywność:" : "Profil"}</StyledHeader>
+            ) : site==='moje' ? 
+            <PeriodSelector activePeriod={activePeriod} setActivePeriod={(e)=> setActivePeriod(e)}/> : 
+            "Profil"}</StyledHeader>
             {site==='userSettings' ?
             <LogoutButton onClick={logout}>Wyloguj się</LogoutButton>
             :
@@ -438,7 +434,7 @@ function App() {
             <div id="buttons">
               <AddActivityPopup groups={groups} activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} refreshUserActivities={fetchUserActivities}/>
               <StyledSeparator/>
-              <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup}/>
+              <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup} host={host} onNotificationsChanged={() => { fetchUsersActivities(); fetchStatsActivities(); }} />
               <UserButton $color={currentUser?.color} onClick={() => setSite("userSettings")}>
                 <User />
               </UserButton>
@@ -448,11 +444,12 @@ function App() {
           {site==='grupa' ?(
             <Group hasGroup={!!activeGroupId} statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} goalPeriod={goalPeriod} usersActivities={usersActivities}/>
           ) : site==='moje' ? (
-            <Diary activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
+            <Diary activePeriod={activePeriod} activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
           ) : (
             <UserSettings logout={logout} onSave={() => { fetchGroupInfo(); fetchCurrentUser(); }} onGroupCreated={(newId) => { fetchMyGroups().then(() => setActiveGroupId(newId)); }} onGroupsChanged={() => fetchMyGroups()} />
           )}
         </StyledWrapper>
+        {site==='userSettings' && <Footer/>}
       </>
     ):(
       <StyledWrapper>

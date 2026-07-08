@@ -80,3 +80,15 @@ export function FormattedDate(d) {
     else text = `Zostało ${days} dni`;
     return { text, days };
   }
+
+  // najdluzsza passa - najwiecej kolejnych dni (wejscie: iterowalne z datami 'YYYY-MM-DD')
+  // (daty parsujemy jako UTC, wiec roznica miedzy sasiednimi dniami = dokladnie 1 doba)
+  export function longestDayStreak(isoDates) {
+    let longest = 0, run = 0, prev = null;
+    for (const iso of [...isoDates].sort()) {
+      run = (prev && (new Date(iso) - new Date(prev)) === 86400000) ? run + 1 : 1;
+      prev = iso;
+      if (run > longest) longest = run;
+    }
+    return longest;
+  }

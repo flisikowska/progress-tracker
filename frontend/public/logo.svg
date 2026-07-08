@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" aria-label="TrenujeMY logo">
+  <!-- Kwadrat z zaokrąglonymi rogami -->
+  <rect x="1" y="1" width="46" height="46" rx="12" fill="#40C4FF"/>
+  <!-- Trzy postacie = budująca się społeczność -->
+  <g fill="#F8F7F4">
+    <circle cx="14" cy="24" r="3.5"/>
+    <rect x="10" y="29" width="8" height="13" rx="4"/>
+    <circle cx="24" cy="18" r="4"/>
+    <rect x="19" y="24" width="10" height="18" rx="5"/>
+    <circle cx="34" cy="24" r="3.5"/>
+    <rect x="30" y="29" width="8" height="13" rx="4"/>
+  </g>
+</svg>

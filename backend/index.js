@@ -7,27 +7,60 @@ import ggl from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
+import { runMigrations } from './migrate.js';
 
-dotenv.config();
+dotenv.config({ path: ['.env.local', '.env'] });
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const staticDir = path.join(__dirname, 'public');
 
 const { OAuth2Client } = ggl;
 const googleClient = new OAuth2Client();
 
 const { Client } = pg;
 
+const dbConfig = {
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  host: process.env.PGHOST,
+  port: Number(process.env.PGPORT) || 5432,
+  database: process.env.PGDATABASE,
+};
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Sesja: 30 dni, odświeżana przy każdym zapytaniu (rolling), żeby aktywny user nie wypadał.
+const TOKEN_TTL = '30d';
+const TOKEN_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+const cookieOptions = {
+  httpOnly: true,
+  secure: false,
+  sameSite: 'Strict',
+};
+const issueAuthCookie = (res, userId) => {
+  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: TOKEN_TTL });
+  res.cookie('token', token, { ...cookieOptions, maxAge: TOKEN_MAX_AGE });
+};
+
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 var jsonParser= bodyParser.json();
 
 const corsOptions = {
   credentials: true,
-  origin: ['http://localhost:3000', 'http://localhost:5000', 'http://192.168.1.126:3000', 'http://192.168.1.126:5000'] // Whitelist the domains you want to allow
+  origin: process.env.CORS_ORIGINS.split(',').map(o=>o.trim())
 };
 
 app.use(cookieParser());
 app.use(cors(corsOptions));
+
+// Serve the frontend build (copied to ./public in the Docker image)
+if (existsSync(staticDir)) {
+  app.use(express.static(staticDir));
+}
 
 const authenticateToken = (req, res, next) => {
   console.log(req.cookies);
@@ -39,8 +72,10 @@ const authenticateToken = (req, res, next) => {
     if (err) {
       return res.sendStatus(403);
     }
-    req.user = { userId: user.userId }; 
-    next(); 
+    req.user = { userId: user.userId };
+    // Rolling session: odśwież token/cookie przy każdym zapytaniu, żeby aktywny user nie wygasał.
+    issueAuthCookie(res, user.userId);
+    next();
   });
 };
 
@@ -65,13 +100,7 @@ function getPeriodStart(period) {
 }
 
 async function executeQuery(query, params) {
-  const client = new Client({
-    user: 'postgres',
-    password: '123456',
-    host: 'localhost',
-    port: 5432,
-    database: 'progress_tracker',
-  });
+  const client = new Client(dbConfig);
   
   try {
     await client.connect();
@@ -176,6 +205,10 @@ app.get('/group-invite', authenticateToken, async (req, res) => {
   res.send({ invite_token: token });
 })
 
+app.get('/health_check', (req, res) => {
+  res.sendStatus(200);
+})
+
 //TODO https://node-postgres.com/guides/async-express
 app.get('/', async (req, res) => {
   const response = await executeQuery('SELECT $1::text as message', ['Hello world!'])
@@ -217,6 +250,26 @@ app.get('/group', authenticateToken, async (req, res) => {
 
 app.get('/activities', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
+
+  const selectFrom = `
+    SELECT
+	    A.user_id,
+      AT.activity_type_id,
+      A.date::text AS activity_date,
+      A.activity_id,
+      A.amount AS time
+    FROM public.activity A
+    JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
+  `;
+
+  // zakres dat (np. widok roczny) - jedno zapytanie zamiast listy pojedynczych dat
+  if(req.query.from && req.query.to) {
+    const query = `${selectFrom} WHERE A.user_id = $1 AND A.date >= $2::date AND A.date <= $3::date`;
+    const response = await executeQuery(query, [user_id, req.query.from, req.query.to]);
+    res.send(response);
+    return;
+  }
+
   if(req.query.date == null)
   {
     res.send([]);
@@ -230,18 +283,7 @@ app.get('/activities', authenticateToken, async (req, res) => {
     return;
   }
 
-  const query = `
-    SELECT
-	    A.user_id,
-      AT.activity_type_id,
-      A.date AS activity_date,
-      A.activity_id,
-      A.amount AS time
-    FROM public.activity A
-    JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
-    WHERE A.user_id = $1
-	  AND A.date IN (${datePlaceholders})
-  `;
+  const query = `${selectFrom} WHERE A.user_id = $1 AND A.date IN (${datePlaceholders})`;
   const response = await executeQuery(query, [user_id, ...dates]);
   res.send(response);
 })
@@ -324,12 +366,18 @@ app.get('/last-10-weeks', authenticateToken, async (req, res) => {
   res.send(result);
 });
 
-app.get('/activity-types', async (req, res) => {
+app.get('/activity-types', authenticateToken, async (req, res) => {
+  // Sortujemy wg tego, jak często dany user wybierał aktywność (priorytet = najczęściej wybierane).
+  // Nowe/nieużywane typy (0 aktywności) lądują na końcu, alfabetycznie.
   const query = `
-  SELECT activity_type_id AS id, icon, name
-	FROM public.activity_type;
+  SELECT at.activity_type_id AS id, at.icon, at.name
+	FROM public.activity_type at
+	LEFT JOIN public.activity a
+	  ON a.activity_type_id = at.activity_type_id AND a.user_id = $1
+	GROUP BY at.activity_type_id, at.icon, at.name
+	ORDER BY COUNT(a.activity_id) DESC, at.name ASC;
 `;
-  const response = await executeQuery(query, []);
+  const response = await executeQuery(query, [req.user.userId]);
   res.send(response);
 });
 
@@ -366,60 +414,68 @@ app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
   const response=await executeQuery(query, [date, activity_type_id, user_id, amount]);
   const activity = response[0];
 
+  // dane do treści powiadomienia: imię autora + nazwa typu aktywności
+  const actorRows = await executeQuery(`SELECT name FROM public.user WHERE user_id = $1`, [user_id]);
+  const actorName = actorRows[0]?.name ?? 'Ktoś';
+  const typeRows = await executeQuery(`SELECT name FROM public.activity_type WHERE activity_type_id = $1`, [activity_type_id]);
+  const typeName = typeRows[0]?.name ?? 'aktywność';
+
   for (const gid of targetGroups) {
     await executeQuery(
       `INSERT INTO public.activity_group (activity_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [activity.activity_id, gid]
+    );
+     // powiadomienie dla każdego członka grupy OPRÓCZ autora aktywności
+     // nazwę grupy bierzemy z JOIN-a, żeby wpis niósł info z której grupy pochodzi
+    await executeQuery(
+      `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount)
+       SELECT ug.user_id, g.group_id, g.name, $2, $3, $4
+       FROM public.user_group ug
+       JOIN public."group" g ON g.group_id = ug.group_id
+       WHERE ug.group_id = $1 AND ug.user_id <> $5`,
+      [gid, actorName, typeName, amount, user_id]
     );
   }
   res.send(activity);
 })
 
 app.post("/google-auth", jsonParser, async (req, res) => {
-  const default_group_id=1;
-  const color='000000';
-  const { credential, client_id } = req.body;
-  const client = new Client({
-    user: "postgres",
-    password: "123456",
-    host: "localhost",
-    port: 5432,
-    database: "progress_tracker",
-  });
-  await client.connect();
-  // try {
-  const ticket = await googleClient.verifyIdToken({
-    idToken: credential,
-    audience: client_id,
-  });
-  const payload = ticket.getPayload();
-  const sub = payload["sub"]; 
-  const name = payload["given_name"]; 
-  const userQuery = `SELECT * FROM public.user WHERE user_id = $1`;
-  const resp=await client.query(userQuery, [sub]);
-  let user=resp.rows[0];
-  if (!user) {
-    const query = `INSERT INTO public.user (user_id, name, color)
-          VALUES ($1, $2, $3) RETURNING *`;
-    const response = await client.query(query, [sub, name, color]);
-    user = response.rows[0];
-    await client.query(
-      `INSERT INTO public.user_group (user_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-      [user.user_id, default_group_id]
-    );
+
+  console.log(`POST /google-auth started`);
+  try
+  {
+    const color='000000';
+    const { credential, client_id } = req.body;
+    const client = new Client(dbConfig);
+    await client.connect();
+    // try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: client_id,
+    });
+    const payload = ticket.getPayload();
+    const sub = payload["sub"]; 
+    const name = payload["given_name"]; 
+    const userQuery = `SELECT * FROM public.user WHERE user_id = $1`;
+    const resp=await client.query(userQuery, [sub]);
+    let user=resp.rows[0];
+    if (!user) {
+      const query = `INSERT INTO public.user (user_id, name, color)
+            VALUES ($1, $2, $3) RETURNING *`;
+      const response = await client.query(query, [sub, name, color]);
+      user = response.rows[0];
+    }
+    issueAuthCookie(res, user.user_id);
+    res.status(200).json({ message: "Zalogowano pomyślnie" });
+    // } catch (err) {
+    //   res.status(400).json({ err });
+    // }
+    await client.end();
   }
-  const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, { expiresIn: '1h' }); 
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: false, 
-    sameSite: 'Strict', 
-    maxAge: 3600000 
-  });
-  res.status(200).json({ message: "Zalogowano pomyślnie" });
-  // } catch (err) {
-  //   res.status(400).json({ err });
-  // }
-  await client.end();
+  catch(err){
+    console.log(err);
+    throw err;
+  }
 });
 
 app.get("/user", authenticateToken, async (req, res) => {
@@ -440,13 +496,54 @@ app.put("/user", jsonParser, authenticateToken, async (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: false,
-    sameSite: 'Strict',
-  });
+  res.clearCookie('token', cookieOptions);
   res.status(200).json({ message: "Wylogowano pomyślnie" });
 });
+
+// Jedna wspólna lista powiadomień usera ze WSZYSTKICH grup (najnowsze na górze)
+app.get('/notifications', authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  const rows = await executeQuery(
+    `SELECT notification_id, group_id, group_name, actor_name, activity_type_name, amount, is_read, created_at
+     FROM public.notification
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+    [user_id]
+  );
+  res.send(rows);
+});
+
+// Oznacz wszystkie powiadomienia usera (ze wszystkich grup) jako przeczytane
+app.post('/notifications/mark-read', authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  await executeQuery(
+    `UPDATE public.notification SET is_read = true
+     WHERE user_id = $1 AND is_read = false`,
+    [user_id]
+  );
+  res.sendStatus(204);
+});
+
+// Usuń wszystkie powiadomienia usera (ze wszystkich grup)
+app.delete('/notifications', authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  await executeQuery(
+    `DELETE FROM public.notification WHERE user_id = $1`,
+    [user_id]
+  );
+  res.sendStatus(204);
+});
+
+// SPA fallback: any GET not matched by the API routes above returns index.html
+// It must always be declared as the last endpoint
+if (existsSync(staticDir)) {
+  app.get('/{*splat}', (req, res) => {
+    console.log(`Reached fallback at: ${req.url}`);
+    res.sendFile(path.join(staticDir, 'index.html'));
+  });
+}
+
+await runMigrations(dbConfig);
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`Example app listening on port ${port}`);

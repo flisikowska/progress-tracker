@@ -5,15 +5,16 @@ const radius = 90;
 const inner = Math.min(radius, 150);
 const outer = Math.max(radius, 150);
 
-// Stały układ współrzędnych wykresu - dzięki temu SVG (width:100%) skaluje się z kontenerem
-const SIZE = outer * 2; // 300
-const CENTER = outer;   // 150
+const POP_OFFSET = 18; // stałe wysunięcie zaznaczonego segmentu (px)
+
+const PAD = POP_OFFSET + 6;
+
+const SIZE = outer * 2 + PAD * 2;
+const CENTER = outer + PAD;
 
 const arc = d3.arc()
   .outerRadius(inner + 8)
   .innerRadius(outer);
-
-const POP_OFFSET = 18; // stałe wysunięcie zaznaczonego segmentu (px)
 
 const usePieChart = (data, setComponent, selected) => {
   const selectedId = selected?.user_id;
@@ -62,20 +63,22 @@ const usePieChart = (data, setComponent, selected) => {
         setComponent(d.data.name === "Pozostało" ? null : d.data);
       });
 
+    svg.selectAll("path").filter(d => d.data.name === "Pozostało").lower();
+
     return () => {
       d3.select("#pieChart").select("svg").remove();
     };
   }, [data, setComponent]);
 
-  // obrót koła podąża za wybranym userem (jak wcześniej) — na desktopie
   useEffect(() => {
     const g = d3.select('#pieChart').select('svg').select('g');
     if (g.empty()) return;
 
     const FULL = 2 * Math.PI - 0.01; // segment obejmujący (prawie) całe koło
 
-    // obrót całego koła: wybrany segment na górę (albo reset do 0).
-    // Dla pełnego koła nie obracamy - i tak wygląda tak samo, a wirowanie wygląda źle.
+    const remaining = data.find(d => d.name === 'Pozostało');
+    const circleFull = !remaining || remaining.amount <= 0;
+
     let rotation = 0;
     if (selectedId != null) {
       g.selectAll('path').each(function (d) {
@@ -88,13 +91,11 @@ const usePieChart = (data, setComponent, selected) => {
       .duration(800)
       .attr('transform', `translate(${CENTER},${CENTER}) rotate(${rotation})`);
 
-    // jedna tranzycja na segment: wybrany wysunięty, reszta wyzerowana.
-    // Pełnego koła nie wysuwamy - przesunęłoby cały wykres.
     g.selectAll('path')
       .transition('pop')
       .duration(800)
       .attr('transform', function (d) {
-        if (selectedId != null && d.data.user_id === selectedId && (d.endAngle - d.startAngle) < FULL) {
+        if (selectedId != null && d.data.user_id === selectedId && !circleFull) {
           const mid = (d.startAngle + d.endAngle) / 2;
           return `translate(${Math.sin(mid) * POP_OFFSET},${-Math.cos(mid) * POP_OFFSET})`;
         }

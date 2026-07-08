@@ -8,6 +8,8 @@ import { Plus } from '@styled-icons/fa-solid/Plus';
 import { ActivityIcon } from '../helpers/activityIcons';
 import axios from 'axios';
 
+const host = process.env.REACT_APP_API_HOST;
+
 const StyledButton= styled.div`
     z-index:10;
     padding:7px 10px;
@@ -86,34 +88,28 @@ const StyledWrapper=styled.div`
     `;
 
 const ActivitiesWrapper= styled.div`
-    height: 150px;
     width:550px;
+    max-width:100%;
+    margin:20px auto;
+    display:flex;
+    flex-flow:row nowrap;
+    gap:0px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding-bottom:8px;
     @media(max-width:1000px){
         width:80%;
     }
-    overflow-y: auto;
-    display: grid;
-    margin:20px auto;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0px;
-    align-content:start;
-    @media(max-width:700px){
-        grid-template-columns: repeat(3, 1fr);
-    }
-    @media(max-width:520px){
-        grid-template-columns: repeat(2, 1fr);
-        height: 400px;
-        >div{
-            width:90%;
-            margin:8px auto;
-        }
-    }
+    &::-webkit-scrollbar { height:6px; }
+    &::-webkit-scrollbar:hover { height:6px; }
+    &::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.2); border-radius:3px; }
 `;
 
 const StyledActivity= styled.div`
     padding:10px;
     margin:6px;
     width:110px;
+    flex-shrink:0;
     cursor:pointer;
     text-align:center;
     height:80px;
@@ -127,11 +123,9 @@ const StyledActivity= styled.div`
     `};
     >p{
         font-weight:600;
-        font-size:0.8rem;
+        font-size:0.65rem;
         margin-top:8px;
-        @media(max-width:450px){
-            font-size:0.7rem;
-        }
+     
     }
 `;
 
@@ -161,6 +155,10 @@ const SearchInput= styled.input`
     &:focus{ border-color: var(--blue); }
     @media(max-width:1000px){
         width:80%;
+    }
+    /* iOS zoomuje przy focusie inputa z czcionką <16px - na mobilce trzymamy 16px */
+    @media(max-width:570px){
+        font-size:16px;
     }
 `;
 
@@ -307,8 +305,7 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
     }
 
     const addActivity=(activity_type_id, date, amount)=>{
-        const host='localhost';
-        axios.post(`http://${host}:5000/activities`, {activity_type_id: activity_type_id, date: date, amount: amount, group_ids: selectedGroups}, { withCredentials: true })
+        axios.post(`${host}/activities`, {activity_type_id: activity_type_id, date: date, amount: amount, group_ids: selectedGroups}, { withCredentials: true })
         .then(res => {
            refreshUsersActivities();
            refreshUserActivities();
@@ -363,7 +360,7 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
                             multipleDaySelect={false}
                             daysCount={7}
         />
-                {groups.length > 1 && (
+                {groups.length > 0 && (
                     <>
                         <StyledHeader>Widoczne w grupach</StyledHeader>
                         <GroupChecks>

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 import { Link } from '@styled-icons/fa-solid/Link';
 import { Check } from '@styled-icons/fa-solid/Check';
+
+const host = process.env.REACT_APP_API_HOST;
 
 const COLORS = [
   'F5B1C7', 'F4A0A0', 'F5C97B', 'A8D8A8',
@@ -298,7 +300,6 @@ const GOAL_PERIODS = [
 ];
 
 function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
-  const host = 'localhost';
   const [name, setName] = useState('');
   const [color, setColor] = useState('');
   const [saved, setSaved] = useState(false);
@@ -323,23 +324,23 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
 
   const closeCreateModal = () => setShowCreateModal(false);
 
-  const fetchMyGroups = () => {
-    axios.get(`http://${host}:5000/my-groups`, { withCredentials: true })
+  const fetchMyGroups = useCallback(() => {
+    axios.get(`${host}/my-groups`, { withCredentials: true })
       .then(res => setMyGroups(res.data));
-  };
+  }, []);
 
   useEffect(() => {
-    axios.get(`http://${host}:5000/user`, { withCredentials: true })
+    axios.get(`${host}/user`, { withCredentials: true })
       .then(res => {
         setName(res.data[0].name);
         setColor(res.data[0].color);
       });
     fetchMyGroups();
-  }, []);
+  }, [fetchMyGroups]);
 
   const confirmLeaveGroup = () => {
     const group = groupToLeave;
-    axios.delete(`http://${host}:5000/my-groups/${group.group_id}`, { withCredentials: true })
+    axios.delete(`${host}/my-groups/${group.group_id}`, { withCredentials: true })
       .then(() => {
         setMyGroups(prev => prev.filter(g => g.group_id !== group.group_id));
         if (onGroupsChanged) onGroupsChanged();
@@ -348,7 +349,7 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
   };
 
   const openInviteModal = (group) => {
-    axios.get(`http://${host}:5000/group-invite?group_id=${group.group_id}`, { withCredentials: true })
+    axios.get(`${host}/group-invite?group_id=${group.group_id}`, { withCredentials: true })
       .then(res => {
         setInviteCopied(false);
         setInviteModal({
@@ -368,7 +369,7 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
   };
 
   const handleSave = () => {
-    axios.put(`http://${host}:5000/user`, { name, color }, { withCredentials: true })
+    axios.put(`${host}/user`, { name, color }, { withCredentials: true })
       .then(() => {
         setSaved(true);
         if (onSave) onSave();
@@ -383,7 +384,7 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
       setGroupError('Podaj nazwę i dodatni cel.');
       return;
     }
-    axios.post(`http://${host}:5000/groups`, { name: groupName.trim(), goal, goal_period: groupPeriod }, { withCredentials: true })
+    axios.post(`${host}/groups`, { name: groupName.trim(), goal, goal_period: groupPeriod }, { withCredentials: true })
       .then(res => {
         fetchMyGroups();
         setShowCreateModal(false);
