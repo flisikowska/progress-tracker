@@ -73,9 +73,11 @@ const StyledWeekday = styled.p`
 `;
 
 const StyledDay = styled.div`
-  aspect-ratio: 2.2/1;
+  /* plynnie skalowana wysokosc zamiast aspect-ratio - bez skokow na breakpointach */
+  height: clamp(38px, 7vw, 64px);
   box-sizing: border-box;
-  border: 2px solid transparent; /* baza - by active/picked (border 2px) nie zmienialy rozmiaru */
+  border: 2px solid transparent;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -83,27 +85,22 @@ const StyledDay = styled.div`
   border-radius: 9px;
   cursor: pointer;
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: clamp(0.8rem, 2.2vw, 0.95rem);
   user-select: none;
-  @media (max-width: 450px) {
-    font-size: 0.8rem;
-  }
   >span {
-    font-size: 0.65rem;
+    position: absolute;
+    bottom: 3px;
+    left: 0;
+    right: 0;
+    font-size: clamp(0.5rem, 1.6vw, 0.65rem);
     line-height: 1;
-    margin-top: 3px;
     color: var(--dark-blue);
-    @media (max-width: 450px) {
-      font-size: 0.5rem;
-    }
   }
-  /* dzień z aktywnoscia - bez tla/bordera, tylko ciemnoniebieska czcionka */
   ${(props) =>
     props.active &&
     css`
       color: var(--dark-blue);
     `};
-  /* dzień wybrany klikiem - wyrozniony tlem (dawny wyglad dnia z aktywnoscia, nadpisuje) */
   ${(props) =>
     props.picked &&
     css`
@@ -114,7 +111,6 @@ const StyledDay = styled.div`
         color: #fff;
       }
     `};
-  /* dzisiejszy dzien - obwodka (widoczna niezaleznie od tla, inset by nie nachodzila na sasiadow) */
   ${(props) =>
     props.today &&
     css`
@@ -122,11 +118,19 @@ const StyledDay = styled.div`
     `};
 `;
 
-const compactMinutes = (total) => {
+// "in" z "min" - chowane na mniejszych ekranach, zostaje samo "m" 
+const MinUnit = styled.span`
+  @media (max-width: 550px) {
+    display: none;
+  }
+`;
+
+const renderTime = (total) => {
   const h = Math.floor(total / 60);
   const m = total % 60;
-  if (h === 0) return `${m}min`;
-  return m === 0 ? `${h}h` : `${h}h ${m}min`;
+  if (m === 0) return `${h}h`;
+  const mins = <>{m}m<MinUnit>in</MinUnit></>;
+  return h === 0 ? mins : <>{`${h}h `}{mins}</>;
 };
 
 const MonthPicker = ({ fetchSelectedDaysToParent, onPickedDaysChange = () => {}, activities = [] }) => {
@@ -153,7 +157,7 @@ const MonthPicker = ({ fetchSelectedDaysToParent, onPickedDaysChange = () => {},
     const all = Array.from({ length: daysInMonth }, (_, i) =>
       FormattedDate(new Date(viewYear, viewMonth, i + 1)));
     fetchSelectedDaysToParent(all);
-    setPickedDays([]); // zmiana miesiaca czysci wybor
+    setPickedDays([]); 
     // eslint-disable-next-line
   }, [viewYear, viewMonth]);
 
@@ -198,7 +202,7 @@ const MonthPicker = ({ fetchSelectedDaysToParent, onPickedDaysChange = () => {},
               today={iso === todayIso}
             >
               {dayNum}
-              {minutes > 0 && <span>{compactMinutes(minutes)}</span>}
+              {minutes > 0 && <span>{renderTime(minutes)}</span>}
             </StyledDay>
           );
         })}

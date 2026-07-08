@@ -111,6 +111,7 @@ const Cell = styled.div`
   background: ${(p) => p.$color};
   cursor: default;
   ${(p) => p.$hidden && css`visibility: hidden;`}
+
 `;
 
 const Legend = styled.div`

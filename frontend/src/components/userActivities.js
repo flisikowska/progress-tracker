@@ -18,9 +18,11 @@ const StyledActivitiesWrapper = styled.div`
   gap:15px;
   @media(max-width:650px){
     gap:10px;
+    padding: 0 20px;
   }
   @media(max-width:420px){
     gap:10px;
+    padding: 0 10px;
     grid-template-columns: repeat(auto-fill, 130px);
   }
 `;
@@ -36,6 +38,9 @@ const StyledTotal = styled.div`
   color:var(--text);
   @media(max-width:450px){
     font-size:1.1rem;
+  }
+  @media(max-width:420px){
+    width:130px;
   }
   >p{
     font-size:1rem;
