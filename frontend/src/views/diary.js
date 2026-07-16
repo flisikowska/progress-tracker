@@ -36,6 +36,11 @@ function Diary({activePeriod, activityTypes, userActivitiesForTheDay, refreshUse
   const pickedActivities = userActivitiesForTheDay.filter(
     (a) => pickedDays.includes((a.activity_date || '').slice(0, 10)));
 
+  const dayActivities = selectedDays.length === 1
+    ? userActivitiesForTheDay.filter(
+        (a) => selectedDays.includes((a.activity_date || '').slice(0, 10)))
+    : [];
+
   const monthRef = selectedDays[0] || FormattedDate(new Date());
   const [refYear, refMonth] = monthRef.split('-').map(Number); // refMonth: 1-12
   const daysInMonth = new Date(refYear, refMonth, 0).getDate();
@@ -65,7 +70,7 @@ function Diary({activePeriod, activityTypes, userActivitiesForTheDay, refreshUse
           multipleDaySelect={false}
           daysCount={7}
         />
-        <UserActivities activityTypes={activityTypes} deleteActivity={handleActivityDelete} activities={userActivitiesForTheDay} onEditActivity={onEditActivity}/>
+        <UserActivities activityTypes={activityTypes} deleteActivity={handleActivityDelete} activities={dayActivities} onEditActivity={onEditActivity}/>
         </>
       : activePeriod==='miesiac'?
       <>
