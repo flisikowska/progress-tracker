@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styled, { css } from 'styled-components';
 import axios from 'axios';
 import { ArrowLeftOutline } from '@styled-icons/evaicons-outline/ArrowLeftOutline';
@@ -140,6 +140,19 @@ const mondayOnOrBefore = (date) => {
 const YearActivity = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [yearActivities, setYearActivities] = useState([]);
+  const currentMonthRef = useRef(null);
+
+  const now = new Date();
+  const isCurrentYear = year === now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  // przy bieżącym roku wyśrodkuj poziomy scroll na aktualnym miesiącu (istotne na mobilce)
+  useEffect(() => {
+    if (!isCurrentYear) return;
+    requestAnimationFrame(() => {
+      currentMonthRef.current?.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+    });
+  }, [isCurrentYear, year, yearActivities]);
 
   const fetchYear = useCallback(() => {
     axios.get(`${host}/activities?from=${year}-01-01&to=${year}-12-31`, { withCredentials: true })
@@ -198,7 +211,7 @@ const YearActivity = () => {
         <Board>
           <Months $weeks={weeks}>
             {monthSpans.map((s) => (
-              <span key={s.month} style={{ gridColumn: `${s.start + 1} / ${s.end + 2}` }}>
+              <span key={s.month} ref={isCurrentYear && s.month === currentMonth ? currentMonthRef : null} style={{ gridColumn: `${s.start + 1} / ${s.end + 2}` }}>
                 {MONTHS_SHORT[s.month]}
               </span>
             ))}
@@ -223,13 +236,14 @@ const YearActivity = () => {
               })}
             </Grid>
           </Body>
-          <Legend>
-            Mniej
-            {COLORS.map((c, i) => <i key={i} style={{ background: c }} />)}
-            Więcej
-          </Legend>
         </Board>
       </Scroll>
+
+      <Legend>
+        Mniej
+        {COLORS.map((c, i) => <i key={i} style={{ background: c }} />)}
+        Więcej
+      </Legend>
 
       <PeriodSummary stats={[
         { icon: Clock, value: MinutesToFormattedTime(yearTotal), label: `Łącznie w ${year} roku` },
