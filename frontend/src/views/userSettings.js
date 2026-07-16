@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 import { Link } from '@styled-icons/fa-solid/Link';
@@ -40,16 +40,15 @@ const Input = styled.input`
 const ColorGrid = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 28px;
+  gap: 8px;
 `;
 
 const ColorDot = styled.div`
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   cursor: pointer;
-  border: 3px solid ${p => p.$selected ? '#fff' : 'transparent'};
+  border: 2px solid ${p => p.$selected ? '#fff' : 'transparent'};
   outline: ${p => p.$selected ? '2px solid var(--blue)' : 'none'};
   transition: 0.15s;
   &:hover { transform: scale(1.15); }
@@ -68,22 +67,10 @@ const SaveButton = styled.button`
   &:hover { background: var(--blue); }
 `;
 
-const SuccessMsg = styled.span`
-  margin-left: 14px;
-  color: var(--blue);
-  font-size: 0.9rem;
-`;
-
 const ErrorMsg = styled.span`
   margin-left: 14px;
   color: var(--primary-dark);
   font-size: 0.9rem;
-`;
-
-const Separator = styled.hr`
-  border: none;
-  border-top: 1px solid var(--primary-dark);
-  margin: 32px 0 24px 0;
 `;
 
 const SectionTitle = styled.h2`
@@ -139,58 +126,108 @@ const CopyLinkButton = styled.button`
 `;
 
 const GroupList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 400px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  width: 100%;
   margin-bottom: 8px;
 `;
 
 const GroupItem = styled.div`
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--white);
+  border: 1px solid var(--primary-dark);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+`;
+
+const GroupItemTop = styled.div`
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 10px 18px;
-  background-color: var(--primary);
-  border-radius: 25px;
+  gap: 12px;
 `;
 
 const GroupActions = styled.div`
   display: flex;
-  gap: 8px;
+  flex-shrink: 0;
+  gap: 4px;
 `;
 
 const ShareButton = styled.button`
-  padding: 6px 16px;
-  border-radius: 16px;
+  padding: 5px 12px;
+  border-radius: 12px;
   background: transparent;
-  border: 2px solid var(--blue);
-  color: var(--blue);
-  font-size: 0.85rem;
+  border: none;
+  color: var(--text-inactive);
+  font-size: 0.8rem;
   cursor: pointer;
   white-space: nowrap;
-  &:hover { background: var(--blue); color: var(--white); }
+  transition: 0.15s;
+  &:hover { color: var(--dark-blue); background: rgba(64, 196, 255, 0.12); }
 `;
 
 const GroupItemName = styled.span`
+  flex: 1;
+  min-width: 0;
   color: var(--text);
-  font-size: 0.95rem;
-  font-weight:500;
+  font-size: 1rem;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
 
+const NickField = styled.label`
+  display: block;
+`;
+
+const NickLabel = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-inactive);
+  margin-bottom: 6px;
+`;
+
+const SavedHint = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue);
+  > svg { width: 11px; height: 11px; }
+`;
+
+const GroupNickInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--primary-dark);
+  background: var(--color-background);
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  &:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(64, 196, 255, 0.15); }
+  &::placeholder { color: var(--text-inactive); }
+`;
+
 const LeaveButton = styled.button`
-  padding: 6px 16px;
-  border-radius: 16px;
+  padding: 5px 12px;
+  border-radius: 12px;
   background: transparent;
-  border: 2px solid var(--red);
-  color: var(--red);
-  font-size: 0.85rem;
+  border: none;
+  color: var(--text-inactive);
+  font-size: 0.8rem;
   cursor: pointer;
   white-space: nowrap;
-  &:hover { background: var(--red); color: var(--white); }
+  transition: 0.15s;
+  &:hover { color: var(--red); background: rgba(229, 83, 75, 0.12); }
 `;
 
 const Muted = styled.p`
@@ -302,13 +339,14 @@ const GOAL_PERIODS = [
 function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
   const [name, setName] = useState('');
   const [color, setColor] = useState('');
-  const [saved, setSaved] = useState(false);
 
   const [groupName, setGroupName] = useState('');
   const [groupGoal, setGroupGoal] = useState('');
   const [groupPeriod, setGroupPeriod] = useState('week');
   const [groupError, setGroupError] = useState('');
   const [myGroups, setMyGroups] = useState([]);
+  const [nickSavedId, setNickSavedId] = useState(null);
+  const nickTimers = useRef({});
   const [groupToLeave, setGroupToLeave] = useState(null);
   const [inviteModal, setInviteModal] = useState(null);
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -368,15 +406,6 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
       .catch(() => {});
   };
 
-  const handleSave = () => {
-    axios.put(`${host}/user`, { name, color }, { withCredentials: true })
-      .then(() => {
-        setSaved(true);
-        if (onSave) onSave();
-        setTimeout(() => setSaved(false), 2000);
-      });
-  };
-
   const handleCreateGroup = () => {
     setGroupError('');
     const goal = Number(groupGoal);
@@ -398,6 +427,37 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
       .catch(() => setGroupError('Nie udało się utworzyć grupy.'));
   };
 
+  const saveGroupNickname = (group_id, nickname) => {
+    axios.put(`${host}/my-groups/${group_id}/nickname`, { nickname }, { withCredentials: true })
+      .then(() => {
+        setMyGroups(prev => prev.map(g =>
+          g.group_id === group_id ? { ...g, nickname } : g
+        ));
+        setNickSavedId(group_id);
+        setTimeout(() => setNickSavedId(prev => (prev === group_id ? null : prev)), 2000);
+        if (onGroupsChanged) onGroupsChanged();
+      });
+  };
+
+  // zapis nicku po 1 s bezczynności od ostatniego wpisanego znaku
+  const handleNickChange = (group_id, value) => {
+    clearTimeout(nickTimers.current[group_id]);
+    nickTimers.current[group_id] = setTimeout(() => {
+      saveGroupNickname(group_id, value);
+    }, 1000);
+  };
+
+  const saveGroupColor = (group_id, newColor) => {
+    axios.put(`${host}/my-groups/${group_id}/color`, { color: newColor }, { withCredentials: true })
+      .then(() => {
+        setMyGroups(prev => prev.map(g =>
+          g.group_id === group_id ? { ...g, color: newColor } : g
+        ));
+        if (onSave) onSave();
+      });
+  };
+
+
   return (
     <StyledContainer>
       {groupToLeave && (
@@ -412,27 +472,6 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
           </ModalCard>
         </ModalOverlay>
       )}
-      <Label>Nick</Label>
-      <Input
-        value={name}
-        onChange={e => setName(e.target.value)}
-        maxLength={30}
-      />
-      <Label>Kolor</Label>
-      <ColorGrid>
-        {COLORS.map(c => (
-          <ColorDot
-            key={c}
-            style={{ backgroundColor: '#' + c }}
-            $selected={color.toUpperCase() === c.toUpperCase()}
-            onClick={() => setColor(c)}
-          />
-        ))}
-      </ColorGrid>
-      <SaveButton onClick={handleSave}>Zapisz</SaveButton>
-      {saved && <SuccessMsg>Zapisano!</SuccessMsg>}
-
-      <Separator />
       <SectionHeader>
         <SectionTitle style={{ margin: 0 }}>Twoje grupy</SectionTitle>
         <NewGroupButton onClick={openCreateModal}>+ Nowa grupa</NewGroupButton>
@@ -443,11 +482,39 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
         <GroupList>
           {myGroups.map(g => (
             <GroupItem key={g.group_id}>
-              <GroupItemName>{g.name}</GroupItemName>
-              <GroupActions>
-                <ShareButton onClick={() => openInviteModal(g)}>Zaproś</ShareButton>
-                <LeaveButton onClick={() => setGroupToLeave(g)}>Opuść</LeaveButton>
-              </GroupActions>
+              <GroupItemTop>
+                <GroupItemName>{g.name}</GroupItemName>
+                <GroupActions>
+                  <ShareButton onClick={() => openInviteModal(g)}>Zaproś</ShareButton>
+                  <LeaveButton onClick={() => setGroupToLeave(g)}>Opuść</LeaveButton>
+                </GroupActions>
+              </GroupItemTop>
+              <NickField>
+                <NickLabel>
+                  Twój nick
+                  {nickSavedId === g.group_id && <SavedHint><Check /> Zapisano</SavedHint>}
+                </NickLabel>
+                <GroupNickInput
+                  key={`${g.group_id}-${name}`}
+                  defaultValue={g.nickname || name}
+                  placeholder="Nick w tej grupie"
+                  maxLength={30}
+                  onChange={e => handleNickChange(g.group_id, e.target.value)}
+                />
+              </NickField>
+              <div>
+                <NickLabel>Twój kolor</NickLabel>
+                <ColorGrid>
+                  {COLORS.map(c => (
+                    <ColorDot
+                      key={c}
+                      style={{ backgroundColor: '#' + c }}
+                      $selected={(g.color || color).toUpperCase() === c.toUpperCase()}
+                      onClick={() => saveGroupColor(g.group_id, c)}
+                    />
+                  ))}
+                </ColorGrid>
+              </div>
             </GroupItem>
           ))}
         </GroupList>

@@ -121,7 +121,7 @@ async function userInGroup(userId, groupId){
 
 app.get(`/my-groups`, authenticateToken, async (req, res)=>{
   const rows= await executeQuery(`
-    SELECT g.group_id, g.name, g.goal
+    SELECT g.group_id, g.name, g.goal, ug.nickname, ug.color
     FROM public.user_group ug
     JOIN public.group g ON g.group_id = ug.group_id
     WHERE ug.user_id= $1
@@ -159,6 +159,30 @@ app.delete('/my-groups/:id', authenticateToken, async (req, res) => {
   );
   res.sendStatus(204);
 })
+
+app.put('/my-groups/:id/nickname', jsonParser, authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  const group_id = req.params.id;
+  const { nickname } = req.body;
+  const value = nickname && nickname.trim() ? nickname.trim() : null;
+  await executeQuery(
+    `UPDATE public.user_group SET nickname = $3 WHERE user_id = $1 AND group_id = $2`,
+    [user_id, group_id, value]
+  );
+  res.sendStatus(204);
+});
+
+app.put('/my-groups/:id/color', jsonParser, authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  const group_id = req.params.id;
+  const { color } = req.body;
+  const value = color && color.trim() ? color.trim() : null;
+  await executeQuery(
+    `UPDATE public.user_group SET color = $3 WHERE user_id = $1 AND group_id = $2`,
+    [user_id, group_id, value]
+  );
+  res.sendStatus(204);
+});
 
 // Podgląd grupy po tokenie - do pokazania zaproszenia bez dołączania
 app.get('/invite-info', authenticateToken, async (req, res) => {
@@ -226,8 +250,8 @@ app.get('/group', authenticateToken, async (req, res) => {
     g.name AS group_name,
     g.goal AS group_goal,
     g.goal_period AS group_goal_period,
-    u.name AS user_name,
-    u.color AS user_color,
+    COALESCE(ug.nickname, u.name) AS user_name,
+    COALESCE(ug.color, u.color) AS user_color,
     u.user_id
     FROM public.group g
     JOIN public.user_group ug ON ug.group_id = g.group_id
