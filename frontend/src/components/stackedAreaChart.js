@@ -178,7 +178,7 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
           name: nameById[key],
           color: colorScale[key],
           minutes: week[key] || 0,
-      }));
+      })).sort((a, b) => b.minutes - a.minutes);
       const total = rows.reduce((sum, r) => sum + r.minutes, 0);
       const cx = xScale(week.x);
 
