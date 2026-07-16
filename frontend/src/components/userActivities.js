@@ -167,7 +167,7 @@ const CancelBtn = styled.button`
   &:hover { background: var(--primary-dark); color: var(--white); }
 `;
 
-function UserActivities({activityTypes, deleteActivity, activities, showDate=false, hideTotal=false}){
+function UserActivities({activityTypes, deleteActivity, activities, showDate=false, hideTotal=false, onEditActivity}){
     useEffect(() => {
         ResizeGridItems("activities")
       })
@@ -185,10 +185,13 @@ function UserActivities({activityTypes, deleteActivity, activities, showDate=fal
                 activity_type_id,
                 time,
                 activity_date,
+                group_ids
               }, key
             ) => (
-              <StyledActivity key={key}  className='grid-item'>
-                <StyledHeader><p>{MinutesToFormattedTime(time)}</p>{activity_id != null && <CloseOutline onClick={()=> setConfirmId(activity_id)}/>}</StyledHeader>
+              <StyledActivity key={key}  className='grid-item' style={{ cursor: activity_id != null ? 'pointer' : 'default'}} onClick={()=> activity_id != null && onEditActivity?.(
+                { activity_id, activity_type_id, time, activity_date, group_ids }
+              )}>
+                <StyledHeader><p>{MinutesToFormattedTime(time)}</p>{activity_id != null && <CloseOutline onClick={(e)=> { e.stopPropagation(); setConfirmId(activity_id);}}/>}</StyledHeader>
                 <StyledIcon name={activityTypes.find(a=> a.id===activity_type_id)?.icon} />
                 <ActivityTitle>{activityTypes.find(a=> a.id===activity_type_id).name}</ActivityTitle>
                 {showDate && activity_date &&

@@ -1,0 +1,1 @@
+ALTER TABLE public.notification ADD COLUMN IF NOT EXISTS type text NOT NULL DEFAULT 'add';

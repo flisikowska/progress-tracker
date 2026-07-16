@@ -257,12 +257,14 @@ app.get('/activities', authenticateToken, async (req, res) => {
       AT.activity_type_id,
       A.date::text AS activity_date,
       A.activity_id,
-      A.amount AS time
+      A.amount AS time,
+      (SELECT COALESCE(array_agg(AG.group_id), '{}')
+      FROM public.activity_group AG WHERE AG.activity_id = A.activity_id) AS group_ids
     FROM public.activity A
     JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
   `;
 
-  // zakres dat (np. widok roczny) - jedno zapytanie zamiast listy pojedynczych dat
+  // zakres dat
   if(req.query.from && req.query.to) {
     const query = `${selectFrom} WHERE A.user_id = $1 AND A.date >= $2::date AND A.date <= $3::date`;
     const response = await executeQuery(query, [user_id, req.query.from, req.query.to]);
@@ -392,6 +394,61 @@ app.delete('/activities/:id', authenticateToken, async (req, res) => {
   res.send();
 })
 
+app.put('/activities/:id', jsonParser, authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  const activity_id=req.params.id;
+  const {activity_type_id, date, amount, group_ids}= req.body;
+  if (!activity_type_id || !date || amount == null || amount <= 0)
+    return res.sendStatus(400);
+
+  // grupy, do których user faktycznie należy (tylko one są dozwolone)
+  const userGroups = await executeQuery(`SELECT group_id FROM public.user_group WHERE user_id = $1`, [user_id]);
+  const allowed = userGroups.map(g => g.group_id);
+  // domyślnie wszystkie grupy usera; jeśli podano listę - przecinamy z dozwolonymi
+  const targetGroups = Array.isArray(group_ids)
+    ? group_ids.map(Number).filter(id => allowed.includes(id))
+    : allowed;
+
+  const query = `
+    UPDATE public.activity SET
+      activity_type_id = $1,
+      date= $2,
+      amount = $3
+    WHERE activity_id=$4 AND user_id=$5
+    RETURNING *;
+  `;
+
+  const response=await executeQuery(query, [activity_type_id, date, amount, activity_id, user_id]);
+  const activity = response[0];
+  if(!activity) return res.sendStatus(404);
+
+  // dane do treści powiadomienia: imię autora + nazwa typu aktywności
+  const actorRows = await executeQuery(`SELECT name FROM public.user WHERE user_id = $1`, [user_id]);
+  const actorName = actorRows[0]?.name ?? 'Ktoś';
+  const typeRows = await executeQuery(`SELECT name FROM public.activity_type WHERE activity_type_id = $1`, [activity_type_id]);
+  const typeName = typeRows[0]?.name ?? 'aktywność';
+
+  await executeQuery(`DELETE FROM public.activity_group WHERE activity_id=$1`, [activity.activity_id]);
+
+  for (const gid of targetGroups) {
+    await executeQuery(
+      `INSERT INTO public.activity_group (activity_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [activity.activity_id, gid]
+    );
+     // powiadomienie dla każdego członka grupy OPRÓCZ autora aktywności
+     // nazwę grupy bierzemy z JOIN-a, żeby wpis niósł info z której grupy pochodzi
+    await executeQuery(
+      `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount, type)
+       SELECT ug.user_id, g.group_id, g.name, $2, $3, $4, 'edit'
+       FROM public.user_group ug
+       JOIN public."group" g ON g.group_id = ug.group_id
+       WHERE ug.group_id = $1 AND ug.user_id <> $5`,
+      [gid, actorName, typeName, amount, user_id]
+    );
+  }
+  res.send(activity);
+})
+
 app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
   const user_id = req.user.userId;
   const {activity_type_id, date, amount, group_ids}= req.body;
@@ -428,8 +485,8 @@ app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
      // powiadomienie dla każdego członka grupy OPRÓCZ autora aktywności
      // nazwę grupy bierzemy z JOIN-a, żeby wpis niósł info z której grupy pochodzi
     await executeQuery(
-      `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount)
-       SELECT ug.user_id, g.group_id, g.name, $2, $3, $4
+      `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount, type)
+       SELECT ug.user_id, g.group_id, g.name, $2, $3, $4, 'add'
        FROM public.user_group ug
        JOIN public."group" g ON g.group_id = ug.group_id
        WHERE ug.group_id = $1 AND ug.user_id <> $5`,
@@ -504,7 +561,7 @@ app.post("/logout", (req, res) => {
 app.get('/notifications', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
   const rows = await executeQuery(
-    `SELECT notification_id, group_id, group_name, actor_name, activity_type_name, amount, is_read, created_at
+    `SELECT notification_id, group_id, group_name, actor_name, activity_type_name, amount, type, is_read, created_at
      FROM public.notification
      WHERE user_id = $1
      ORDER BY created_at DESC`,

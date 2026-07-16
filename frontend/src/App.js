@@ -231,6 +231,7 @@ function App() {
   const [activeAddPopup, setActiveAddPopup] = useState(false);
   const [pendingInvite, setPendingInvite] = useState(null);
   const [inviteInfo, setInviteInfo] = useState(null);
+  const [editActivity, setEditActivity]= useState(null);
   const [activePeriod, setActivePeriod]= useState('dzien');
   const host = process.env.REACT_APP_API_HOST;
 
@@ -432,7 +433,7 @@ function App() {
             :
             (
             <div id="buttons">
-              <AddActivityPopup groups={groups} activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} refreshUserActivities={fetchUserActivities}/>
+              <AddActivityPopup groups={groups} activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} editActivity={editActivity} setEditActivity={setEditActivity} defaultDay={activePeriod === 'dzien' ? selectedDays[0] : undefined} refreshUserActivities={fetchUserActivities}/>
               <StyledSeparator/>
               <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup} host={host} onNotificationsChanged={() => { fetchUsersActivities(); fetchStatsActivities(); }} />
               <UserButton $color={currentUser?.color} onClick={() => setSite("userSettings")}>
@@ -444,7 +445,7 @@ function App() {
           {site==='grupa' ?(
             <Group hasGroup={!!activeGroupId} statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} goalPeriod={goalPeriod} usersActivities={usersActivities}/>
           ) : site==='moje' ? (
-            <Diary activePeriod={activePeriod} activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
+            <Diary activePeriod={activePeriod} activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} onEditActivity={(e)=> {setEditActivity(e); setActiveAddPopup(true);}} />
           ) : (
             <UserSettings logout={logout} onSave={() => { fetchGroupInfo(); fetchCurrentUser(); }} onGroupCreated={(newId) => { fetchMyGroups().then(() => setActiveGroupId(newId)); }} onGroupsChanged={() => fetchMyGroups()} />
           )}

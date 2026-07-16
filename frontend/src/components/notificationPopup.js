@@ -203,7 +203,11 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host, onNotific
           notifications.map((n) => (
             <Item key={n.notification_id} $unread={!n.is_read}>
               <p id='time'>{formatTime(n.created_at)}</p>
-              <p id='info'>{n.actor_name} dodał/a "{n.activity_type_name}-{MinutesToFormattedTime(n.amount)}" w grupie {n.group_name}</p>
+              <p id='info'>
+              {n.type === 'edit'
+                ? <>{n.actor_name} zmienił/a aktywność w grupie {n.group_name} na "{n.activity_type_name}-{MinutesToFormattedTime(n.amount)}"</>
+                : <>{n.actor_name} dodał/a "{n.activity_type_name}-{MinutesToFormattedTime(n.amount)}" w grupie {n.group_name}</>}
+              </p>
             </Item>
           ))
         )}

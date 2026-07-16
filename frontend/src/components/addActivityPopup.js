@@ -232,7 +232,7 @@ const GroupCheck= styled.label`
 `;
 
 
-const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, refreshStatsActivities, refreshUsersActivities, refreshUserActivities})=>{
+const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, refreshStatsActivities, refreshUsersActivities, refreshUserActivities, editActivity, setEditActivity, defaultDay})=>{
     const [chosenItem, setChosenItem] = useState(null);
     const activePopupRef = useRef(active);
     const [selectedDay, setSelectedDay] = useState(FormattedDate(new Date()));
@@ -242,6 +242,16 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
     const [pickerKey, setPickerKey] = useState(0);
     const [selectedGroups, setSelectedGroups] = useState([]);
     const wrapperRef = useRef(null);
+    const chosenRef = useRef(null);
+
+    // po otwarciu przewiń poziomą listę do wybranej aktywności (istotne przy edycji)
+    useEffect(() => {
+        if (active && chosenItem != null) {
+            requestAnimationFrame(() => {
+                chosenRef.current?.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+            });
+        }
+    }, [active, chosenItem]);
 
     useEffect(() => {
         if (active && wrapperRef.current) {
@@ -253,8 +263,17 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
 
     // przy każdym otwarciu popupu zaznacz wszystkie grupy
     useEffect(() => {
-        if (active) setSelectedGroups(groups.map(g => g.group_id));
-    }, [active, groups]);
+        if (active && !editActivity) setSelectedGroups(groups.map(g => g.group_id));
+    }, [active, groups, editActivity]);
+
+    useEffect(() => {
+    if (active && editActivity) {
+        setChosenItem(editActivity.activity_type_id);
+        setAmount(editActivity.time);
+        setSelectedDay(editActivity.activity_date.slice(0, 10));
+        setSelectedGroups(editActivity.group_ids ?? groups.map(g => g.group_id));
+        setPickerKey(k => k + 1); // przeładuj TimePicker, żeby pokazał czas
+    }}, [active, editActivity, groups]);
 
     const toggleGroup = (id) => {
         setSelectedGroups(prev => prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]);
@@ -275,7 +294,7 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
                   if (parent === popup) return;
                   else parent = parent.parentNode;
                 }
-                setTimeout(() => setActiveAddPopup(false), 1);
+                setTimeout(() => closePopup(), 1);
               }
             }
           });
@@ -300,30 +319,39 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
             return;
         }
         setError('');
-        addActivity(chosenItem, selectedDay, amount);
+        saveActivity(chosenItem, selectedDay, amount);
     }
 
-    const addActivity=(activity_type_id, date, amount)=>{
-        axios.post(`${host}/activities`, {activity_type_id: activity_type_id, date: date, amount: amount, group_ids: selectedGroups}, { withCredentials: true })
-        .then(res => {
-           refreshUsersActivities();
-           refreshUserActivities();
-           setActiveAddPopup(false);
-           refreshStatsActivities();
-           setChosenItem(null);
-           setAmount(0);
-           setSearch('');
-           setError('');
-           setPickerKey(k => k + 1);
+    const saveActivity = () => {
+        const payload = { activity_type_id: chosenItem, date: selectedDay, amount, group_ids: selectedGroups };
+        const request = editActivity
+            ? axios.put(`${host}/activities/${editActivity.activity_id}`, payload, { withCredentials: true })
+            : axios.post(`${host}/activities`, payload, { withCredentials: true });
+
+        request.then(() => {
+            refreshUsersActivities();
+            refreshUserActivities();
+            refreshStatsActivities();
+            closePopup();
         });
-      }
+    };
+
+    const closePopup = () => {
+        setActiveAddPopup(false);
+        setEditActivity?.(null);
+        setChosenItem(null);
+        setAmount(0);
+        setSearch('');
+        setError('');
+        setPickerKey(k => k + 1);
+    };
 
     return (
         <>
-            <StyledButton onClick={()=> setActiveAddPopup(!active) }><Plus/>Dodaj aktywność</StyledButton>
-            <Overlay $active={active} onClick={()=>setActiveAddPopup(false)}/>
+            <StyledButton onClick={()=> {setEditActivity?.(null); setActiveAddPopup(!active)}}><Plus/>Dodaj aktywność</StyledButton>
+            <Overlay $active={active} onClick={()=>closePopup()}/>
             <StyledWrapper ref={wrapperRef} id='addPopup' $active={active}>
-                <CloseOutline onClick={()=>setActiveAddPopup(false)}/>
+                <CloseOutline onClick={closePopup}/>
                 <StyledHeader>Aktywność</StyledHeader>
                 <SearchInput
                     placeholder="Szukaj aktywności..."
@@ -334,6 +362,7 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
                 {filteredActivities.map((activity) => (
                     <StyledActivity
                         key={activity.id}
+                        ref={chosenItem === activity.id ? chosenRef : null}
                         $chosen={chosenItem === activity.id}
                         onClick={() => { setChosenItem(activity.id); setError(''); }}
                     >
@@ -349,10 +378,11 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
                         id='timePicker'
                         name="activityTime"
                         onChange={(e) => {const a = parseInt(e.hours)*60+parseInt(e.minutes); setAmount(a); if (a > 0) setError('');}}
-                        value={{hours:0,minutes:0}}
+                        value={{hours: Math.floor(amount/60) ,minutes: amount%60}}
                         />
                         <StyledHeader>Kiedy?</StyledHeader>
                         <DayPicker
+                            initialSelectedDay={editActivity ? editActivity.activity_date.slice(0, 10) : (defaultDay || FormattedDate(new Date()))}
                             fetchSelectedDaysToParent={(selectedDays) => {
                                 if (selectedDays.length === 1) setSelectedDay(selectedDays[0]);
                             }}
@@ -377,7 +407,7 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
                     </>
                 )}
                 {error && <ErrorMsg>{error}</ErrorMsg>}
-                <ChooseButton onClick={handleAdd}>Dodaj aktywność</ChooseButton>
+                <ChooseButton onClick={handleAdd}>{editActivity? 'Zapisz zmiany' : 'Dodaj aktywność'}</ChooseButton>
             </StyledWrapper>
         </>
 

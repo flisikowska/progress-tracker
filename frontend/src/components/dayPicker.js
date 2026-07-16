@@ -122,11 +122,13 @@ const DayPicker = ({
   fetchSelectedDaysToParent,
   multipleDaySelect,
   daysCount,
+  initialSelectedDay,
 }) => {
-  const initialStartDay = FormattedDate(addDays(new Date(), -3));
+  const baseDay = initialSelectedDay || FormattedDate(new Date());
+  const initialStartDay = FormattedDate(addDays(baseDay, -3));
   const [startDay, setStartDay] = useState(initialStartDay);
   const [weekdays, setWeekdays] = useState([initialStartDay]);
-  const [selectedDays, setSelectedDays] = useState([FormattedDate(addDays(initialStartDay, 3))]);
+  const [selectedDays, setSelectedDays] = useState([baseDay]);
 
   useEffect(() => {
     let days = [startDay];
@@ -142,6 +144,14 @@ const DayPicker = ({
     fetchSelectedDaysToParent(selectedDays);
     // eslint-disable-next-line
   }, [selectedDays]);
+
+  // gdy rodzic poda datę z zewnątrz (edycja / wybrany dzień) - zaznacz ją i wyśrodkuj na niej tydzień
+  useEffect(() => {
+    if (!initialSelectedDay) return;
+    setSelectedDays([initialSelectedDay]);
+    setStartDay(FormattedDate(addDays(initialSelectedDay, -3)));
+    // eslint-disable-next-line
+  }, [initialSelectedDay]);
 
   useEffect(() => {
     let days = [startDay];

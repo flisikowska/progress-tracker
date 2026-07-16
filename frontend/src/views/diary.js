@@ -26,7 +26,7 @@ const StyledContainer= styled.div`
   margin:0;
 `
 
-function Diary({activePeriod, activityTypes, userActivitiesForTheDay, refreshUsersActivities, fetchUserActivities, selectedDays, setSelectedDays}) {
+function Diary({activePeriod, activityTypes, userActivitiesForTheDay, refreshUsersActivities, fetchUserActivities, selectedDays, setSelectedDays, onEditActivity}) {
   const [pickedDays, setPickedDays] = useState([]);
 
   useEffect(()=>{
@@ -65,7 +65,7 @@ function Diary({activePeriod, activityTypes, userActivitiesForTheDay, refreshUse
           multipleDaySelect={false}
           daysCount={7}
         />
-        <UserActivities activityTypes={activityTypes} deleteActivity={handleActivityDelete} activities={userActivitiesForTheDay}/>
+        <UserActivities activityTypes={activityTypes} deleteActivity={handleActivityDelete} activities={userActivitiesForTheDay} onEditActivity={onEditActivity}/>
         </>
       : activePeriod==='miesiac'?
       <>
@@ -91,6 +91,7 @@ function Diary({activePeriod, activityTypes, userActivitiesForTheDay, refreshUse
             activityTypes={activityTypes}
             deleteActivity={handleActivityDelete}
             activities={pickedActivities}
+            onEditActivity={onEditActivity}
             showDate
           />
         )}
