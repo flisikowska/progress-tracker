@@ -96,7 +96,6 @@ function Diary({activePeriod, activityTypes, userActivitiesForTheDay, refreshUse
             activityTypes={activityTypes}
             deleteActivity={handleActivityDelete}
             activities={pickedActivities}
-            onEditActivity={onEditActivity}
             showDate
           />
         )}
