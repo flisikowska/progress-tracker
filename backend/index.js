@@ -251,7 +251,7 @@ app.get('/group', authenticateToken, async (req, res) => {
     g.goal AS group_goal,
     g.goal_period AS group_goal_period,
     COALESCE(ug.nickname, u.name) AS user_name,
-    COALESCE(ug.color, u.color) AS user_color,
+    COALESCE(ug.color, '000000') AS user_color,
     u.user_id
     FROM public.group g
     JOIN public.user_group ug ON ug.group_id = g.group_id
@@ -525,7 +525,6 @@ app.post("/google-auth", jsonParser, async (req, res) => {
   console.log(`POST /google-auth started`);
   try
   {
-    const color='000000';
     const { credential, client_id } = req.body;
     const client = new Client(dbConfig);
     await client.connect();
@@ -541,9 +540,9 @@ app.post("/google-auth", jsonParser, async (req, res) => {
     const resp=await client.query(userQuery, [sub]);
     let user=resp.rows[0];
     if (!user) {
-      const query = `INSERT INTO public.user (user_id, name, color)
-            VALUES ($1, $2, $3) RETURNING *`;
-      const response = await client.query(query, [sub, name, color]);
+      const query = `INSERT INTO public.user (user_id, name)
+            VALUES ($1, $2) RETURNING *`;
+      const response = await client.query(query, [sub, name]);
       user = response.rows[0];
     }
     issueAuthCookie(res, user.user_id);
@@ -569,10 +568,10 @@ app.get("/user", authenticateToken, async (req, res) => {
 });
 
 app.put("/user", jsonParser, authenticateToken, async (req, res) => {
-    const { name, color } = req.body;
-    if (!name || !color) return res.sendStatus(400);
-    const query = `UPDATE public.user SET name=$2, color=$3 WHERE user_id=$1 RETURNING *`;
-    const response = await executeQuery(query, [req.user.userId, name, color]);
+    const { name } = req.body;
+    if (!name) return res.sendStatus(400);
+    const query = `UPDATE public.user SET name=$2 WHERE user_id=$1 RETURNING *`;
+    const response = await executeQuery(query, [req.user.userId, name]);
     res.status(200).json(response[0]);
 });
 

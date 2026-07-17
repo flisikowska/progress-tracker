@@ -10,6 +10,7 @@ const COLORS = [
   'F5B1C7', 'F4A0A0', 'F5C97B', 'A8D8A8',
   '7DCEF5', 'B8BDE1', '40C4FF', '9B8EC4',
   '40B7B0', 'F4A261', 'D4A5A5', 'C5E0B4',
+  'C39BD3', 'F5E07B', '85C1E9', 'F1948A',
 ];
 
 const StyledContainer = styled.div`
@@ -338,7 +339,6 @@ const GOAL_PERIODS = [
 
 function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
   const [name, setName] = useState('');
-  const [color, setColor] = useState('');
 
   const [groupName, setGroupName] = useState('');
   const [groupGoal, setGroupGoal] = useState('');
@@ -371,7 +371,6 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
     axios.get(`${host}/user`, { withCredentials: true })
       .then(res => {
         setName(res.data[0].name);
-        setColor(res.data[0].color);
       });
     fetchMyGroups();
   }, [fetchMyGroups]);
@@ -509,7 +508,7 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
                     <ColorDot
                       key={c}
                       style={{ backgroundColor: '#' + c }}
-                      $selected={(g.color || color).toUpperCase() === c.toUpperCase()}
+                      $selected={(g.color || '000000').toUpperCase() === c.toUpperCase()}
                       onClick={() => saveGroupColor(g.group_id, c)}
                     />
                   ))}

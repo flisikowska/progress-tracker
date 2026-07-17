@@ -395,6 +395,8 @@ function App() {
     );
   }
 
+  const currentUserColor = users.find(u => u.user_id === currentUser?.user_id)?.user_color ?? '000000';
+
   return (
     <AppContainer>
     {inviteInfo && (
@@ -436,7 +438,7 @@ function App() {
               <AddActivityPopup groups={groups} activityTypes={activityTypes} setActiveAddPopup={setActiveAddPopup} active={activeAddPopup} refreshStatsActivities={fetchStatsActivities} refreshUsersActivities={fetchUsersActivities} editActivity={editActivity} setEditActivity={setEditActivity} defaultDay={activePeriod === 'dzien' ? selectedDays[0] : undefined} refreshUserActivities={fetchUserActivities}/>
               <StyledSeparator/>
               <NotificationPopup setActiveNotificationPopup={setActiveNotificationPopup} active={activeNotificationPopup} host={host} onNotificationsChanged={() => { fetchUsersActivities(); fetchStatsActivities(); }} />
-              <UserButton $color={currentUser?.color} onClick={() => setSite("userSettings")}>
+              <UserButton $color={currentUserColor} onClick={() => setSite("userSettings")}>
                 <User />
               </UserButton>
             </div>
