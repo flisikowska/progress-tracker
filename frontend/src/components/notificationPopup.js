@@ -127,10 +127,8 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host, onNotific
   const activePopupRef = useRef(active);
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-  // zawsze wolaj najnowszy callback (unikamy stale closure przy zmianie propa)
   const onChangeRef = useRef(onNotificationsChanged);
   useEffect(() => { onChangeRef.current = onNotificationsChanged; }, [onNotificationsChanged]);
-  // najwyzsze widziane id - by wykryc NOWA notyfikacje (nowa aktywnosc czlonka grupy)
   const lastMaxIdRef = useRef(null);
 
   // jedna wspólna lista ze wszystkich grup
@@ -155,6 +153,11 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host, onNotific
     return () => clearInterval(id);
   }, [fetchNotifications]);
 
+    const markAsRead = (id) => {
+    axios.post(`${host}/notifications/mark-read/${id}`, {}, { withCredentials: true })
+      .then(() => setNotifications((prev) => prev.map((n) =>
+        n.notification_id === id ? { ...n, is_read: true } : n)))};
+
   const markAllRead = () => {
     axios.post(`${host}/notifications/mark-read`, {}, { withCredentials: true })
       .then(() => setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true }))));
@@ -165,7 +168,7 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host, onNotific
       .then(() => setNotifications([]));
   };
 
-  // zamykanie po kliknięciu poza popupem (jak było wcześniej)
+  // zamykanie po kliknięciu poza popupem
   useEffect(() => {
     const handler = (event) => {
       if (!activePopupRef.current) return;
@@ -201,7 +204,7 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host, onNotific
           <Empty>Brak powiadomień</Empty>
         ) : (
           notifications.map((n) => (
-            <Item key={n.notification_id} $unread={!n.is_read}>
+            <Item onClick={()=>markAsRead(n.notification_id)} key={n.notification_id} $unread={!n.is_read}>
               <p id='time'>{formatTime(n.created_at)}</p>
               <p id='info'>
               {n.type === 'edit'

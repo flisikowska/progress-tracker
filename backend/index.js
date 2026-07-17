@@ -506,8 +506,7 @@ app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
       `INSERT INTO public.activity_group (activity_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [activity.activity_id, gid]
     );
-     // powiadomienie dla każdego członka grupy OPRÓCZ autora aktywności
-     // nazwę grupy bierzemy z JOIN-a, żeby wpis niósł info z której grupy pochodzi
+
     await executeQuery(
       `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount, type)
        SELECT ug.user_id, g.group_id, g.name, $2, $3, $4, 'add'
@@ -591,6 +590,18 @@ app.get('/notifications', authenticateToken, async (req, res) => {
     [user_id]
   );
   res.send(rows);
+});
+
+// Oznacz powiadomienie usera jako przeczytane
+app.post('/notifications/mark-read/:id', authenticateToken, async (req, res) => {
+  const notification_id=req.params.id;
+  const user_id = req.user.userId;
+  await executeQuery(
+    `UPDATE public.notification SET is_read = true
+     WHERE user_id = $1 AND notification_id = $2 AND is_read = false`,
+    [user_id, notification_id]
+  );
+  res.sendStatus(204);
 });
 
 // Oznacz wszystkie powiadomienia usera (ze wszystkich grup) jako przeczytane
