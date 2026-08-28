@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import PieChart from '../components/pieChart';
 import StackedAreaChart from '../components/stackedAreaChart';
 import GroupMemberActivities from '../components/groupMemberActivities';
-import { MinutesToFormattedTime } from '../helpers/functions';
+import { MinutesToFormattedTime, formatPeriodLabel } from '../helpers/functions';
 
 const StyledPieChart = styled.div`
     width:100%;
@@ -24,6 +24,49 @@ const StyledContainer = styled.div`
     text-align: center;
 `;
 
+const PieColumn = styled.div`
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    flex-shrink:0;
+`;
+
+const PeriodNav = styled.div`
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-top:-40px;
+    position:relative;
+    z-index:5;
+`;
+
+const NavBtn = styled.button`
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:22px;
+    height:22px;
+    border:none;
+    border-radius:50%;
+    font-size:0.85rem;
+    line-height:1;
+    cursor:pointer;
+    color:var(--text);
+    background:var(--color-background);
+    transition:0.2s;
+    &:hover:not(:disabled){ background:var(--primary); }
+    &:disabled{ opacity:0.35; cursor:default; }
+`;
+
+const PeriodLabel = styled.span`
+    min-width:110px;
+    font-weight:600;
+    font-size:0.8rem;
+    text-transform:capitalize;
+    color:var(--text);
+`;
+
 const StyledStatsHeader = styled.div`
     display: flex;
     align-items: center;
@@ -36,7 +79,10 @@ const StyledStatsTitle = styled.h2`
     font-size: 1.2rem;
     text-align: left;
     pointer-events: none;
-    flex-shrink: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color:var(--text);
 `;
 
@@ -110,6 +156,12 @@ const Dot = styled.span`
 `;
 
 const Name = styled.span`
+    flex:1;
+    min-width:0;
+    text-align:left;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
     font-weight:600;
     color: var(--text);
 `;
@@ -167,6 +219,15 @@ const EmptyText = styled.p`
     line-height:1.5;
 `;
 
+const DetailsTitle = styled.span`
+    flex:1;
+    min-width:0;
+    margin-right:10px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+`;
+
 const CloseBtn = styled.span`
     cursor:pointer;
     display:flex;
@@ -191,7 +252,7 @@ const CloseBtn = styled.span`
     }
 `;
 
-function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, usersActivities }) {
+function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, usersActivities, periodOffset, setPeriodOffset }) {
     const areaChartWidth = 860;
     const areaChartHeight = 400;
     const [selected, setSelected] = useState(null);
@@ -223,21 +284,34 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, us
         };
     }).sort((a, b) => b.amount - a.amount);
 
+    const changePeriod = (delta) => {
+        setSelected(null);
+        setPeriodOffset((prev) => Math.max(0, prev + delta));
+    };
+
     return (
         <StyledContainer>
             <StyledPieChart>
-                <PieChart
-                    goal={goal}
-                    goalPeriod={goalPeriod}
-                    users={users}
-                    usersActivities={usersActivities}
-                    setComponent={setSelected}
-                    selected={selected}
-                />
+                <PieColumn>
+                    <PieChart
+                        goal={goal}
+                        goalPeriod={goalPeriod}
+                        users={users}
+                        usersActivities={usersActivities}
+                        setComponent={setSelected}
+                        selected={selected}
+                        isCurrent={periodOffset === 0}
+                    />
+                    <PeriodNav>
+                        <NavBtn onClick={() => changePeriod(1)} aria-label="Poprzedni okres">‹</NavBtn>
+                        <PeriodLabel>{formatPeriodLabel(goalPeriod, periodOffset)}</PeriodLabel>
+                        <NavBtn onClick={() => changePeriod(-1)} disabled={periodOffset === 0} aria-label="Następny okres">›</NavBtn>
+                    </PeriodNav>
+                </PieColumn>
                 {selected ? (
                     <Details>
                         <DetailsHeader>
-                            {selected.name}
+                            <DetailsTitle>{selected.name}</DetailsTitle>
                             <CloseBtn onClick={() => setSelected(null)}>Zamknij <span>×</span></CloseBtn>
                         </DetailsHeader>
                         <GroupMemberActivities

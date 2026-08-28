@@ -94,7 +94,7 @@ const PERIOD_LABELS = {
     year: 'rocznego',
 };
 
-function PieChart({ goal, goalPeriod, users, usersActivities, setComponent, selected }) {
+function PieChart({ goal, goalPeriod, users, usersActivities, setComponent, selected, isCurrent = true }) {
     const periodLabel = PERIOD_LABELS[goalPeriod] || PERIOD_LABELS.week;
     const calculateAmount = (d) => {
         return d.activities.reduce((total, activity) => total + activity.time, 0);
@@ -129,9 +129,11 @@ function PieChart({ goal, goalPeriod, users, usersActivities, setComponent, sele
                     <p>Cel osiągnięty!<br/><span>{MinutesToFormattedTime(goal)} razem</span></p>
                     :
                     <p>{MinutesToFormattedTime(goal - timeLeft)} <br/> <span>z {MinutesToFormattedTime(goal)} celu {periodLabel}</span></p>}
-                    <PeriodCountdown $urgent={periodLeft.days <= 1}>
-                        <HourglassHalf /> {periodLeft.text}
-                    </PeriodCountdown>
+                    {isCurrent && (
+                        <PeriodCountdown $urgent={periodLeft.days <= 1}>
+                            <HourglassHalf /> {periodLeft.text}
+                        </PeriodCountdown>
+                    )}
                 </StyledRemainingTime>
             </PieChartContainer>
         </StyledContainer>

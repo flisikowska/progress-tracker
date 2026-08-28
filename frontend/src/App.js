@@ -223,6 +223,7 @@ function App() {
   });
   const [goal, setGoal] = useState(0);
   const [goalPeriod, setGoalPeriod] = useState('week');
+  const [periodOffset, setPeriodOffset] = useState(0); // 0 = bieżący okres, 1 = poprzedni...
   const [site, setSite] = useState('grupa');
   const [loggedIn, setLoggedIn] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -322,15 +323,15 @@ function App() {
     else localStorage.removeItem('activeGroupId');
   }, [activeGroupId])
 
-  const fetchUsersActivities=useCallback((groupId = activeGroupId)=>{
+  const fetchUsersActivities=useCallback((groupId = activeGroupId, offset = periodOffset)=>{
     if (!groupId) return;
-    axios.get(`${host}/current-period?group_id=${groupId}`, {
+    axios.get(`${host}/current-period?group_id=${groupId}&offset=${offset}`, {
       withCredentials: true,
     })
     .then(res => {
         setUsersActivities(res.data);
       });
-  }, [host, activeGroupId])
+  }, [host, activeGroupId, periodOffset])
 
   const fetchUserActivities=useCallback((days = selectedDays)=>{
     const query = days.map(d => `date=${encodeURIComponent(d)}`).join('&');
@@ -373,9 +374,11 @@ function App() {
     }
   }, [loggedIn, fetchCurrentUser, fetchActivityTypes, fetchMyGroups]);
 
+  // zmiana grupy - wracamy do bieżącego okresu
+  useEffect(() => { setPeriodOffset(0); }, [activeGroupId]);
+
   useEffect(() => {
     if (loggedIn && activeGroupId) {
-      fetchUsersActivities();
       fetchStatsActivities();
       fetchGroupInfo();
     } else if (loggedIn && !activeGroupId) {
@@ -385,7 +388,12 @@ function App() {
       setStatsData([]);
       setGoal(0);
     }
-  }, [loggedIn, activeGroupId, fetchUsersActivities, fetchStatsActivities, fetchGroupInfo]);
+  }, [loggedIn, activeGroupId, fetchStatsActivities, fetchGroupInfo]);
+
+  // dane okresu (koło + lista) - odświeżają się też przy przewijaniu miesięcy
+  useEffect(() => {
+    if (loggedIn && activeGroupId) fetchUsersActivities();
+  }, [loggedIn, activeGroupId, periodOffset, fetchUsersActivities]);
 
   if (loggedIn === null) {
     return (
@@ -445,7 +453,7 @@ function App() {
 )}
           </HeaderWrapper>
           {site==='grupa' ?(
-            <Group hasGroup={!!activeGroupId} statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} goalPeriod={goalPeriod} usersActivities={usersActivities}/>
+            <Group hasGroup={!!activeGroupId} statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} goalPeriod={goalPeriod} usersActivities={usersActivities} periodOffset={periodOffset} setPeriodOffset={setPeriodOffset}/>
           ) : site==='moje' ? (
             <Diary activePeriod={activePeriod} activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} onEditActivity={(e)=> {setEditActivity(e); setActiveAddPopup(true);}} />
           ) : (

@@ -67,6 +67,25 @@ export function FormattedDate(d) {
     return monday;
   }
 
+  const MONTHS_PL = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
+
+  // Czytelna etykieta okresu cofniętego o `offset` (0 = bieżący) - do nawigacji po historii
+  export function formatPeriodLabel(period, offset = 0, now = new Date()) {
+    if (period === 'month') {
+      const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+      return `${MONTHS_PL[d.getMonth()]} ${d.getFullYear()}`;
+    }
+    if (period === 'year') {
+      return String(now.getFullYear() - offset);
+    }
+    // 'week' - zakres poniedziałek–niedziela
+    const day = now.getDay() || 7;
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (day - 1) - offset * 7);
+    const sunday = addDays(monday, 6);
+    const fmt = (x) => `${x.getDate()}.${String(x.getMonth() + 1).padStart(2, '0')}`;
+    return `${fmt(monday)}–${fmt(sunday)}`;
+  }
+
   // Ile zostało do końca okresu celu - zwraca { text, days } (days = pełne dni do ostatniego dnia włącznie)
   export function timeLeftInPeriod(period, now = new Date()) {
     const end = getPeriodEnd(period, now);

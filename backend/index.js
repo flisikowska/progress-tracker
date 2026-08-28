@@ -89,7 +89,7 @@ function getMonday() {
 
 const GOAL_PERIODS = ['week', 'month', 'year'];
 
-// początek bieżącego okresu celu grupy — od niego liczymy postęp na pie chart
+// początek bieżącego okresu celu grupy - od niego liczymy postęp na pie chart
 function getPeriodStart(period) {
   const now = new Date();
   if (period === 'month')
@@ -97,6 +97,30 @@ function getPeriodStart(period) {
   if (period === 'year')
     return new Date(now.getFullYear(), 0, 1);
   return getMonday(); // 'week' (domyślnie)
+}
+
+// okno okresu cofniętego o `offset` pełnych okresów (0 = bieżący) - do podglądu historii
+function getPeriodWindow(period, offset = 0) {
+  const now = new Date();
+  if (period === 'month') {
+    const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    return { start, end: new Date(start.getFullYear(), start.getMonth() + 1, 1) };
+  }
+  if (period === 'year') {
+    const start = new Date(now.getFullYear() - offset, 0, 1);
+    return { start, end: new Date(start.getFullYear() + 1, 0, 1) };
+  }
+  // 'week' - poniedziałek jako pierwszy dzień
+  const start = getMonday();
+  start.setDate(start.getDate() - offset * 7);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 7);
+  return { start, end };
+}
+
+// data lokalna jako 'YYYY-MM-DD' (porównujemy datę z datą, bez konwersji UTC)
+function toLocalDateString(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 async function executeQuery(query, params) {
@@ -320,10 +344,12 @@ app.get('/current-period', jsonParser, authenticateToken, async (req, res) => {
   if(!group_id || !(await userInGroup(user_id, group_id)))
     return res.sendStatus(403);
 
+  // offset = ile pełnych okresów wstecz (0 = bieżący) - podgląd poprzednich miesięcy/tygodni
+  const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
   const groupRows = await executeQuery(`SELECT goal_period FROM public.group WHERE group_id = $1`, [group_id]);
-  const startDate = getPeriodStart(groupRows[0]?.goal_period);
-  // Format jako lokalna data YYYY-MM-DD - porównujemy datę z datą, bez konwersji UTC
-  const beginning_of_period = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+  const { start, end } = getPeriodWindow(groupRows[0]?.goal_period, offset);
+  const beginning_of_period = toLocalDateString(start);
+  const end_of_period = toLocalDateString(end);
   const query = `
     SELECT
 	    U.user_id,
@@ -339,8 +365,9 @@ app.get('/current-period', jsonParser, authenticateToken, async (req, res) => {
     JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
     WHERE UG.group_id = $1
 	  AND A.date >= $2::date
+	  AND A.date < $3::date
   `;
-  const response = await executeQuery(query, [group_id, beginning_of_period]);
+  const response = await executeQuery(query, [group_id, beginning_of_period, end_of_period]);
   const result = [];
 
   response.forEach(row => {

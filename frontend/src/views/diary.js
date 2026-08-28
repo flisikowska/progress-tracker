@@ -86,7 +86,7 @@ function Diary({activePeriod, activityTypes, userActivitiesForTheDay, refreshUse
             stats={[
               { icon: Clock, value: MinutesToFormattedTime(monthTotalMinutes), label: `Łącznie w ${MONTHS_LOCATIVE[refMonth - 1]}` },
               { icon: CalendarCheck, value: `${activeDays}/${daysInMonth}`, label: 'Dni z aktywnością' },
-              { icon: Fire, value: longestStreak ? `${longestStreak} ${longestStreak === 1 ? 'dzień' : 'dni'}` : '—', label: 'Najdłuższa passa' },
+              { icon: Fire, value: longestStreak ? `${longestStreak} ${longestStreak === 1 ? 'dzień' : 'dni'}` : '-', label: 'Najdłuższa passa' },
             ]}
             breakdownActivities={userActivitiesForTheDay}
             activityTypes={activityTypes}

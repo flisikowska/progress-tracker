@@ -248,7 +248,7 @@ const YearActivity = () => {
       <PeriodSummary stats={[
         { icon: Clock, value: MinutesToFormattedTime(yearTotal), label: `Łącznie w ${year} roku` },
         { icon: CalendarCheck, value: `${activeDays}`, label: 'Aktywnych dni' },
-        { icon: Fire, value: longestStreak ? `${longestStreak} ${longestStreak === 1 ? 'dzień' : 'dni'}` : '—', label: 'Najdłuższa passa' },
+        { icon: Fire, value: longestStreak ? `${longestStreak} ${longestStreak === 1 ? 'dzień' : 'dni'}` : '-', label: 'Najdłuższa passa' },
       ]} />
     </StyledWrapper>
   );
