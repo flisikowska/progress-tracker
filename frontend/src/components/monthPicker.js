@@ -123,7 +123,6 @@ const StyledDay = styled.div`
     `};
 `;
 
-// "in" z "min" - chowane na mniejszych ekranach, zostaje samo "m" 
 const MinUnit = styled.span`
   @media (max-width: 550px) {
     display: none;

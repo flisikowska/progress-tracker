@@ -62,10 +62,8 @@ const BrandName=styled.span`
 
 const Logo=() => (
   <svg width="40" height="40" viewBox="0 0 48 48" aria-label="TrenujeMY logo">
-    {/* Kwadrat z zaokrąglonymi rogami */}
     <rect x="1" y="1" width="46" height="46" rx="12" fill="var(--blue)"/>
-    {/* Trzy postacie rosnące w górę = budująca się społeczność */}
-    <g fill="var(--white)">
+    <g fill="var(--light)">
       <circle cx="14" cy="24" r="3.5"/>
       <rect x="10" y="29" width="8" height="13" rx="4"/>
       <circle cx="24" cy="18" r="4"/>

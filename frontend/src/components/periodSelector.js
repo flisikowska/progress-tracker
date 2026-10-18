@@ -23,7 +23,7 @@ const StyledItem=styled.div`
             background-color:var(--blue);
             border:2px solid var(--primary);
             border-radius: 20px;
-                color: var(--white);
+                color: var(--light);
 
         `
     }

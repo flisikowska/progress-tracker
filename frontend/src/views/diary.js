@@ -13,7 +13,6 @@ import axios from 'axios';
 
 const host = process.env.REACT_APP_API_HOST;
 
-// nazwy miesiecy w miejscowniku ("w lipcu", "w czerwcu"...)
 const MONTHS_LOCATIVE = [
   'styczniu', 'lutym', 'marcu', 'kwietniu', 'maju', 'czerwcu',
   'lipcu', 'sierpniu', 'wrześniu', 'październiku', 'listopadzie', 'grudniu',

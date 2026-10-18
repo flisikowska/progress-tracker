@@ -2,7 +2,7 @@ import { Notifications } from '@styled-icons/material-outlined/Notifications';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
-import { MinutesToFormattedTime } from '../helpers/functions';
+import { formatScore } from '../helpers/functions';
 
 const StyledContainer = styled.div`
   width:35px;
@@ -137,7 +137,6 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host, onNotific
       .then((res) => {
         setNotifications(res.data);
         const maxId = res.data.reduce((m, n) => Math.max(m, n.notification_id), 0);
-        // pojawilo sie nowe id (poza pierwszym pobraniem) -> ktos dodal aktywnosc, odswiezamy pie/statystyki
         if (lastMaxIdRef.current !== null && maxId > lastMaxIdRef.current) {
           onChangeRef.current();
         }
@@ -146,7 +145,6 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host, onNotific
       .catch(() => {});
   }, [host]);
 
-  // pobierz od razu + odświeżaj co 30s (nowe wpisy od innych członków)
   useEffect(() => {
     fetchNotifications();
     const id = setInterval(fetchNotifications, 30000);
@@ -208,8 +206,8 @@ const NotificationPopup = ({ active, setActiveNotificationPopup, host, onNotific
               <p id='time'>{formatTime(n.created_at)}</p>
               <p id='info'>
               {n.type === 'edit'
-                ? <>{n.actor_name} zmienił/a aktywność w grupie {n.group_name} na "{n.activity_type_name}-{MinutesToFormattedTime(n.amount)}"</>
-                : <>{n.actor_name} dodał/a "{n.activity_type_name}-{MinutesToFormattedTime(n.amount)}" w grupie {n.group_name}</>}
+                ? <>{n.actor_name} zmienił/a aktywność w grupie {n.group_name} na "{n.activity_type_name}-{formatScore(n.scoring_mode === 'points' ? n.amount * n.weight / 60 : n.amount, n.scoring_mode)}"</>
+                : <>{n.actor_name} dodał/a "{n.activity_type_name}-{formatScore(n.scoring_mode === 'points' ? n.amount * n.weight / 60 : n.amount, n.scoring_mode)}" w grupie {n.group_name}</>}
               </p>
             </Item>
           ))

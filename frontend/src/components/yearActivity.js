@@ -27,7 +27,7 @@ const bucket = (m) => {
 
 const CELL = 12;
 const GAP = 3;
-const GUTTER = 30; // szerokosc kolumny z etykietami dni tygodnia
+const GUTTER = 30;
 
 const StyledWrapper = styled.div`
   text-align: center;
@@ -129,7 +129,6 @@ const Legend = styled.div`
   }
 `;
 
-// poniedzialek w dniu lub przed dana data
 const mondayOnOrBefore = (date) => {
   const dow = date.getDay() || 7; // 1..7 (Pon..Nd)
   const d = new Date(date);
@@ -167,14 +166,12 @@ const YearActivity = () => {
     return acc;
   }, {});
 
-  // statystyki do kafelkow
   const yearTotal = yearActivities.reduce((t, a) => t + a.time, 0);
   const activeDaySet = new Set(
     yearActivities.map((a) => (a.activity_date || '').slice(0, 10)));
   const activeDays = activeDaySet.size;
   const longestStreak = longestDayStreak(activeDaySet);
 
-  // siatka: od poniedzialku <= 1 stycznia do niedzieli >= 31 grudnia
   const start = mondayOnOrBefore(new Date(year, 0, 1));
   const end = new Date(year, 11, 31);
   const endSunday = new Date(end);

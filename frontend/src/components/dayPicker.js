@@ -69,8 +69,6 @@ const DayPickerItem = ({
 };
 
 
-//////////////////////
-
 const StyledDayPickerWrapper = styled.div`
     >svg{
       color: var(--pale-blue);
@@ -145,7 +143,6 @@ const DayPicker = ({
     // eslint-disable-next-line
   }, [selectedDays]);
 
-  // gdy rodzic poda datę z zewnątrz (edycja / wybrany dzień) - zaznacz ją i wyśrodkuj na niej tydzień
   useEffect(() => {
     if (!initialSelectedDay) return;
     setSelectedDays([initialSelectedDay]);

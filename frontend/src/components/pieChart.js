@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
-import { MinutesToFormattedTime, timeLeftInPeriod } from '../helpers/functions';
+import { formatScore, timeLeftInPeriod } from '../helpers/functions';
 import usePieChart from '../helpers/usePieChart';
 import { HourglassHalf } from '@styled-icons/fa-solid/HourglassHalf';
 
@@ -27,14 +27,13 @@ const PieChartContainer = styled.div`
     margin:20px;
     z-index:1;
     @media(max-width:750px){
-      width:260px;
-      height:260px;
-    }
-    @media(max-width:400px){
-      width:90vw;
+      width:min(90vw, 330px);
       height:auto;
       aspect-ratio:1 / 1;
       margin:10px auto;
+    }
+    @media(max-width:400px){
+      width:90vw;
     }
 `;
 
@@ -80,7 +79,7 @@ const PeriodCountdown = styled.div`
     padding:3px 11px;
     border-radius:14px;
     background:${p => p.$urgent ? 'var(--red)' : 'var(--primary)'};
-    color:${p => p.$urgent ? 'var(--white)' : 'var(--text)'};
+    color:${p => p.$urgent ? 'var(--light)' : 'var(--text)'};
     font-size:0.72rem;
     font-weight:600;
     white-space:nowrap;
@@ -94,12 +93,13 @@ const PERIOD_LABELS = {
     year: 'rocznego',
 };
 
-function PieChart({ goal, goalPeriod, users, usersActivities, setComponent, selected, isCurrent = true }) {
+function PieChart({ goal, goalPeriod, scoringMode, users, usersActivities, setComponent, selected, isCurrent = true }) {
     const periodLabel = PERIOD_LABELS[goalPeriod] || PERIOD_LABELS.week;
     const calculateAmount = (d) => {
-        return d.activities.reduce((total, activity) => total + activity.time, 0);
+        return d.activities.reduce((total, activity) => total + (scoringMode === 'points' ? activity.time * activity.weight / 60 : activity.time), 0);
     };
-    const timeLeft= goal - usersActivities.reduce((sum, d) => sum + calculateAmount(d), 0);
+    const total = usersActivities.reduce((sum, d) => sum + calculateAmount(d), 0);
+    const timeLeft= goal - total;
     const periodLeft = timeLeftInPeriod(goalPeriod);
 
     const data = useMemo(() => ([
@@ -126,9 +126,9 @@ function PieChart({ goal, goalPeriod, users, usersActivities, setComponent, sele
                 <StyledPieChart id="pieChart" />
                 <StyledRemainingTime>
                     {timeLeft<=0?
-                    <p>Cel osiągnięty!<br/><span>{MinutesToFormattedTime(goal)} razem</span></p>
+                    <p>Cel osiągnięty!<br/><span>{formatScore(total, scoringMode)} razem</span></p>
                     :
-                    <p>{MinutesToFormattedTime(goal - timeLeft)} <br/> <span>z {MinutesToFormattedTime(goal)} celu {periodLabel}</span></p>}
+                    <p>{formatScore(total, scoringMode)} <br/> <span>z {formatScore(goal, scoringMode)} celu {periodLabel}</span></p>}
                     {isCurrent && (
                         <PeriodCountdown $urgent={periodLeft.days <= 1}>
                             <HourglassHalf /> {periodLeft.text}

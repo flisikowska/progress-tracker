@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import styled from 'styled-components';
 import { ResizeGridItems } from "../helpers/functions"
-import { MinutesToFormattedTime } from '../helpers/functions';
+import { formatScore } from '../helpers/functions';
 import { ActivityIcon } from '../helpers/activityIcons';
 
 const StyledActivitiesWrapper = styled.div`
@@ -92,7 +92,7 @@ const StyledIcon=styled(ActivityIcon)`
   color: var(--icon);
 `;
 
-function GroupMemberActivities({activityTypes, summary, activities}){
+function GroupMemberActivities({activityTypes, scoringMode, summary, activities}){
     useEffect(() => {
         ResizeGridItems("groupMemberActivities")
     })
@@ -100,7 +100,7 @@ function GroupMemberActivities({activityTypes, summary, activities}){
       <StyledActivitiesWrapper className='scrollable groupMemberActivities'>
         <StyledActivity className='grid-item'><StyledTime>Łącznie</StyledTime>
           <ActivityTitle>
-            {MinutesToFormattedTime(summary)}
+            {formatScore(summary, scoringMode)}
           </ActivityTitle>
         </StyledActivity>
         {activities &&
@@ -109,11 +109,12 @@ function GroupMemberActivities({activityTypes, summary, activities}){
               {
                 activity_type_id,
                 time,
+                weight,
                 date,
               }, key
             ) => (
                   <StyledActivity key={key} className='grid-item'>
-                    <StyledTime>{MinutesToFormattedTime(time)}</StyledTime>
+                    <StyledTime>{formatScore(scoringMode === 'points' ? time * weight / 60 : time, scoringMode)}</StyledTime>
                     <StyledIcon name={activityTypes.find(a=> a.id===activity_type_id)?.icon} />
                     <ActivityTitle>{activityTypes.find(a=> a.id===activity_type_id).name}</ActivityTitle>
                     {date && <StyledDate>{date.split('-').reverse().slice(0,2).join('.')}</StyledDate>}

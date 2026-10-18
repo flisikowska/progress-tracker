@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import PieChart from '../components/pieChart';
 import StackedAreaChart from '../components/stackedAreaChart';
 import GroupMemberActivities from '../components/groupMemberActivities';
-import { MinutesToFormattedTime, formatPeriodLabel } from '../helpers/functions';
+import { formatScore, formatPeriodLabel } from '../helpers/functions';
 
 const StyledPieChart = styled.div`
     width:100%;
@@ -223,6 +223,7 @@ const DetailsTitle = styled.span`
     flex:1;
     min-width:0;
     margin-right:10px;
+    text-align:left;
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
@@ -241,7 +242,7 @@ const CloseBtn = styled.span`
     font-weight:600;
     line-height:1;
     border-radius:20px;
-    color:var(--white);
+    color:var(--light);
     background:var(--text-inactive);
     transition:0.2s;
     > span{
@@ -252,7 +253,7 @@ const CloseBtn = styled.span`
     }
 `;
 
-function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, usersActivities, periodOffset, setPeriodOffset }) {
+function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, scoringMode, usersActivities, periodOffset, setPeriodOffset }) {
     const areaChartWidth = 860;
     const areaChartHeight = 400;
     const [selected, setSelected] = useState(null);
@@ -270,7 +271,7 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, us
     }
 
 
-    const calculateAmount = (d) => d.activities.reduce((total, a) => total + a.time, 0);
+    const calculateAmount = (d) => d.activities.reduce((total, a) => total + (scoringMode === 'points' ? a.time * a.weight / 60 : a.time), 0);
 
     // Wszyscy członkowie grupy - także ci bez aktywności (0 minut), posortowani malejąco po czasie
     const members = users.map((u) => {
@@ -296,6 +297,7 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, us
                     <PieChart
                         goal={goal}
                         goalPeriod={goalPeriod}
+                        scoringMode={scoringMode}
                         users={users}
                         usersActivities={usersActivities}
                         setComponent={setSelected}
@@ -316,6 +318,7 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, us
                         </DetailsHeader>
                         <GroupMemberActivities
                             activityTypes={activityTypes}
+                            scoringMode={scoringMode}
                             summary={selected.amount}
                             activities={selected.activities}
                         />
@@ -329,7 +332,7 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, us
                             >
                                 <Dot style={{ backgroundColor: m.color }} />
                                 <Name>{m.name}</Name>
-                                <Time>{MinutesToFormattedTime(m.amount)}</Time>
+                                <Time>{formatScore(m.amount, scoringMode)}</Time>
                             </StatRow>
                         ))}
                     </StatsList>
@@ -352,6 +355,7 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, us
             <StackedAreaChart
                 data={statsData}
                 goal={goal}
+                scoringMode={scoringMode}
                 width={areaChartWidth}
                 height={areaChartHeight}
                 users={users}

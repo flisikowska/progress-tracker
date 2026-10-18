@@ -32,7 +32,7 @@ const Input = styled.input`
   border-radius: 20px;
   border: 1px solid var(--primary-dark);
   color: var(--text);
-  font-size: 1rem;
+  font-size: 0.9rem;
   outline: none;
   margin-bottom: 24px;
   &:focus { border-color: var(--blue); }
@@ -60,7 +60,7 @@ const SaveButton = styled.button`
   border-radius: 20px;
   background: var(--pale-blue);
   border:2px solid var(--blue);
-  color: var(--white);
+  color: var(--light);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -70,7 +70,7 @@ const SaveButton = styled.button`
 
 const ErrorMsg = styled.span`
   margin-left: 14px;
-  color: var(--primary-dark);
+  color: var(--red);
   font-size: 0.9rem;
 `;
 
@@ -84,12 +84,18 @@ const Select = styled.select`
   display: block;
   width: 100%;
   max-width: 250px;
-  padding: 10px 12px;
+  padding: 10px 36px 10px 12px;
   border-radius: 20px;
   border: 1px solid var(--primary-dark);
   color: var(--text);
-  background: transparent;
-  font-size: 1rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--white);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  font-size: 0.9rem;
   outline: none;
   margin: 0 auto 24px;
   cursor: pointer;
@@ -117,7 +123,7 @@ const CopyLinkButton = styled.button`
   border-radius: 20px;
   background: ${p => p.$done ? 'var(--blue)' : 'var(--pale-blue)'};
   border: 2px solid var(--blue);
-  color: var(--white);
+  color: var(--light);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -139,7 +145,7 @@ const GroupItem = styled.div`
   flex-direction: column;
   gap: 14px;
   padding: 16px 18px;
-  background: var(--white);
+  background: var(--light);
   border: 1px solid var(--primary-dark);
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -236,6 +242,92 @@ const Muted = styled.p`
   font-size: 0.9rem;
 `;
 
+const LabelRow = styled.p`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+  margin: 0 0 8px 0;
+  text-align: left;
+`;
+
+const InfoWrap = styled.span`
+  position: relative;
+  display: inline-flex;
+`;
+
+const InfoBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-inactive);
+  color: var(--light);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+`;
+
+const InfoBubble = styled.span`
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--color-background);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: break-word;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  @media (max-width: 420px) {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    width: auto;
+    max-width: none;
+  }
+`;
+
+const InfoLine = styled.span`
+  display: block;
+`;
+
+const InfoName = styled.strong`
+  font-weight: 700;
+`;
+
+function InfoTip({ children }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <InfoWrap
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <InfoBadge onClick={() => setOpen(o => !o)}>?</InfoBadge>
+      {open && <InfoBubble>{children}</InfoBubble>}
+    </InfoWrap>
+  );
+}
+
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -247,7 +339,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalCard = styled.div`
-  background: var(--white);
+  background: var(--light);
   border-radius: 12px;
   padding: 28px;
   max-width: 360px;
@@ -258,7 +350,7 @@ const ModalCard = styled.div`
 `;
 
 const CreateModalCard = styled.div`
-  background: var(--white);
+  background: var(--light);
   border-radius: 12px;
   padding: 28px;
   max-width: 340px;
@@ -287,7 +379,7 @@ const NewGroupButton = styled.button`
   border-radius: 20px;
   background: var(--pale-blue);
   border: 2px solid var(--blue);
-  color: var(--white);
+  color: var(--light);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -312,7 +404,7 @@ const ConfirmBtn = styled.button`
   border-radius: 20px;
   background: var(--red);
   border: 2px solid var(--red);
-  color: var(--white);
+  color: var(--light);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -328,7 +420,7 @@ const CancelBtn = styled.button`
   color: var(--text);
   font-size: 1rem;
   cursor: pointer;
-  &:hover { background: var(--primary-dark); color: var(--white); }
+  &:hover { background: var(--primary-dark); color: var(--light); }
 `;
 
 const GOAL_PERIODS = [
@@ -337,12 +429,24 @@ const GOAL_PERIODS = [
   { value: 'year', label: 'Roczny' },
 ];
 
+const SCORING_MODES = [
+  { value: 'hours', label: 'Czas treningu (minuty)' },
+  { value: 'points', label: 'Punkty za aktywności' },
+];
+
+const GOAL_LABELS = {
+  week: 'Cel tygodniowy',
+  month: 'Cel miesięczny',
+  year: 'Cel roczny',
+};
+
 function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
   const [name, setName] = useState('');
 
   const [groupName, setGroupName] = useState('');
   const [groupGoal, setGroupGoal] = useState('');
   const [groupPeriod, setGroupPeriod] = useState('week');
+  const [groupScoringMode, setGroupScoringMode] = useState('hours');
   const [groupError, setGroupError] = useState('');
   const [myGroups, setMyGroups] = useState([]);
   const [nickSavedId, setNickSavedId] = useState(null);
@@ -356,6 +460,7 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
     setGroupName('');
     setGroupGoal('');
     setGroupPeriod('week');
+    setGroupScoringMode('hours');
     setGroupError('');
     setShowCreateModal(true);
   };
@@ -408,11 +513,15 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
   const handleCreateGroup = () => {
     setGroupError('');
     const goal = Number(groupGoal);
-    if (!groupName.trim() || !goal || goal <= 0) {
-      setGroupError('Podaj nazwę i dodatni cel.');
+    if (!groupName.trim()) {
+      setGroupError('Podaj nazwę grupy.');
       return;
     }
-    axios.post(`${host}/groups`, { name: groupName.trim(), goal, goal_period: groupPeriod }, { withCredentials: true })
+    if (!goal || goal <= 0) {
+      setGroupError('Podaj dodatni cel.');
+      return;
+    }
+    axios.post(`${host}/groups`, { name: groupName.trim(), goal, goal_period: groupPeriod, scoring_mode: groupScoringMode }, { withCredentials: true })
       .then(res => {
         fetchMyGroups();
         setShowCreateModal(false);
@@ -534,7 +643,17 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
               <Select value={groupPeriod} onChange={e => setGroupPeriod(e.target.value)}>
                 {GOAL_PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
               </Select>
-              <Label>Cel (w minutach na okres)</Label>
+              <LabelRow>
+                Jak liczyć cel grupy
+                <InfoTip>
+                  <InfoLine><InfoName>Czas:</InfoName> liczy się łączny czas spędzony na aktywnościach</InfoLine>
+                  <InfoLine><InfoName>Punkty:</InfoName> liczone wg wagi aktywności, za godzinę - np. godzina chodzenia to 0.5 pkt, a godzina boksu 2 pkt</InfoLine>
+                </InfoTip>
+              </LabelRow>
+              <Select value={groupScoringMode} onChange={e => setGroupScoringMode(e.target.value)}>
+                {SCORING_MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </Select>
+              <Label>{GOAL_LABELS[groupPeriod]} ({groupScoringMode === 'points' ? 'w punktach' : 'w minutach'})</Label>
               <Input
                 type="number"
                 min={1}

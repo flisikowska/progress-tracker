@@ -45,7 +45,7 @@ const PickerName = styled.p`
   font-size: 13px;
   font-size: 0.6rem;
   opacity: 0.6;
-  color: var(--white);
+  color: var(--light);
   padding: 0;
   margin: 0;
   font-weight: 600;

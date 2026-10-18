@@ -58,7 +58,7 @@ const ItemWrapper = styled.div`
   	padding: .7em 2em .5em;
     z-index: ${(props) => (props.$active ? '2' : '1')};
     &:before{
-        background-color: ${(props) => (props.$active ? 'var(--blue)' : 'var(--white)')};
+        background-color: ${(props) => (props.$active ? 'var(--blue)' : 'var(--light)')};
         border: .1em solid #fff;
         content: '';
         z-index:-1;
@@ -76,7 +76,7 @@ ${(props) =>
       .item-name,
       .item-icon {
         color: ${(props) =>
-    props.$active ? 'var(--white)':'var(--text)'};
+    props.$active ? 'var(--light)':'var(--text)'};
 
      @media (max-width: 570px) {
        color: ${(props) =>

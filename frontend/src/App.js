@@ -31,7 +31,7 @@ const AppContainer=styled.div`
   position:relative;
   padding:20px;
   margin:auto;
-  background-color: var(--white);
+  background-color: var(--light);
   @media(max-width:1000px){
     width:90%;
   }
@@ -162,7 +162,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalCard = styled.div`
-  background: var(--white);
+  background: var(--light);
   border-radius: 12px;
   padding: 28px;
   max-width: 360px;
@@ -189,7 +189,7 @@ const AcceptBtn = styled.button`
   border-radius: 20px;
   background: var(--pale-blue);
   border: 2px solid var(--blue);
-  color: var(--white);
+  color: var(--light);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -205,7 +205,7 @@ const DeclineBtn = styled.button`
   font-size: 1rem;
   cursor: pointer;
   transition: 0.2s;
-  &:hover { background: var(--red); color: var(--white); }
+  &:hover { background: var(--red); color: var(--light); }
 `;
 
 
@@ -223,6 +223,7 @@ function App() {
   });
   const [goal, setGoal] = useState(0);
   const [goalPeriod, setGoalPeriod] = useState('week');
+  const [scoringMode, setScoringMode] = useState('hours');
   const [periodOffset, setPeriodOffset] = useState(0); // 0 = bieżący okres, 1 = poprzedni...
   const [site, setSite] = useState('grupa');
   const [loggedIn, setLoggedIn] = useState(null);
@@ -348,6 +349,7 @@ function App() {
         setGroupName(res.data.group_name);
         setGoal(res.data.group_goal);
         setGoalPeriod(res.data.group_goal_period);
+        setScoringMode(res.data.scoring_mode || 'hours');
         setUsers(res.data.users);
       });
   }, [host, activeGroupId])
@@ -453,7 +455,7 @@ function App() {
 )}
           </HeaderWrapper>
           {site==='grupa' ?(
-            <Group hasGroup={!!activeGroupId} statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} goalPeriod={goalPeriod} usersActivities={usersActivities} periodOffset={periodOffset} setPeriodOffset={setPeriodOffset}/>
+            <Group key={activeGroupId} hasGroup={!!activeGroupId} statsData={statsData} activityTypes={activityTypes} users={users} goal={goal} goalPeriod={goalPeriod} scoringMode={scoringMode} usersActivities={usersActivities} periodOffset={periodOffset} setPeriodOffset={setPeriodOffset}/>
           ) : site==='moje' ? (
             <Diary activePeriod={activePeriod} activityTypes={activityTypes} users={users} userActivitiesForTheDay={userActivitiesForTheDay} refreshUsersActivities={fetchUsersActivities} fetchUserActivities={fetchUserActivities} selectedDays={selectedDays} setSelectedDays={setSelectedDays} onEditActivity={(e)=> {setEditActivity(e); setActiveAddPopup(true);}} />
           ) : (

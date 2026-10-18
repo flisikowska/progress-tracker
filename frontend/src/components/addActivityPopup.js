@@ -18,7 +18,7 @@ const StyledButton= styled.div`
     cursor:pointer;
     background-color: var(--blue);
     border-radius:20px;
-    color:var(--white);
+    color:var(--light);
     display:flex;
     align-items:center;
     gap:6px;
@@ -187,7 +187,7 @@ const ChooseButton= styled.div`
     width:300px;
     margin:20px auto 0 auto;
     background-color: var(--blue);
-    color:var(--white);
+    color:var(--light);
     &:hover{
         background-color:var(--blue);
         border:2px solid var(--blue);
@@ -244,7 +244,6 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
     const wrapperRef = useRef(null);
     const chosenRef = useRef(null);
 
-    // po otwarciu przewiń poziomą listę do wybranej aktywności (istotne przy edycji)
     useEffect(() => {
         if (active && chosenItem != null) {
             requestAnimationFrame(() => {
@@ -261,7 +260,6 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
         }
     }, [active]);
 
-    // przy każdym otwarciu popupu zaznacz wszystkie grupy
     useEffect(() => {
         if (active && !editActivity) setSelectedGroups(groups.map(g => g.group_id));
     }, [active, groups, editActivity]);
@@ -272,7 +270,7 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
         setAmount(editActivity.time);
         setSelectedDay(editActivity.activity_date.slice(0, 10));
         setSelectedGroups(editActivity.group_ids ?? groups.map(g => g.group_id));
-        setPickerKey(k => k + 1); // przeładuj TimePicker, żeby pokazał czas
+        setPickerKey(k => k + 1); 
     }}, [active, editActivity, groups]);
 
     const toggleGroup = (id) => {

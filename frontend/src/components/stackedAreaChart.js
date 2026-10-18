@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useEffect, useCallback, useState } from 'react';
 import * as d3 from 'd3';
 import styled from 'styled-components';
-import { MinutesToFormattedTime } from '../helpers/functions';
+import { formatScore } from '../helpers/functions';
 
 const MARGIN = { top: 30, right: 30, bottom: 50, left: 50 };
 
@@ -17,7 +17,7 @@ const StyledG = styled.g`
   color: #333;
 `;
 
-const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) => {
+const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selectedUserId }) => {
   const axesRef = useRef(null);
   const svgRef = useRef(null);
   const [hovered, setHovered] = useState(null);
@@ -44,8 +44,6 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
             month: '2-digit',
           });
         const entry = { x: formattedWeek };
-        // każdy członek grupy ma wartość w każdym tygodniu (brak aktywności = 0),
-        // inaczej d3.stack robi NaN i obszar nie jest wypełniany
         users.forEach(u => {
             entry[u.user_id] = rawData[week][u.user_id] || 0;
         });
@@ -75,7 +73,7 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
       const svgElement = d3.select(axesRef.current);
       svgElement.selectAll('*').remove();
 
-      // poziome linie siatki - ułatwiają odczyt wartości przez całą szerokość
+      // poziome linie siatki 
       const gridGenerator = d3.axisLeft(yScale)
           .ticks(5)
           .tickSize(-boundsWidth)
@@ -106,7 +104,7 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
 
       const yAxisGenerator = d3.axisLeft(yScale)
           .ticks(5)
-          .tickFormat(d => `${(d / 60).toFixed(0)}h`);
+          .tickFormat(d => scoringMode === 'points' ? `${Math.round(d)}` : `${(d / 60).toFixed(0)}h`);
 
       svgElement.append('g')
           .call(yAxisGenerator)
@@ -138,7 +136,7 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
       .attr('fill', '#555')
       .text('cel');
 
-  }, [xScale, yScale, boundsHeight, boundsWidth, goal]);
+  }, [xScale, yScale, boundsHeight, boundsWidth, goal, scoringMode]);
 
   const areaBuilder = d3.area()
       .x(d => xScale(d.data.x))
@@ -149,7 +147,6 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
       .x(d => xScale(d.data.x))
       .y(d => yScale(d[1]));
 
-  // najechanie -> ustal najbliższy tydzień (do linii prowadzącej i tooltipa)
   const handleMove = (e) => {
       const svg = svgRef.current;
       if (!svg || !processedData.length) return;
@@ -169,7 +166,6 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
       setHovered(best);
   };
 
-  // dane tooltipa dla aktualnie najechanego tygodnia
   const tooltip = useMemo(() => {
       if (hovered == null || !processedData[hovered]) return null;
       const week = processedData[hovered];
@@ -187,17 +183,16 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
       const pad = 8;
       const boxH = headerH + rows.length * rowH + pad;
       const maxChars = Math.max(
-          `${week.x}  •  ${MinutesToFormattedTime(total)}`.length,
-          ...rows.map(r => `${r.name}${MinutesToFormattedTime(r.minutes)}`.length + 4)
+          `${week.x}  •  ${formatScore(total, scoringMode)}`.length,
+          ...rows.map(r => `${r.name}${formatScore(r.minutes, scoringMode)}`.length + 4)
       );
       const boxW = Math.max(130, 24 + maxChars * 6.5);
-      // domyślnie po prawej od kursora, przy krawędzi przerzuć w lewo
       let bx = cx + 12;
       if (bx + boxW > boundsWidth) bx = cx - 12 - boxW;
       const by = 6;
 
       return { week, rows, total, cx, rowH, headerH, pad, boxH, boxW, bx, by };
-  }, [hovered, processedData, stackKeys, nameById, colorScale, xScale, boundsWidth]);
+  }, [hovered, processedData, stackKeys, nameById, colorScale, xScale, boundsWidth, scoringMode]);
 
     return (
     <StyledContainer>
@@ -240,7 +235,6 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
                             fill="none"
                             strokeWidth={1.7}
                         />
-                        {/* punkty danych - szczegół ułatwiający odczyt pojedynczych tygodni */}
                         {serie.map((d, j) => (
                             <circle
                                 key={j}
@@ -256,7 +250,6 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
                     </g>
                 ))}
 
-                {/* linia prowadząca + wyróżnione punkty dla najechanego tygodnia */}
                 {tooltip && (
                     <g pointerEvents="none">
                         <line
@@ -290,7 +283,6 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
                 transform={`translate(${[MARGIN.left, MARGIN.top].join(',')})`}
             />
 
-            {/* tooltip ze szczegółami tygodnia */}
             {tooltip && (
                 <StyledG
                     transform={`translate(${[MARGIN.left, MARGIN.top].join(',')})`}
@@ -325,7 +317,7 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
                         fill="#888"
                         textAnchor="end"
                     >
-                        Σ {MinutesToFormattedTime(tooltip.total)}
+                        Σ {formatScore(tooltip.total, scoringMode)}
                     </text>
                     {tooltip.rows.map((r, idx) => {
                         const ry = tooltip.by + tooltip.headerH + idx * tooltip.rowH + 12;
@@ -353,7 +345,7 @@ const StackedAreaChart = ({ data, goal, width, height, users, selectedUserId }) 
                                     fill="#333"
                                     textAnchor="end"
                                 >
-                                    {MinutesToFormattedTime(r.minutes)}
+                                    {formatScore(r.minutes, scoringMode)}
                                 </text>
                             </g>
                         );

@@ -1,16 +1,14 @@
 
 .scrollable::-webkit-scrollbar {
-  width: 12px; /* szerokość paska przewijania */
-  height: 12px; /* wysokość paska przewijania */
+  width: 12px;
+  height: 12px;
 }
 
-/* Stylowanie kanału paska przewijania */
 .scrollable::-webkit-scrollbar-track {
   background: #4d4d4d; 
   border-radius: 4px;
 }
 
-/* Stylowanie uchwytu (thumb) paska przewijania */
 .scrollable::-webkit-scrollbar-thumb {
   background: #888; 
   border-radius: 4px;
@@ -41,7 +39,8 @@ code {
 
 :root {
   --color-background: #EFEDE8;
-  --white: #F8F7F4;
+  --white: #fff;
+  --light: #F8F7F4;
   --primary: #EEEBE4;
   --primary-dark: #BEBCB6;
   --text: #2B2823;

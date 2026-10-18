@@ -121,7 +121,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalCard = styled.div`
-  background: var(--white);
+  background: var(--light);
   border-radius: 12px;
   padding: 28px;
   max-width: 360px;
@@ -148,7 +148,7 @@ const ConfirmBtn = styled.button`
   border-radius: 20px;
   background: var(--red);
   border: 2px solid var(--red);
-  color: var(--white);
+  color: var(--light);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -164,7 +164,7 @@ const CancelBtn = styled.button`
   color: var(--text);
   font-size: 1rem;
   cursor: pointer;
-  &:hover { background: var(--primary-dark); color: var(--white); }
+  &:hover { background: var(--primary-dark); color: var(--light); }
 `;
 
 function UserActivities({activityTypes, deleteActivity, activities, showDate=false, hideTotal=false, onEditActivity}){

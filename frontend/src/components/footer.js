@@ -1,8 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 
-// Stopka z atrybucją ikon (Flaticon). Mała, ledwo widoczna, zwinięta domyślnie -
-// rozwija się dopiero po kliknięciu, więc nie zajmuje miejsca ani nie rozprasza.
 const StyledFooter = styled.footer`
   width: 900px;
   max-width: 90%;
@@ -33,8 +31,6 @@ const StyledFooter = styled.footer`
   a { color: inherit; text-decoration: underline; }
 `;
 
-// Atrybucja Flaticon - jedna linia na autora (licencja wymaga podania autora,
-// ale ikony tego samego autora można zgrupować pod jednym wpisem/linkiem).
 const CREDITS = [
   ['Freepik', 'https://www.flaticon.com/authors/freepik'],
   ['Culmbio', 'https://www.flaticon.com/free-icons/soccer'],
@@ -53,6 +49,15 @@ const CREDITS = [
   ['Pixelmeetup', 'https://www.flaticon.com/free-icons/ice-hockey'],
   ['kosonicon', 'https://www.flaticon.com/free-icons/sex'],
   ['gravisio', 'https://www.flaticon.com/free-icons/rower'],
+  ['Magnific', 'https://www.flaticon.com/free-icons/elliptical'],
+  ['Flowicon', 'https://www.flaticon.com/free-icons/rope'],
+  ['surang', 'https://www.flaticon.com/free-icons/exercise'],
+  ['Ole2000', 'https://www.flaticon.com/free-icons/taekwondo'],
+  ['BZZRINCANTATION', 'https://www.flaticon.com/free-icons/diving'],
+  ['Vitaly Gorbachev', 'https://www.flaticon.com/free-icons/snowboard'],
+  ['cah nggunung', 'https://www.flaticon.com/free-icons/trampoline'],
+  ['spacepixel', 'https://www.flaticon.com/free-icons/exercise'],
+  ['Reion', 'https://www.flaticon.com/free-icons/muscle-up'],
 ];
 
 const Footer = () => (

@@ -5,7 +5,7 @@ const radius = 90;
 const inner = Math.min(radius, 150);
 const outer = Math.max(radius, 150);
 
-const POP_OFFSET = 18; // stałe wysunięcie zaznaczonego segmentu (px)
+const POP_OFFSET = 18; 
 
 const PAD = POP_OFFSET + 6;
 
@@ -19,7 +19,6 @@ const arc = d3.arc()
 const usePieChart = (data, setComponent, selected) => {
   const selectedId = selected?.user_id;
 
-  // rysowanie wykresu
   useEffect(() => {
     const pie = d3.pie()
       .sort(null)
@@ -74,7 +73,7 @@ const usePieChart = (data, setComponent, selected) => {
     const g = d3.select('#pieChart').select('svg').select('g');
     if (g.empty()) return;
 
-    const FULL = 2 * Math.PI - 0.01; // segment obejmujący (prawie) całe koło
+    const FULL = 2 * Math.PI - 0.01; 
 
     const remaining = data.find(d => d.name === 'Pozostało');
     const circleFull = !remaining || remaining.amount <= 0;

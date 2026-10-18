@@ -50,17 +50,24 @@ export function FormattedDate(d) {
     return m+'min';
   }
 
+  export function formatScore(value, scoringMode){
+    if (scoringMode === 'points') {
+      const rounded = Math.round(value * 10) / 10;
+      const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace('.', ',');
+      return text + ' pkt';
+    }
+    return MinutesToFormattedTime(value);
+  }
+
   export const addDays = (date, days) => {
     const newDate = new Date(date);
     newDate.setDate(newDate.getDate() + days);
     return newDate;
   };
 
-  // Początek następnego okresu celu = moment resetu (spójnie z backendem: tydzień od poniedziałku)
   export function getPeriodEnd(period, now = new Date()) {
     if (period === 'month') return new Date(now.getFullYear(), now.getMonth() + 1, 1);
     if (period === 'year') return new Date(now.getFullYear() + 1, 0, 1);
-    // 'week' - poniedziałek jako pierwszy dzień
     const day = now.getDay() || 7; // Pon=1 ... Niedz=7
     const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (day - 1));
     monday.setDate(monday.getDate() + 7);
@@ -69,7 +76,6 @@ export function FormattedDate(d) {
 
   const MONTHS_PL = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
 
-  // Czytelna etykieta okresu cofniętego o `offset` (0 = bieżący) - do nawigacji po historii
   export function formatPeriodLabel(period, offset = 0, now = new Date()) {
     if (period === 'month') {
       const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
@@ -78,7 +84,6 @@ export function FormattedDate(d) {
     if (period === 'year') {
       return String(now.getFullYear() - offset);
     }
-    // 'week' - zakres poniedziałek–niedziela
     const day = now.getDay() || 7;
     const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (day - 1) - offset * 7);
     const sunday = addDays(monday, 6);
@@ -86,12 +91,11 @@ export function FormattedDate(d) {
     return `${fmt(monday)}–${fmt(sunday)}`;
   }
 
-  // Ile zostało do końca okresu celu - zwraca { text, days } (days = pełne dni do ostatniego dnia włącznie)
   export function timeLeftInPeriod(period, now = new Date()) {
     const end = getPeriodEnd(period, now);
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const lastDay = new Date(end);
-    lastDay.setDate(lastDay.getDate() - 1); // ostatni dzień okresu (przed resetem)
+    lastDay.setDate(lastDay.getDate() - 1); 
     const days = Math.round((lastDay - today) / 86400000);
     let text;
     if (days <= 0) text = 'Kończy się dziś';
@@ -99,9 +103,7 @@ export function FormattedDate(d) {
     else text = `Zostało ${days} dni`;
     return { text, days };
   }
-
-  // najdluzsza passa - najwiecej kolejnych dni (wejscie: iterowalne z datami 'YYYY-MM-DD')
-  // (daty parsujemy jako UTC, wiec roznica miedzy sasiednimi dniami = dokladnie 1 doba)
+  
   export function longestDayStreak(isoDates) {
     let longest = 0, run = 0, prev = null;
     for (const iso of [...isoDates].sort()) {
