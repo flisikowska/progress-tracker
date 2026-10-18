@@ -16,7 +16,6 @@ INSERT INTO public.user_group(
 	('235766135207672635456', 1),
 	('100262135207672155021', 1),
 	('335463135207672456832', 1),
-	-- Emilia należy dodatkowo do drugiej grupy
 	('100262135207672155021', 2);
 	
 	

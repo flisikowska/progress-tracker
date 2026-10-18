@@ -89,17 +89,8 @@ function getMonday() {
 
 const GOAL_PERIODS = ['week', 'month', 'year'];
 
-// początek bieżącego okresu celu grupy - od niego liczymy postęp na pie chart
-function getPeriodStart(period) {
-  const now = new Date();
-  if (period === 'month')
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  if (period === 'year')
-    return new Date(now.getFullYear(), 0, 1);
-  return getMonday(); // 'week' (domyślnie)
-}
+const SCORING_MODES = ['hours', 'points'];
 
-// okno okresu cofniętego o `offset` pełnych okresów (0 = bieżący) - do podglądu historii
 function getPeriodWindow(period, offset = 0) {
   const now = new Date();
   if (period === 'month') {
@@ -110,7 +101,7 @@ function getPeriodWindow(period, offset = 0) {
     const start = new Date(now.getFullYear() - offset, 0, 1);
     return { start, end: new Date(start.getFullYear() + 1, 0, 1) };
   }
-  // 'week' - poniedziałek jako pierwszy dzień
+
   const start = getMonday();
   start.setDate(start.getDate() - offset * 7);
   const end = new Date(start);
@@ -118,7 +109,6 @@ function getPeriodWindow(period, offset = 0) {
   return { start, end };
 }
 
-// data lokalna jako 'YYYY-MM-DD' (porównujemy datę z datą, bez konwersji UTC)
 function toLocalDateString(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
@@ -145,7 +135,7 @@ async function userInGroup(userId, groupId){
 
 app.get(`/my-groups`, authenticateToken, async (req, res)=>{
   const rows= await executeQuery(`
-    SELECT g.group_id, g.name, g.goal, ug.nickname, ug.color
+    SELECT g.group_id, g.name, g.goal, ug.nickname, ug.color, (g.admin_id = ug.user_id) AS is_admin
     FROM public.user_group ug
     JOIN public.group g ON g.group_id = ug.group_id
     WHERE ug.user_id= $1
@@ -155,15 +145,16 @@ app.get(`/my-groups`, authenticateToken, async (req, res)=>{
 
 app.post('/groups', jsonParser, authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
-  const { name, goal, goal_period } = req.body;
+  const { name, goal, goal_period, scoring_mode } = req.body;
+  const mode= scoring_mode || 'hours';
   const period = goal_period || 'week';
-  if (!name || !name.trim() || goal == null || goal <= 0 || !GOAL_PERIODS.includes(period))
+  if (!name || !name.trim() || goal == null || goal <= 0 || !GOAL_PERIODS.includes(period) || !SCORING_MODES.includes(mode))
     return res.sendStatus(400);
 
   const invite_token = randomUUID();
   const rows = await executeQuery(
-    `INSERT INTO public.group (name, goal, goal_period, invite_token) VALUES ($1, $2, $3, $4) RETURNING group_id, name, goal, goal_period, invite_token`,
-    [name.trim(), goal, period, invite_token]
+    `INSERT INTO public.group (name, goal, goal_period, scoring_mode, invite_token, admin_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING group_id, name, goal, goal_period, scoring_mode, invite_token`,
+    [name.trim(), goal, period, mode, invite_token, user_id]
   );
   const group = rows[0];
   await executeQuery(
@@ -173,7 +164,6 @@ app.post('/groups', jsonParser, authenticateToken, async (req, res) => {
   res.status(201).send(group);
 })
 
-// Opuszczenie grupy - usuwa członkostwo zalogowanego usera
 app.delete('/my-groups/:id', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
   const group_id = req.params.id;
@@ -208,7 +198,18 @@ app.put('/my-groups/:id/color', jsonParser, authenticateToken, async (req, res) 
   res.sendStatus(204);
 });
 
-// Podgląd grupy po tokenie - do pokazania zaproszenia bez dołączania
+app.put('/my-groups/:id/name', jsonParser, authenticateToken, async (req, res) => {
+  const user_id = req.user.userId;
+  const group_id = req.params.id;
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.sendStatus(400);
+  // tylko twórca grupy może zmienić nazwę
+  const rows = await executeQuery(`SELECT admin_id FROM public.group WHERE group_id = $1`, [group_id]);
+  if (rows[0]?.admin_id !== user_id) return res.sendStatus(403);
+  await executeQuery(`UPDATE public.group SET name = $2 WHERE group_id = $1`, [group_id, name.trim()]);
+  res.sendStatus(204);
+});
+
 app.get('/invite-info', authenticateToken, async (req, res) => {
   const token = req.query.token;
   if (!token) return res.sendStatus(400);
@@ -220,7 +221,6 @@ app.get('/invite-info', authenticateToken, async (req, res) => {
   res.send(rows[0]);
 })
 
-// Dołączenie do grupy przez token z linku zapraszającego
 app.post('/join', jsonParser, authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
   const { token } = req.body;
@@ -238,7 +238,6 @@ app.post('/join', jsonParser, authenticateToken, async (req, res) => {
   res.status(200).send({ group_id });
 })
 
-// Pobranie tokenu zaproszenia dla grupy (dla starszych grup dogeneruje brakujący)
 app.get('/group-invite', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
   const group_id = req.query.group_id;
@@ -274,6 +273,7 @@ app.get('/group', authenticateToken, async (req, res) => {
     g.name AS group_name,
     g.goal AS group_goal,
     g.goal_period AS group_goal_period,
+    g.scoring_mode,
     COALESCE(ug.nickname, u.name) AS user_name,
     COALESCE(ug.color, '000000') AS user_color,
     u.user_id
@@ -286,6 +286,7 @@ app.get('/group', authenticateToken, async (req, res) => {
   const groupData = {
     group_name: response[0].group_name,
     group_goal: response[0].group_goal,
+    scoring_mode: response[0].scoring_mode,
     group_goal_period: response[0].group_goal_period,
     users: response.map(row => ({
       user_id: row.user_id,
@@ -312,7 +313,6 @@ app.get('/activities', authenticateToken, async (req, res) => {
     JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
   `;
 
-  // zakres dat
   if(req.query.from && req.query.to) {
     const query = `${selectFrom} WHERE A.user_id = $1 AND A.date >= $2::date AND A.date <= $3::date`;
     const response = await executeQuery(query, [user_id, req.query.from, req.query.to]);
@@ -344,7 +344,6 @@ app.get('/current-period', jsonParser, authenticateToken, async (req, res) => {
   if(!group_id || !(await userInGroup(user_id, group_id)))
     return res.sendStatus(403);
 
-  // offset = ile pełnych okresów wstecz (0 = bieżący) - podgląd poprzednich miesięcy/tygodni
   const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
   const groupRows = await executeQuery(`SELECT goal_period FROM public.group WHERE group_id = $1`, [group_id]);
   const { start, end } = getPeriodWindow(groupRows[0]?.goal_period, offset);
@@ -354,6 +353,7 @@ app.get('/current-period', jsonParser, authenticateToken, async (req, res) => {
     SELECT
 	    U.user_id,
       AT.activity_type_id,
+      AT.weight as weight,
       AT.name AS activity_type_name,
       A.date::text AS date,
       A.activity_id,
@@ -382,6 +382,7 @@ app.get('/current-period', jsonParser, authenticateToken, async (req, res) => {
     user.activities.push({
       activity_type_id: row.activity_type_id,
       activity_id: row.activity_id,
+      weight: row.weight,
       date: row.date,
       time: row.activity_amount
     });
@@ -395,14 +396,17 @@ app.get('/last-10-weeks', authenticateToken, async (req, res) => {
   if(!group_id || !(await userInGroup(user_id, group_id)))
     return res.sendStatus(403);
 
+  const groupRows = await executeQuery(`SELECT scoring_mode FROM public.group WHERE group_id = $1`, [group_id]);
+  const sumExpr = groupRows[0]?.scoring_mode === 'points' ? 'SUM(A.amount * AT.weight / 60.0)' : 'SUM(A.amount)';
   const query = `
     SELECT
         A.user_id,
         TO_CHAR(DATE_TRUNC('week', A.date), 'YYYY-MM-DD') AS week_start,
-        SUM(A.amount) AS total_amount
+        ${sumExpr} AS total_amount
     FROM public.activity A
     JOIN public.user_group UG ON UG.user_id = A.user_id
     JOIN public.activity_group AG ON AG.activity_id = A.activity_id AND AG.group_id = UG.group_id
+    JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
     WHERE UG.group_id = $1 AND A.date >= NOW() - INTERVAL '10 weeks'
     GROUP BY A.user_id, week_start
     ORDER BY week_start DESC, A.user_id
@@ -414,14 +418,12 @@ app.get('/last-10-weeks', authenticateToken, async (req, res) => {
     if (!result[week]) {
       result[week] = {};
     }
-    result[week][row.user_id] = parseInt(row.total_amount) || 0;
+    result[week][row.user_id] = parseFloat(row.total_amount) || 0;
   });
   res.send(result);
 });
 
 app.get('/activity-types', authenticateToken, async (req, res) => {
-  // Sortujemy wg tego, jak często dany user wybierał aktywność (priorytet = najczęściej wybierane).
-  // Nowe/nieużywane typy (0 aktywności) lądują na końcu, alfabetycznie.
   const query = `
   SELECT at.activity_type_id AS id, at.icon, at.name
 	FROM public.activity_type at
@@ -452,10 +454,8 @@ app.put('/activities/:id', jsonParser, authenticateToken, async (req, res) => {
   if (!activity_type_id || !date || amount == null || amount <= 0)
     return res.sendStatus(400);
 
-  // grupy, do których user faktycznie należy (tylko one są dozwolone)
   const userGroups = await executeQuery(`SELECT group_id FROM public.user_group WHERE user_id = $1`, [user_id]);
   const allowed = userGroups.map(g => g.group_id);
-  // domyślnie wszystkie grupy usera; jeśli podano listę - przecinamy z dozwolonymi
   const targetGroups = Array.isArray(group_ids)
     ? group_ids.map(Number).filter(id => allowed.includes(id))
     : allowed;
@@ -473,11 +473,11 @@ app.put('/activities/:id', jsonParser, authenticateToken, async (req, res) => {
   const activity = response[0];
   if(!activity) return res.sendStatus(404);
 
-  // dane do treści powiadomienia: imię autora + nazwa typu aktywności
   const actorRows = await executeQuery(`SELECT name FROM public.user WHERE user_id = $1`, [user_id]);
   const actorName = actorRows[0]?.name ?? 'Ktoś';
-  const typeRows = await executeQuery(`SELECT name FROM public.activity_type WHERE activity_type_id = $1`, [activity_type_id]);
+  const typeRows = await executeQuery(`SELECT name, weight FROM public.activity_type WHERE activity_type_id = $1`, [activity_type_id]);
   const typeName = typeRows[0]?.name ?? 'aktywność';
+  const typeWeight = typeRows[0]?.weight ?? 1;
 
   await executeQuery(`DELETE FROM public.activity_group WHERE activity_id=$1`, [activity.activity_id]);
 
@@ -486,15 +486,14 @@ app.put('/activities/:id', jsonParser, authenticateToken, async (req, res) => {
       `INSERT INTO public.activity_group (activity_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [activity.activity_id, gid]
     );
-     // powiadomienie dla każdego członka grupy OPRÓCZ autora aktywności
-     // nazwę grupy bierzemy z JOIN-a, żeby wpis niósł info z której grupy pochodzi
+
     await executeQuery(
-      `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount, type)
-       SELECT ug.user_id, g.group_id, g.name, $2, $3, $4, 'edit'
+      `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount, scoring_mode, weight, type)
+       SELECT ug.user_id, g.group_id, g.name, $2, $3, $4, g.scoring_mode, $6, 'edit'
        FROM public.user_group ug
        JOIN public."group" g ON g.group_id = ug.group_id
        WHERE ug.group_id = $1 AND ug.user_id <> $5`,
-      [gid, actorName, typeName, amount, user_id]
+      [gid, actorName, typeName, amount, user_id, typeWeight]
     );
   }
   res.send(activity);
@@ -506,10 +505,8 @@ app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
   if (!activity_type_id || !date || amount == null || amount <= 0)
     return res.sendStatus(400);
 
-  // grupy, do których user faktycznie należy (tylko one są dozwolone)
   const userGroups = await executeQuery(`SELECT group_id FROM public.user_group WHERE user_id = $1`, [user_id]);
   const allowed = userGroups.map(g => g.group_id);
-  // domyślnie wszystkie grupy usera; jeśli podano listę - przecinamy z dozwolonymi
   const targetGroups = Array.isArray(group_ids)
     ? group_ids.map(Number).filter(id => allowed.includes(id))
     : allowed;
@@ -522,11 +519,11 @@ app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
   const response=await executeQuery(query, [date, activity_type_id, user_id, amount]);
   const activity = response[0];
 
-  // dane do treści powiadomienia: imię autora + nazwa typu aktywności
   const actorRows = await executeQuery(`SELECT name FROM public.user WHERE user_id = $1`, [user_id]);
   const actorName = actorRows[0]?.name ?? 'Ktoś';
-  const typeRows = await executeQuery(`SELECT name FROM public.activity_type WHERE activity_type_id = $1`, [activity_type_id]);
+  const typeRows = await executeQuery(`SELECT name, weight FROM public.activity_type WHERE activity_type_id = $1`, [activity_type_id]);
   const typeName = typeRows[0]?.name ?? 'aktywność';
+  const typeWeight = typeRows[0]?.weight ?? 1;
 
   for (const gid of targetGroups) {
     await executeQuery(
@@ -535,12 +532,12 @@ app.post('/activities', jsonParser, authenticateToken, async (req, res) =>{
     );
 
     await executeQuery(
-      `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount, type)
-       SELECT ug.user_id, g.group_id, g.name, $2, $3, $4, 'add'
+      `INSERT INTO public.notification (user_id, group_id, group_name, actor_name, activity_type_name, amount, scoring_mode, weight, type)
+       SELECT ug.user_id, g.group_id, g.name, $2, $3, $4, g.scoring_mode, $6, 'add'
        FROM public.user_group ug
        JOIN public."group" g ON g.group_id = ug.group_id
        WHERE ug.group_id = $1 AND ug.user_id <> $5`,
-      [gid, actorName, typeName, amount, user_id]
+      [gid, actorName, typeName, amount, user_id, typeWeight]
     );
   }
   res.send(activity);
@@ -554,7 +551,7 @@ app.post("/google-auth", jsonParser, async (req, res) => {
     const { credential, client_id } = req.body;
     const client = new Client(dbConfig);
     await client.connect();
-    // try {
+  
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
       audience: client_id,
@@ -573,9 +570,6 @@ app.post("/google-auth", jsonParser, async (req, res) => {
     }
     issueAuthCookie(res, user.user_id);
     res.status(200).json({ message: "Zalogowano pomyślnie" });
-    // } catch (err) {
-    //   res.status(400).json({ err });
-    // }
     await client.end();
   }
   catch(err){
@@ -606,11 +600,10 @@ app.post("/logout", (req, res) => {
   res.status(200).json({ message: "Wylogowano pomyślnie" });
 });
 
-// Jedna wspólna lista powiadomień usera ze WSZYSTKICH grup (najnowsze na górze)
 app.get('/notifications', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
   const rows = await executeQuery(
-    `SELECT notification_id, group_id, group_name, actor_name, activity_type_name, amount, type, is_read, created_at
+    `SELECT notification_id, group_id, group_name, actor_name, activity_type_name, amount, scoring_mode, weight, type, is_read, created_at
      FROM public.notification
      WHERE user_id = $1
      ORDER BY created_at DESC`,
@@ -619,7 +612,6 @@ app.get('/notifications', authenticateToken, async (req, res) => {
   res.send(rows);
 });
 
-// Oznacz powiadomienie usera jako przeczytane
 app.post('/notifications/mark-read/:id', authenticateToken, async (req, res) => {
   const notification_id=req.params.id;
   const user_id = req.user.userId;
@@ -631,7 +623,6 @@ app.post('/notifications/mark-read/:id', authenticateToken, async (req, res) => 
   res.sendStatus(204);
 });
 
-// Oznacz wszystkie powiadomienia usera (ze wszystkich grup) jako przeczytane
 app.post('/notifications/mark-read', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
   await executeQuery(
@@ -642,7 +633,6 @@ app.post('/notifications/mark-read', authenticateToken, async (req, res) => {
   res.sendStatus(204);
 });
 
-// Usuń wszystkie powiadomienia usera (ze wszystkich grup)
 app.delete('/notifications', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
   await executeQuery(
@@ -652,8 +642,6 @@ app.delete('/notifications', authenticateToken, async (req, res) => {
   res.sendStatus(204);
 });
 
-// SPA fallback: any GET not matched by the API routes above returns index.html
-// It must always be declared as the last endpoint
 if (existsSync(staticDir)) {
   app.get('/{*splat}', (req, res) => {
     console.log(`Reached fallback at: ${req.url}`);

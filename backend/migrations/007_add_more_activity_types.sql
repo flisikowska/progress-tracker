@@ -1,4 +1,3 @@
--- Dodaje popularne sporty. Idempotentne - pomija te, których klucz ikony już jest.
 INSERT INTO public.activity_type (icon, name)
 SELECT v.icon, v.name
 FROM (VALUES

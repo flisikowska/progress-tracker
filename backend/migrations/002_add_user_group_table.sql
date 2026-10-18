@@ -6,8 +6,6 @@ CREATE TABLE IF NOT EXISTS public.user_group (
     FOREIGN KEY (group_id) REFERENCES public.group(group_id) ON DELETE CASCADE
 );
 
--- Backfill istniejących przypisań i usunięcie starej kolumny user.group_id.
--- Uruchamia się tylko, gdy kolumna jeszcze istnieje (stara baza); na świeżej bazie pomijane.
 DO $$
 BEGIN
   IF EXISTS (

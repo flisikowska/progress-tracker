@@ -1,5 +1,3 @@
--- Dodaje okres celu do grupy (tydzień/miesiąc/rok). Domyślnie 'week',
--- więc istniejące grupy zachowują dotychczasowe, tygodniowe zachowanie.
 ALTER TABLE public."group"
     ADD COLUMN IF NOT EXISTS goal_period text NOT NULL DEFAULT 'week';
 

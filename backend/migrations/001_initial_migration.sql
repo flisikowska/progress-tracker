@@ -1,8 +1,4 @@
 
--- Table: public.group
-
--- DROP TABLE IF EXISTS public."group";
-
 CREATE TABLE IF NOT EXISTS public."group"
 (
     group_id SERIAL NOT NULL,
@@ -18,9 +14,6 @@ TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public."group"
     OWNER to postgres;
 
--- Table: public.user
-
--- DROP TABLE IF EXISTS public."user";
 
 CREATE TABLE IF NOT EXISTS public."user"
 (
@@ -35,10 +28,6 @@ ALTER TABLE IF EXISTS public."user"
     OWNER to postgres;
 
 
--- Table: public.activity_type
-
--- DROP TABLE IF EXISTS public.activity_type;
-
 CREATE TABLE IF NOT EXISTS public.activity_type
 (
     activity_type_id SERIAL NOT NULL,
@@ -52,10 +41,6 @@ TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.activity_type
     OWNER to postgres;
 
-
--- Table: public.activity
-
--- DROP TABLE IF EXISTS public.activity;
 
 CREATE TABLE IF NOT EXISTS public.activity
 (

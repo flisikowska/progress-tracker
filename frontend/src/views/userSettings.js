@@ -452,6 +452,8 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
   const [nickSavedId, setNickSavedId] = useState(null);
   const nickTimers = useRef({});
   const [groupToLeave, setGroupToLeave] = useState(null);
+  const [renameModal, setRenameModal] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
   const [inviteModal, setInviteModal] = useState(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -488,6 +490,25 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
         if (onGroupsChanged) onGroupsChanged();
       })
       .finally(() => setGroupToLeave(null));
+  };
+
+  const openRenameModal = (group) => {
+    setRenameValue(group.name);
+    setRenameModal(group);
+  };
+
+  const confirmRename = () => {
+    const name = renameValue.trim();
+    if (!name) return;
+    const group_id = renameModal.group_id;
+    axios.put(`${host}/my-groups/${group_id}/name`, { name }, { withCredentials: true })
+      .then(() => {
+        setMyGroups(prev => prev.map(g =>
+          g.group_id === group_id ? { ...g, name } : g
+        ));
+        if (onGroupsChanged) onGroupsChanged();
+      })
+      .finally(() => setRenameModal(null));
   };
 
   const openInviteModal = (group) => {
@@ -593,6 +614,7 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
               <GroupItemTop>
                 <GroupItemName>{g.name}</GroupItemName>
                 <GroupActions>
+                  {g.is_admin && <ShareButton onClick={() => openRenameModal(g)}>Zmień nazwę</ShareButton>}
                   <ShareButton onClick={() => openInviteModal(g)}>Zaproś</ShareButton>
                   <LeaveButton onClick={() => setGroupToLeave(g)}>Opuść</LeaveButton>
                 </GroupActions>
@@ -626,6 +648,24 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
             </GroupItem>
           ))}
         </GroupList>
+      )}
+
+      {renameModal && (
+        <ModalOverlay>
+          <ModalCard>
+            <ModalTitle>Zmień nazwę grupy</ModalTitle>
+            <Input
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              maxLength={50}
+              autoFocus
+            />
+            <ModalButtons>
+              <CancelBtn onClick={() => setRenameModal(null)}>Anuluj</CancelBtn>
+              <SaveButton onClick={confirmRename}>Zapisz</SaveButton>
+            </ModalButtons>
+          </ModalCard>
+        </ModalOverlay>
       )}
 
       {showCreateModal && (
