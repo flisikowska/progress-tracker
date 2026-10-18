@@ -462,11 +462,11 @@ app.get('/last-10-weeks', authenticateToken, async (req, res) => {
 
 app.get('/activity-types', authenticateToken, async (req, res) => {
   const query = `
-  SELECT at.activity_type_id AS id, at.icon, at.name
+  SELECT at.activity_type_id AS id, at.icon, at.name, at.weight
 	FROM public.activity_type at
 	LEFT JOIN public.activity a
 	  ON a.activity_type_id = at.activity_type_id AND a.user_id = $1
-	GROUP BY at.activity_type_id, at.icon, at.name
+	GROUP BY at.activity_type_id, at.icon, at.name, at.weight
 	ORDER BY COUNT(a.activity_id) DESC, at.name ASC;
 `;
   const response = await executeQuery(query, [req.user.userId]);

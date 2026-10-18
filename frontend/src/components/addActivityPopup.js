@@ -112,7 +112,7 @@ const StyledActivity= styled.div`
     flex-shrink:0;
     cursor:pointer;
     text-align:center;
-    height:80px;
+    min-height:95px;
     border-radius:12px;
     border: 1px solid var(--primary);
     >p{
@@ -126,6 +126,14 @@ const StyledActivity= styled.div`
         border: 2px solid var(--pale-blue);
         box-shadow: 0 0 4px var(--pale-blue);
     `};
+`;
+
+const ActivityWeight= styled.span`
+    display:inline-block;
+    margin-top:6px;
+    font-size:0.6rem;
+    font-weight:600;
+    color: var(--dark-blue);
 `;
 
 const StyledHeader= styled.div`
@@ -366,6 +374,9 @@ const AddActivityPopup=({groups = [], activityTypes, setActiveAddPopup, active, 
                     >
                         <StyledActivityIcon name={activity.icon} />
                         <p>{activity.name}</p>
+                        {activity.weight != null && (
+                            <ActivityWeight>{String(Number(activity.weight)).replace('.', ',')} pkt/h</ActivityWeight>
+                        )}
                     </StyledActivity>
                 ))}
                 {filteredActivities.length === 0 && <NoResults>Brak pasujących aktywności</NoResults>}
