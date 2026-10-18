@@ -342,9 +342,9 @@ function App() {
       });
   }, [host, selectedDays])
 
-  const fetchGroupInfo=useCallback((groupId = activeGroupId)=>{
+  const fetchGroupInfo=useCallback((groupId = activeGroupId, offset = periodOffset)=>{
     if (!groupId) return;
-    axios.get(`${host}/group?group_id=${groupId}`, { withCredentials: true })
+    axios.get(`${host}/group?group_id=${groupId}&offset=${offset}`, { withCredentials: true })
     .then(res => {
         setGroupName(res.data.group_name);
         setGoal(res.data.group_goal);
@@ -352,7 +352,7 @@ function App() {
         setScoringMode(res.data.scoring_mode || 'hours');
         setUsers(res.data.users);
       });
-  }, [host, activeGroupId])
+  }, [host, activeGroupId, periodOffset])
 
   const fetchStatsActivities=useCallback((groupId = activeGroupId)=>{
     if (!groupId) return;

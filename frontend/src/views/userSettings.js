@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import axios from 'axios';
 import { Link } from '@styled-icons/fa-solid/Link';
 import { Check } from '@styled-icons/fa-solid/Check';
+import { formatScore } from '../helpers/functions';
 
 const host = process.env.REACT_APP_API_HOST;
 
@@ -100,6 +101,7 @@ const Select = styled.select`
   margin: 0 auto 24px;
   cursor: pointer;
   &:focus { border-color: var(--blue); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
 
 const LinkDisplay = styled.div`
@@ -177,14 +179,28 @@ const ShareButton = styled.button`
   &:hover { color: var(--dark-blue); background: rgba(64, 196, 255, 0.12); }
 `;
 
-const GroupItemName = styled.span`
+const GroupItemHead = styled.div`
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const GroupItemName = styled.span`
+  max-width: 100%;
   color: var(--text);
   font-size: 1rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const GroupGoal = styled.span`
+  color: var(--dark-blue);
+  font-size: 0.82rem;
+  font-weight: 600;
   white-space: nowrap;
 `;
 
@@ -452,8 +468,11 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
   const [nickSavedId, setNickSavedId] = useState(null);
   const nickTimers = useRef({});
   const [groupToLeave, setGroupToLeave] = useState(null);
-  const [renameModal, setRenameModal] = useState(null);
-  const [renameValue, setRenameValue] = useState('');
+  const [editModal, setEditModal] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editGoal, setEditGoal] = useState('');
+  const [editScoringMode, setEditScoringMode] = useState('hours');
+  const [editError, setEditError] = useState('');
   const [inviteModal, setInviteModal] = useState(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -492,23 +511,36 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
       .finally(() => setGroupToLeave(null));
   };
 
-  const openRenameModal = (group) => {
-    setRenameValue(group.name);
-    setRenameModal(group);
+  const openEditModal = (group) => {
+    setEditName(group.name);
+    setEditGoal(String(group.goal ?? ''));
+    setEditScoringMode(group.scoring_mode || 'hours');
+    setEditError('');
+    setEditModal(group);
   };
 
-  const confirmRename = () => {
-    const name = renameValue.trim();
-    if (!name) return;
-    const group_id = renameModal.group_id;
-    axios.put(`${host}/my-groups/${group_id}/name`, { name }, { withCredentials: true })
+  const confirmEdit = () => {
+    setEditError('');
+    const name = editName.trim();
+    const goal = Number(editGoal);
+    if (!name) {
+      setEditError('Podaj nazwę grupy.');
+      return;
+    }
+    if (!goal || goal <= 0) {
+      setEditError('Podaj dodatni cel.');
+      return;
+    }
+    const group_id = editModal.group_id;
+    axios.put(`${host}/my-groups/${group_id}/settings`, { name, goal, scoring_mode: editScoringMode }, { withCredentials: true })
       .then(() => {
         setMyGroups(prev => prev.map(g =>
-          g.group_id === group_id ? { ...g, name } : g
+          g.group_id === group_id ? { ...g, name, goal, scoring_mode: editScoringMode } : g
         ));
         if (onGroupsChanged) onGroupsChanged();
+        setEditModal(null);
       })
-      .finally(() => setRenameModal(null));
+      .catch(() => setEditError('Nie udało się zapisać zmian.'));
   };
 
   const openInviteModal = (group) => {
@@ -612,9 +644,14 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
           {myGroups.map(g => (
             <GroupItem key={g.group_id}>
               <GroupItemTop>
-                <GroupItemName>{g.name}</GroupItemName>
+                <GroupItemHead>
+                  <GroupItemName>{g.name}</GroupItemName>
+                  {g.goal != null && (
+                    <GroupGoal>{GOAL_LABELS[g.goal_period] || 'Cel'}: {formatScore(g.goal, g.scoring_mode)}</GroupGoal>
+                  )}
+                </GroupItemHead>
                 <GroupActions>
-                  {g.is_admin && <ShareButton onClick={() => openRenameModal(g)}>Zmień nazwę</ShareButton>}
+                  {g.is_admin && <ShareButton onClick={() => openEditModal(g)}>Edytuj</ShareButton>}
                   <ShareButton onClick={() => openInviteModal(g)}>Zaproś</ShareButton>
                   <LeaveButton onClick={() => setGroupToLeave(g)}>Opuść</LeaveButton>
                 </GroupActions>
@@ -650,21 +687,45 @@ function UserSettings({ onSave, onGroupCreated, onGroupsChanged, logout }) {
         </GroupList>
       )}
 
-      {renameModal && (
+      {editModal && (
         <ModalOverlay>
-          <ModalCard>
-            <ModalTitle>Zmień nazwę grupy</ModalTitle>
-            <Input
-              value={renameValue}
-              onChange={e => setRenameValue(e.target.value)}
-              maxLength={50}
-              autoFocus
-            />
+          <CreateModalCard>
+            <ModalTitle>Edytuj grupę</ModalTitle>
+            <FormFields>
+              <Label>Nazwa grupy</Label>
+              <Input
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                maxLength={50}
+              />
+              <Label>Okres celu</Label>
+              <Select value={editModal.goal_period} onChange={() => {}} disabled>
+                {GOAL_PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </Select>
+              <LabelRow>
+                Jak liczyć cel grupy
+                <InfoTip>
+                  <InfoLine><InfoName>Czas:</InfoName> liczy się łączny czas spędzony na aktywnościach</InfoLine>
+                  <InfoLine><InfoName>Punkty:</InfoName> liczone wg wagi aktywności, za godzinę - np. godzina chodzenia to 0.5 pkt, a godzina boksu 2 pkt</InfoLine>
+                </InfoTip>
+              </LabelRow>
+              <Select value={editScoringMode} onChange={e => setEditScoringMode(e.target.value)}>
+                {SCORING_MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </Select>
+              <Label>{GOAL_LABELS[editModal.goal_period] || 'Cel'} ({editScoringMode === 'points' ? 'w punktach' : 'w minutach'})</Label>
+              <Input
+                type="number"
+                min={1}
+                value={editGoal}
+                onChange={e => setEditGoal(e.target.value)}
+              />
+            </FormFields>
+            {editError && <ErrorMsg style={{ marginLeft: 0 }}>{editError}</ErrorMsg>}
             <ModalButtons>
-              <CancelBtn onClick={() => setRenameModal(null)}>Anuluj</CancelBtn>
-              <SaveButton onClick={confirmRename}>Zapisz</SaveButton>
+              <CancelBtn onClick={() => setEditModal(null)}>Anuluj</CancelBtn>
+              <SaveButton onClick={confirmEdit}>Zapisz</SaveButton>
             </ModalButtons>
-          </ModalCard>
+          </CreateModalCard>
         </ModalOverlay>
       )}
 

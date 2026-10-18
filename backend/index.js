@@ -135,7 +135,14 @@ async function userInGroup(userId, groupId){
 
 app.get(`/my-groups`, authenticateToken, async (req, res)=>{
   const rows= await executeQuery(`
-    SELECT g.group_id, g.name, g.goal, ug.nickname, ug.color, (g.admin_id = ug.user_id) AS is_admin
+    SELECT g.group_id, g.name, g.goal_period,
+      (SELECT goal FROM public.group_settings gs
+       WHERE gs.group_id = g.group_id AND gs.effective_from <= CURRENT_DATE
+       ORDER BY gs.effective_from DESC LIMIT 1) AS goal,
+      (SELECT scoring_mode FROM public.group_settings gs
+       WHERE gs.group_id = g.group_id AND gs.effective_from <= CURRENT_DATE
+       ORDER BY gs.effective_from DESC LIMIT 1) AS scoring_mode,
+      ug.nickname, ug.color, (g.admin_id = ug.user_id) AS is_admin
     FROM public.user_group ug
     JOIN public.group g ON g.group_id = ug.group_id
     WHERE ug.user_id= $1
@@ -160,6 +167,10 @@ app.post('/groups', jsonParser, authenticateToken, async (req, res) => {
   await executeQuery(
     `INSERT INTO public.user_group (user_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
     [user_id, group.group_id]
+  );
+  await executeQuery(
+    `INSERT INTO public.group_settings (group_id, goal, scoring_mode, effective_from) VALUES ($1, $2, $3, DATE '2000-01-01') ON CONFLICT DO NOTHING`,
+    [group.group_id, goal, mode]
   );
   res.status(201).send(group);
 })
@@ -198,15 +209,27 @@ app.put('/my-groups/:id/color', jsonParser, authenticateToken, async (req, res) 
   res.sendStatus(204);
 });
 
-app.put('/my-groups/:id/name', jsonParser, authenticateToken, async (req, res) => {
+app.put('/my-groups/:id/settings', jsonParser, authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
   const group_id = req.params.id;
-  const { name } = req.body;
-  if (!name || !name.trim()) return res.sendStatus(400);
-  // tylko twórca grupy może zmienić nazwę
-  const rows = await executeQuery(`SELECT admin_id FROM public.group WHERE group_id = $1`, [group_id]);
+  const { name, goal, scoring_mode } = req.body;
+  const mode = scoring_mode || 'hours';
+  if (!name || !name.trim() || goal == null || goal <= 0 || !SCORING_MODES.includes(mode))
+    return res.sendStatus(400);
+
+  const rows = await executeQuery(`SELECT admin_id, goal_period FROM public.group WHERE group_id = $1`, [group_id]);
   if (rows[0]?.admin_id !== user_id) return res.sendStatus(403);
+
   await executeQuery(`UPDATE public.group SET name = $2 WHERE group_id = $1`, [group_id, name.trim()]);
+
+  const { start } = getPeriodWindow(rows[0].goal_period, 0);
+  const effective_from = toLocalDateString(start);
+  await executeQuery(
+    `INSERT INTO public.group_settings (group_id, goal, scoring_mode, effective_from)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (group_id, effective_from) DO UPDATE SET goal = EXCLUDED.goal, scoring_mode = EXCLUDED.scoring_mode`,
+    [group_id, goal, mode, effective_from]
+  );
   res.sendStatus(204);
 });
 
@@ -214,7 +237,11 @@ app.get('/invite-info', authenticateToken, async (req, res) => {
   const token = req.query.token;
   if (!token) return res.sendStatus(400);
   const rows = await executeQuery(
-    `SELECT group_id, name, goal, goal_period FROM public.group WHERE invite_token = $1`,
+    `SELECT g.group_id, g.name, g.goal_period,
+       (SELECT goal FROM public.group_settings gs
+        WHERE gs.group_id = g.group_id AND gs.effective_from <= CURRENT_DATE
+        ORDER BY gs.effective_from DESC LIMIT 1) AS goal
+     FROM public.group g WHERE g.invite_token = $1`,
     [token]
   );
   if (!rows.length) return res.sendStatus(404);
@@ -268,26 +295,32 @@ app.get('/group', authenticateToken, async (req, res) => {
   if(!group_id || !(await userInGroup(user_id, group_id)))
     return res.sendStatus(403);
 
+  const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+  const groupRows = await executeQuery(`SELECT name, goal_period FROM public.group WHERE group_id = $1`, [group_id]);
+
+  const { start } = getPeriodWindow(groupRows[0]?.goal_period, offset);
+  const settingsRows = await executeQuery(
+    `SELECT goal, scoring_mode FROM public.group_settings
+     WHERE group_id = $1 AND effective_from <= $2::date
+     ORDER BY effective_from DESC LIMIT 1`,
+    [group_id, toLocalDateString(start)]
+  );
+
   const query = `
     SELECT
-    g.name AS group_name,
-    g.goal AS group_goal,
-    g.goal_period AS group_goal_period,
-    g.scoring_mode,
     COALESCE(ug.nickname, u.name) AS user_name,
     COALESCE(ug.color, '000000') AS user_color,
     u.user_id
-    FROM public.group g
-    JOIN public.user_group ug ON ug.group_id = g.group_id
+    FROM public.user_group ug
     JOIN public.user u ON u.user_id = ug.user_id
-    WHERE g.group_id = $1
+    WHERE ug.group_id = $1
 `;
   const response = await executeQuery(query, [group_id]);
   const groupData = {
-    group_name: response[0].group_name,
-    group_goal: response[0].group_goal,
-    scoring_mode: response[0].scoring_mode,
-    group_goal_period: response[0].group_goal_period,
+    group_name: groupRows[0].name,
+    group_goal: settingsRows[0]?.goal,
+    scoring_mode: settingsRows[0]?.scoring_mode,
+    group_goal_period: groupRows[0].goal_period,
     users: response.map(row => ({
       user_id: row.user_id,
       user_name: row.user_name,
@@ -396,17 +429,21 @@ app.get('/last-10-weeks', authenticateToken, async (req, res) => {
   if(!group_id || !(await userInGroup(user_id, group_id)))
     return res.sendStatus(403);
 
-  const groupRows = await executeQuery(`SELECT scoring_mode FROM public.group WHERE group_id = $1`, [group_id]);
-  const sumExpr = groupRows[0]?.scoring_mode === 'points' ? 'SUM(A.amount * AT.weight / 60.0)' : 'SUM(A.amount)';
   const query = `
     SELECT
         A.user_id,
         TO_CHAR(DATE_TRUNC('week', A.date), 'YYYY-MM-DD') AS week_start,
-        ${sumExpr} AS total_amount
+        SUM(CASE WHEN S.scoring_mode = 'points' THEN A.amount * AT.weight / 60.0 ELSE A.amount END) AS total_amount
     FROM public.activity A
     JOIN public.user_group UG ON UG.user_id = A.user_id
     JOIN public.activity_group AG ON AG.activity_id = A.activity_id AND AG.group_id = UG.group_id
     JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
+    -- tryb liczenia taki, jaki obowiązywał w tygodniu danej aktywności
+    JOIN LATERAL (
+      SELECT scoring_mode FROM public.group_settings gs
+      WHERE gs.group_id = $1 AND gs.effective_from <= DATE_TRUNC('week', A.date)
+      ORDER BY gs.effective_from DESC LIMIT 1
+    ) S ON true
     WHERE UG.group_id = $1 AND A.date >= NOW() - INTERVAL '10 weeks'
     GROUP BY A.user_id, week_start
     ORDER BY week_start DESC, A.user_id
