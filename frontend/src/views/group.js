@@ -84,6 +84,10 @@ const StyledStatsTitle = styled.h2`
     text-overflow: ellipsis;
     white-space: nowrap;
     color:var(--text);
+    @media(max-width:570px){
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
 `;
 
 const UserLegend = styled.div`
@@ -97,6 +101,11 @@ const UserLegend = styled.div`
     &::-webkit-scrollbar { height: 3px; }
     &::-webkit-scrollbar:hover { height: 3px; }
     &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    @media(max-width:570px){
+      gap: 8px;
+      margin-right: 0;
+      max-width: 45%;
+    }
 `;
 
 const LegendItem = styled.div`
@@ -117,6 +126,9 @@ const LegendDot = styled.span`
 const LegendName = styled.span`
     font-size: 0.85rem;
     color: var(--text-inactive);
+    @media(max-width:570px){
+      font-size: 0.72rem;
+    }
 `;
 
 const StatsList = styled.div`
@@ -194,31 +206,6 @@ const DetailsHeader = styled.div`
     color:var(--text);
 `;
 
-const EmptyState = styled.div`
-    width:100%;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding:80px 20px;
-    gap:10px;
-`;
-
-const EmptyTitle = styled.h2`
-    font-size:1.3rem;
-    color:var(--text);
-    margin:0;
-`;
-
-const EmptyText = styled.p`
-    font-size:0.95rem;
-    color:var(--text-inactive);
-    margin:0;
-    max-width:360px;
-    line-height:1.5;
-`;
-
 const DetailsTitle = styled.span`
     flex:1;
     min-width:0;
@@ -253,6 +240,31 @@ const CloseBtn = styled.span`
     }
 `;
 
+const EmptyState = styled.div`
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:80px 20px;
+    gap:10px;
+`;
+
+const EmptyTitle = styled.h2`
+    font-size:1.3rem;
+    color:var(--text);
+    margin:0;
+`;
+
+const EmptyText = styled.p`
+    font-size:0.95rem;
+    color:var(--text-inactive);
+    margin:0;
+    max-width:360px;
+    line-height:1.5;
+`;
+
 function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, scoringMode, usersActivities, periodOffset, setPeriodOffset }) {
     const areaChartWidth = 860;
     const areaChartHeight = 400;
@@ -276,12 +288,13 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, sc
     // Wszyscy członkowie grupy - także ci bez aktywności (0 minut), posortowani malejąco po czasie
     const members = users.map((u) => {
         const d = usersActivities.find((ua) => ua.user_id === u.user_id);
+        const activities = d ? [...d.activities].sort((a, b) => (a.date < b.date ? 1 : -1)) : [];
         return {
             user_id: u.user_id,
             name: u.user_name,
             color: '#' + u.user_color,
             amount: d ? calculateAmount(d) : 0,
-            activities: d ? d.activities : [],
+            activities,
         };
     }).sort((a, b) => b.amount - a.amount);
 
@@ -326,10 +339,7 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, sc
                 ) : (
                     <StatsList>
                         {members.map((m) => (
-                            <StatRow
-                                key={m.user_id}
-                                onClick={() => setSelected(m)}
-                            >
+                            <StatRow key={m.user_id} onClick={() => setSelected(m)}>
                                 <Dot style={{ backgroundColor: m.color }} />
                                 <Name>{m.name}</Name>
                                 <Time>{formatScore(m.amount, scoringMode)}</Time>
@@ -340,9 +350,7 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, sc
             </StyledPieChart>
 
             <StyledStatsHeader>
-                <StyledStatsTitle>
-                    {selected ? `Statystyki – ${selected.name}` : 'Statystyki grupy'}
-                </StyledStatsTitle>
+                <StyledStatsTitle>Statystyki</StyledStatsTitle>
                 <UserLegend>
                     {(selected ? members.filter(m => m.user_id === selected.user_id) : members).map(m => (
                         <LegendItem key={m.user_id}>
@@ -354,8 +362,6 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, sc
             </StyledStatsHeader>
             <StackedAreaChart
                 data={statsData}
-                goal={goal}
-                scoringMode={scoringMode}
                 width={areaChartWidth}
                 height={areaChartHeight}
                 users={users}

@@ -1,9 +1,10 @@
 import React, { useMemo, useRef, useEffect, useCallback, useState } from 'react';
 import * as d3 from 'd3';
 import styled from 'styled-components';
-import { formatScore } from '../helpers/functions';
 
 const MARGIN = { top: 30, right: 30, bottom: 50, left: 50 };
+
+const fmtPct = (v) => `${Math.round(v)}%`;
 
 const StyledContainer = styled.div`
   margin: auto;
@@ -17,7 +18,7 @@ const StyledG = styled.g`
   color: #333;
 `;
 
-const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selectedUserId }) => {
+const StackedAreaChart = ({ data, width, height, users, selectedUserId }) => {
   const axesRef = useRef(null);
   const svgRef = useRef(null);
   const [hovered, setHovered] = useState(null);
@@ -60,10 +61,10 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
       .order(d3.stackOrderNone)
       .offset(d3.stackOffsetNone);
     const series = stackSeries(processedData);
-    const maxMinutes = d3.max(series, s => d3.max(s, d => d[1])) || goal;
+    const maxPct = d3.max(series, s => d3.max(s, d => d[1])) || 100;
     const yScale = useMemo(() => d3.scaleLinear()
-    .domain([0, Math.max(maxMinutes, goal)])
-    .range([boundsHeight, 0]), [boundsHeight, maxMinutes, goal]);
+    .domain([0, Math.max(maxPct, 100)])
+    .range([boundsHeight, 0]), [boundsHeight, maxPct]);
 
   const xScale = useMemo(() => d3.scalePoint()
       .domain(processedData.map(d => d.x).reverse())
@@ -104,7 +105,7 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
 
       const yAxisGenerator = d3.axisLeft(yScale)
           .ticks(5)
-          .tickFormat(d => scoringMode === 'points' ? `${Math.round(d)}` : `${(d / 60).toFixed(0)}h`);
+          .tickFormat(d => `${Math.round(d)}%`);
 
       svgElement.append('g')
           .call(yAxisGenerator)
@@ -117,8 +118,8 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
       svgElement.append('line')
       .attr('x1', 0)
       .attr('x2', boundsWidth)
-      .attr('y1', yScale(goal))
-      .attr('y2', yScale(goal))
+      .attr('y1', yScale(100))
+      .attr('y2', yScale(100))
       .attr('stroke', '#555')
       .attr('stroke-width', 1)
       .attr('stroke-dasharray', '5,5')
@@ -126,7 +127,7 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
 
       svgElement.append('text')
       .attr('x', boundsWidth - 5)
-      .attr('y', yScale(goal) - 6)
+      .attr('y', yScale(100) - 6)
       .attr('text-anchor', 'end')
       .attr('cursor', 'default')
       .attr('font-size', '0.9rem')
@@ -136,7 +137,7 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
       .attr('fill', '#555')
       .text('cel');
 
-  }, [xScale, yScale, boundsHeight, boundsWidth, goal, scoringMode]);
+  }, [xScale, yScale, boundsHeight, boundsWidth]);
 
   const areaBuilder = d3.area()
       .x(d => xScale(d.data.x))
@@ -173,9 +174,9 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
           key,
           name: nameById[key],
           color: colorScale[key],
-          minutes: week[key] || 0,
-      })).sort((a, b) => b.minutes - a.minutes);
-      const total = rows.reduce((sum, r) => sum + r.minutes, 0);
+          pct: week[key] || 0,
+      })).sort((a, b) => b.pct - a.pct);
+      const total = rows.reduce((sum, r) => sum + r.pct, 0);
       const cx = xScale(week.x);
 
       const rowH = 18;
@@ -183,8 +184,8 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
       const pad = 8;
       const boxH = headerH + rows.length * rowH + pad;
       const maxChars = Math.max(
-          `${week.x}  •  ${formatScore(total, scoringMode)}`.length,
-          ...rows.map(r => `${r.name}${formatScore(r.minutes, scoringMode)}`.length + 4)
+          `${week.x}  •  ${fmtPct(total)}`.length,
+          ...rows.map(r => `${r.name}${fmtPct(r.pct)}`.length + 4)
       );
       const boxW = Math.max(130, 24 + maxChars * 6.5);
       let bx = cx + 12;
@@ -192,7 +193,7 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
       const by = 6;
 
       return { week, rows, total, cx, rowH, headerH, pad, boxH, boxW, bx, by };
-  }, [hovered, processedData, stackKeys, nameById, colorScale, xScale, boundsWidth, scoringMode]);
+  }, [hovered, processedData, stackKeys, nameById, colorScale, xScale, boundsWidth]);
 
     return (
     <StyledContainer>
@@ -214,9 +215,6 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
                         onMouseLeave={(e) => {
                             document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('mouseleavechart'));
                             d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.6);
-                        }}
-                        onClick={() => {
-                            document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('click'));
                         }}
                     >
                         <path
@@ -317,7 +315,7 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
                         fill="#888"
                         textAnchor="end"
                     >
-                        Σ {formatScore(tooltip.total, scoringMode)}
+                        Σ {fmtPct(tooltip.total)}
                     </text>
                     {tooltip.rows.map((r, idx) => {
                         const ry = tooltip.by + tooltip.headerH + idx * tooltip.rowH + 12;
@@ -345,7 +343,7 @@ const StackedAreaChart = ({ data, goal, scoringMode, width, height, users, selec
                                     fill="#333"
                                     textAnchor="end"
                                 >
-                                    {formatScore(r.minutes, scoringMode)}
+                                    {fmtPct(r.pct)}
                                 </text>
                             </g>
                         );
