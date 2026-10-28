@@ -63,7 +63,7 @@ const StackedAreaChart = ({ data, goalPeriod, width, height, users, selectedUser
     const series = stackSeries(processedData);
     const maxPct = d3.max(series, s => d3.max(s, d => d[1])) || 100;
     const yScale = useMemo(() => d3.scaleLinear()
-    .domain([0, Math.max(maxPct, 100)])
+    .domain([0, Math.max(maxPct, 120)])
     .range([boundsHeight, 0]), [boundsHeight, maxPct]);
 
   const xScale = useMemo(() => d3.scalePoint()

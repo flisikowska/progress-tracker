@@ -269,7 +269,7 @@ const EmptyText = styled.p`
 
 function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, scoringMode, usersActivities, periodOffset, setPeriodOffset }) {
     const areaChartWidth = 860;
-    const areaChartHeight = 400;
+    const areaChartHeight = 470;
     const [selected, setSelected] = useState(null);
 
     if (!hasGroup) {
