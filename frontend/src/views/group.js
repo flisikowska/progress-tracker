@@ -103,8 +103,10 @@ const UserLegend = styled.div`
     &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
     @media(max-width:570px){
       gap: 8px;
-      margin-right: 0;
-      max-width: 45%;
+      margin-right: 10px;
+      flex: 1;
+      min-width: 0;
+      justify-content: flex-end;
     }
 `;
 

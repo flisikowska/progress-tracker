@@ -442,28 +442,24 @@ app.get('/last-8-weeks', authenticateToken, async (req, res) => {
     ),
     grid AS (
       SELECT m.user_id, w.week FROM members m CROSS JOIN weeks w
-    ),
-    weekly AS (
-      SELECT g.user_id, g.week, S.goal,
-        COALESCE(SUM(CASE WHEN S.scoring_mode = 'points' THEN A.amount * AT.weight / 60.0 ELSE A.amount END), 0) AS raw
-      FROM grid g
-      JOIN LATERAL (
-        SELECT goal, scoring_mode FROM public.group_settings gs
-        WHERE gs.group_id = $1 AND gs.effective_from <= g.week
-        ORDER BY gs.effective_from DESC LIMIT 1
-      ) S ON true
-      LEFT JOIN public.activity A
-        ON A.user_id = g.user_id
-        AND DATE_TRUNC('week', A.date)::date = g.week
-        AND A.activity_id IN (SELECT activity_id FROM public.activity_group WHERE group_id = $1)
-      LEFT JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
-      GROUP BY g.user_id, g.week, S.goal
     )
-    SELECT user_id,
-      TO_CHAR(week, 'YYYY-MM-DD') AS week_start,
-      SUM(raw) OVER (PARTITION BY user_id, DATE_TRUNC($2, week) ORDER BY week) / NULLIF(goal, 0) * 100 AS pct
-    FROM weekly
-    ORDER BY week DESC, user_id
+    SELECT g.user_id,
+      TO_CHAR(g.week, 'YYYY-MM-DD') AS week_start,
+      COALESCE(SUM(CASE WHEN S.scoring_mode = 'points' THEN A.amount * AT.weight / 60.0 ELSE A.amount END), 0) / NULLIF(S.goal, 0) * 100 AS pct
+    FROM grid g
+    JOIN LATERAL (
+      SELECT goal, scoring_mode FROM public.group_settings gs
+      WHERE gs.group_id = $1 AND gs.effective_from <= DATE_TRUNC($2, g.week)
+      ORDER BY gs.effective_from DESC LIMIT 1
+    ) S ON true
+    LEFT JOIN public.activity A
+      ON A.user_id = g.user_id
+      AND DATE_TRUNC($2, A.date) = DATE_TRUNC($2, g.week)
+      AND A.date < g.week + 7
+      AND A.activity_id IN (SELECT activity_id FROM public.activity_group WHERE group_id = $1)
+    LEFT JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
+    GROUP BY g.user_id, g.week, S.goal
+    ORDER BY g.week DESC, g.user_id
   `;
   const response = await executeQuery(query, [group_id, period]);
 
