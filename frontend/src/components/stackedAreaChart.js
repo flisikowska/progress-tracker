@@ -146,9 +146,8 @@ const StackedAreaChart = ({ data, goalPeriod, width, height, users, selectedUser
             svgElement.append('line')
               .attr('x1', sx).attr('x2', sx)
               .attr('y1', 0).attr('y2', boundsHeight)
-              .attr('stroke', '#c9c9d4')
-              .attr('stroke-width', 1)
-              .attr('stroke-dasharray', '3,3')
+              .attr('stroke', '#e2e2ea')
+              .attr('stroke-width', 2)
               .attr('pointer-events', 'none');
           }
         }
@@ -173,16 +172,16 @@ const StackedAreaChart = ({ data, goalPeriod, width, height, users, selectedUser
           raw[raw.length - 1].push(p);
       });
       const halfStep = (xScale.step() || 0) / 2;
+      const gap = 5; // mała przerwa między okresami
       return raw.map((seg, j) => {
           const first = seg[0];
           const last = seg[seg.length - 1];
-          const hasNext = j < raw.length - 1;
-          const leftPx = j > 0 ? (raw[j - 1][raw[j - 1].length - 1].px + first.px) / 2 : Math.max(0, first.px - halfStep);
-          const rightPx = hasNext ? (last.px + raw[j + 1][0].px) / 2 : Math.min(boundsWidth, last.px + halfStep);
+          const leftPx = j > 0 ? (raw[j - 1][raw[j - 1].length - 1].px + first.px) / 2 + gap : Math.max(0, first.px - halfStep);
+          const rightPx = j < raw.length - 1 ? (last.px + raw[j + 1][0].px) / 2 - gap : Math.min(boundsWidth, last.px + halfStep);
           return [
-              { px: leftPx, y0: 0, y1: 0 },
+              { px: leftPx, y0: first.y0, y1: first.y1 },
               ...seg,
-              hasNext ? { px: rightPx, y0: 0, y1: 0 } : { px: rightPx, y0: last.y0, y1: last.y1 },
+              { px: rightPx, y0: last.y0, y1: last.y1 },
           ];
       });
   };
