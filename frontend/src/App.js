@@ -356,7 +356,7 @@ function App() {
 
   const fetchStatsActivities=useCallback((groupId = activeGroupId)=>{
     if (!groupId) return;
-    axios.get(`${host}/last-10-weeks?group_id=${groupId}`, { withCredentials: true })
+    axios.get(`${host}/last-8-weeks?group_id=${groupId}`, { withCredentials: true })
     .then(res => {
         setStatsData(res.data);
     });

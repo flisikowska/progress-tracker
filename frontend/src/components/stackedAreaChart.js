@@ -176,12 +176,13 @@ const StackedAreaChart = ({ data, goalPeriod, width, height, users, selectedUser
       return raw.map((seg, j) => {
           const first = seg[0];
           const last = seg[seg.length - 1];
+          const hasNext = j < raw.length - 1;
           const leftPx = j > 0 ? (raw[j - 1][raw[j - 1].length - 1].px + first.px) / 2 : Math.max(0, first.px - halfStep);
-          const rightPx = j < raw.length - 1 ? (last.px + raw[j + 1][0].px) / 2 : Math.min(boundsWidth, last.px + halfStep);
+          const rightPx = hasNext ? (last.px + raw[j + 1][0].px) / 2 : Math.min(boundsWidth, last.px + halfStep);
           return [
-              { px: leftPx, y0: first.y0, y1: first.y1 },
+              { px: leftPx, y0: 0, y1: 0 },
               ...seg,
-              { px: rightPx, y0: last.y0, y1: last.y1 },
+              hasNext ? { px: rightPx, y0: 0, y1: 0 } : { px: rightPx, y0: last.y0, y1: last.y1 },
           ];
       });
   };

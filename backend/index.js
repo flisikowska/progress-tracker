@@ -423,7 +423,7 @@ app.get('/current-period', jsonParser, authenticateToken, async (req, res) => {
   res.send(result);
 });
 
-app.get('/last-10-weeks', authenticateToken, async (req, res) => {
+app.get('/last-8-weeks', authenticateToken, async (req, res) => {
   const user_id = req.user.userId;
   const group_id = req.query.group_id;
   if(!group_id || !(await userInGroup(user_id, group_id)))
@@ -435,7 +435,7 @@ app.get('/last-10-weeks', authenticateToken, async (req, res) => {
   const query = `
     WITH weeks AS (
       SELECT gs::date AS week
-      FROM generate_series(DATE_TRUNC('week', NOW() - INTERVAL '10 weeks'), DATE_TRUNC('week', NOW()), INTERVAL '1 week') gs
+      FROM generate_series(DATE_TRUNC('week', NOW() - INTERVAL '8 weeks'), DATE_TRUNC('week', NOW()), INTERVAL '1 week') gs
     ),
     members AS (
       SELECT user_id FROM public.user_group WHERE group_id = $1
