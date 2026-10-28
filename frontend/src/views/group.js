@@ -362,6 +362,7 @@ function Group({ hasGroup, statsData, activityTypes, users, goal, goalPeriod, sc
             </StyledStatsHeader>
             <StackedAreaChart
                 data={statsData}
+                goalPeriod={goalPeriod}
                 width={areaChartWidth}
                 height={areaChartHeight}
                 users={users}

@@ -429,35 +429,45 @@ app.get('/last-10-weeks', authenticateToken, async (req, res) => {
   if(!group_id || !(await userInGroup(user_id, group_id)))
     return res.sendStatus(403);
 
+  const groupRows = await executeQuery(`SELECT goal_period FROM public.group WHERE group_id = $1`, [group_id]);
+  const period = groupRows[0]?.goal_period || 'week';
+
   const query = `
-    SELECT
-        A.user_id,
-        TO_CHAR(DATE_TRUNC('week', A.date), 'YYYY-MM-DD') AS week_start,
-        SUM(CASE WHEN S.scoring_mode = 'points' THEN A.amount * AT.weight / 60.0 ELSE A.amount END) / NULLIF(S.goal, 0) * 100 AS pct
-    FROM public.activity A
-    JOIN public.user_group UG ON UG.user_id = A.user_id
-    JOIN public.activity_group AG ON AG.activity_id = A.activity_id AND AG.group_id = UG.group_id
-    JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
-    -- tryb liczenia taki, jaki obowiązywał w tygodniu danej aktywności
-    JOIN LATERAL (
-      SELECT goal, scoring_mode FROM public.group_settings gs
-      WHERE gs.group_id = $1 AND gs.effective_from <= DATE_TRUNC('week', A.date)
-      ORDER BY gs.effective_from DESC LIMIT 1
-    ) S ON true
-    WHERE UG.group_id = $1 AND A.date >= NOW() - INTERVAL '10 weeks'
-    GROUP BY A.user_id, week_start, S.goal
-    ORDER BY week_start DESC, A.user_id
+    WITH weeks AS (
+      SELECT gs::date AS week
+      FROM generate_series(DATE_TRUNC('week', NOW() - INTERVAL '10 weeks'), DATE_TRUNC('week', NOW()), INTERVAL '1 week') gs
+    ),
+    members AS (
+      SELECT user_id FROM public.user_group WHERE group_id = $1
+    ),
+    grid AS (
+      SELECT m.user_id, w.week FROM members m CROSS JOIN weeks w
+    ),
+    weekly AS (
+      SELECT g.user_id, g.week, S.goal,
+        COALESCE(SUM(CASE WHEN S.scoring_mode = 'points' THEN A.amount * AT.weight / 60.0 ELSE A.amount END), 0) AS raw
+      FROM grid g
+      JOIN LATERAL (
+        SELECT goal, scoring_mode FROM public.group_settings gs
+        WHERE gs.group_id = $1 AND gs.effective_from <= g.week
+        ORDER BY gs.effective_from DESC LIMIT 1
+      ) S ON true
+      LEFT JOIN public.activity A
+        ON A.user_id = g.user_id
+        AND DATE_TRUNC('week', A.date)::date = g.week
+        AND A.activity_id IN (SELECT activity_id FROM public.activity_group WHERE group_id = $1)
+      LEFT JOIN public.activity_type AT ON AT.activity_type_id = A.activity_type_id
+      GROUP BY g.user_id, g.week, S.goal
+    )
+    SELECT user_id,
+      TO_CHAR(week, 'YYYY-MM-DD') AS week_start,
+      SUM(raw) OVER (PARTITION BY user_id, DATE_TRUNC($2, week) ORDER BY week) / NULLIF(goal, 0) * 100 AS pct
+    FROM weekly
+    ORDER BY week DESC, user_id
   `;
-  const response = await executeQuery(query, [group_id]);
+  const response = await executeQuery(query, [group_id, period]);
 
-  const weekRows = await executeQuery(`
-    SELECT TO_CHAR(gs::date, 'YYYY-MM-DD') AS week_start
-    FROM generate_series(DATE_TRUNC('week', NOW() - INTERVAL '10 weeks'), DATE_TRUNC('week', NOW()), INTERVAL '1 week') gs
-    ORDER BY gs DESC
-  `, []);
   const result = {};
-  weekRows.forEach(r => { result[r.week_start] = {}; });
-
   response.forEach(row => {
     if (!result[row.week_start]) result[row.week_start] = {};
     result[row.week_start][row.user_id] = parseFloat(row.pct) || 0;

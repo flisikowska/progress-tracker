@@ -18,7 +18,7 @@ const StyledG = styled.g`
   color: #333;
 `;
 
-const StackedAreaChart = ({ data, width, height, users, selectedUserId }) => {
+const StackedAreaChart = ({ data, goalPeriod, width, height, users, selectedUserId }) => {
   const axesRef = useRef(null);
   const svgRef = useRef(null);
   const [hovered, setHovered] = useState(null);
@@ -44,7 +44,7 @@ const StackedAreaChart = ({ data, width, height, users, selectedUserId }) => {
             day: '2-digit',
             month: '2-digit',
           });
-        const entry = { x: formattedWeek };
+        const entry = { x: formattedWeek, __week: week };
         users.forEach(u => {
             entry[u.user_id] = rawData[week][u.user_id] || 0;
         });
@@ -137,16 +137,54 @@ const StackedAreaChart = ({ data, width, height, users, selectedUserId }) => {
       .attr('fill', '#555')
       .text('cel');
 
-  }, [xScale, yScale, boundsHeight, boundsWidth]);
+      if (goalPeriod && goalPeriod !== 'week') {
+        const periodKey = (w) => goalPeriod === 'year' ? w.slice(0, 4) : w.slice(0, 7);
+        const ordered = [...processedData].sort((a, b) => (a.__week < b.__week ? -1 : 1));
+        for (let i = 1; i < ordered.length; i++) {
+          if (periodKey(ordered[i].__week) !== periodKey(ordered[i - 1].__week)) {
+            const sx = (xScale(ordered[i].x) + xScale(ordered[i - 1].x)) / 2;
+            svgElement.append('line')
+              .attr('x1', sx).attr('x2', sx)
+              .attr('y1', 0).attr('y2', boundsHeight)
+              .attr('stroke', '#c9c9d4')
+              .attr('stroke-width', 1)
+              .attr('stroke-dasharray', '3,3')
+              .attr('pointer-events', 'none');
+          }
+        }
+      }
 
-  const areaBuilder = d3.area()
-      .x(d => xScale(d.data.x))
-      .y1(d => yScale(d[1]))
-      .y0(d => yScale(d[0]));
+  }, [xScale, yScale, boundsHeight, boundsWidth, processedData, goalPeriod]);
 
-  const lineBuilder = d3.line()
-      .x(d => xScale(d.data.x))
-      .y(d => yScale(d[1]));
+  const areaPx = d3.area().curve(d3.curveMonotoneX).x(d => d.px).y0(d => yScale(d.y0)).y1(d => yScale(d.y1));
+  const linePx = d3.line().curve(d3.curveMonotoneX).x(d => d.px).y(d => yScale(d.y1));
+
+  const buildSegments = (serie) => {
+      const pts = serie
+          .map(d => ({ px: xScale(d.data.x), y0: d[0], y1: d[1], week: d.data.__week }))
+          .sort((a, b) => a.px - b.px);
+      if (!goalPeriod || goalPeriod === 'week') return [pts];
+      const periodKey = (w) => goalPeriod === 'year' ? w.slice(0, 4) : w.slice(0, 7);
+      const raw = [];
+      let curKey = null;
+      pts.forEach(p => {
+          const k = periodKey(p.week);
+          if (k !== curKey) { raw.push([]); curKey = k; }
+          raw[raw.length - 1].push(p);
+      });
+      const halfStep = (xScale.step() || 0) / 2;
+      return raw.map((seg, j) => {
+          const first = seg[0];
+          const last = seg[seg.length - 1];
+          const leftPx = j > 0 ? (raw[j - 1][raw[j - 1].length - 1].px + first.px) / 2 : Math.max(0, first.px - halfStep);
+          const rightPx = j < raw.length - 1 ? (last.px + raw[j + 1][0].px) / 2 : Math.min(boundsWidth, last.px + halfStep);
+          return [
+              { px: leftPx, y0: first.y0, y1: first.y1 },
+              ...seg,
+              { px: rightPx, y0: last.y0, y1: last.y1 },
+          ];
+      });
+  };
 
   const handleMove = (e) => {
       const svg = svgRef.current;
@@ -206,33 +244,40 @@ const StackedAreaChart = ({ data, width, height, users, selectedUserId }) => {
             onMouseLeave={() => setHovered(null)}
         >
             <StyledG transform={`translate(${[MARGIN.left, MARGIN.top].join(',')})`}>
-                {series && series.map((serie, i) => (
+                {series && series.map((serie, i) => {
+                    const segments = buildSegments(serie);
+                    return (
                     <g key={i}
                         onMouseEnter={(e) => {
                             document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('mouseenterchart'));
-                            d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.7);
+                            d3.select(e.currentTarget).selectAll('path.area').attr('fill-opacity', 0.7);
                         }}
                         onMouseLeave={(e) => {
                             document.getElementById(`pieArc${serie.key}`)?.dispatchEvent(new Event('mouseleavechart'));
-                            d3.select(e.currentTarget).select('path').attr('fill-opacity', 0.6);
+                            d3.select(e.currentTarget).selectAll('path.area').attr('fill-opacity', 0.6);
                         }}
                     >
-                        <path
-                            id={`chartArea${serie.key}`}
-                            className="opacity"
-                            data-key={serie.key}
-                            d={areaBuilder(serie)}
-                            stroke="none"
-                            fill={colorScale[serie.key]}
-                            fillOpacity={0.6}
-                            style={{ transition: 'fill-opacity 0.25s' }}
-                        />
-                        <path
-                            d={lineBuilder(serie)}
-                            stroke={colorScale[serie.key]}
-                            fill="none"
-                            strokeWidth={1.7}
-                        />
+                        {segments.map((seg, s) => (
+                            <path
+                                key={`a${s}`}
+                                id={s === 0 ? `chartArea${serie.key}` : undefined}
+                                className="area"
+                                d={areaPx(seg)}
+                                stroke="none"
+                                fill={colorScale[serie.key]}
+                                fillOpacity={0.6}
+                                style={{ transition: 'fill-opacity 0.25s' }}
+                            />
+                        ))}
+                        {segments.map((seg, s) => (
+                            <path
+                                key={`l${s}`}
+                                d={linePx(seg)}
+                                stroke={colorScale[serie.key]}
+                                fill="none"
+                                strokeWidth={1.7}
+                            />
+                        ))}
                         {serie.map((d, j) => (
                             <circle
                                 key={j}
@@ -246,7 +291,8 @@ const StackedAreaChart = ({ data, width, height, users, selectedUserId }) => {
                             />
                         ))}
                     </g>
-                ))}
+                    );
+                })}
 
                 {tooltip && (
                     <g pointerEvents="none">
